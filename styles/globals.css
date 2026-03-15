@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #ffffff;
+  color: #171717;
+}
+
+@layer utilities {
+  .resume-template {
+    width: 794px;
+    min-height: 1123px;
+    background: white;
+    color: black;
+  }
+}
+
+@keyframes progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  .resume-template {
+    width: 100%;
+    min-height: auto;
+    box-shadow: none;
+  }
+}
