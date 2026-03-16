@@ -1,21 +1,25 @@
 "use client";
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown } from "lucide-react";
 import { v4 as uuid } from "uuid";
 import { useResumeStore } from "@/hooks/use-resume-store";
+import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 interface SectionEditorProps {
   sectionId: string;
   type: string;
   content: any;
+  resumeId?: string;
+  isPro?: boolean;
 }
 
-export function SectionEditor({ sectionId, type, content }: SectionEditorProps) {
+export function SectionEditor({ sectionId, type, content, resumeId, isPro }: SectionEditorProps) {
   const updateSection = useResumeStore((s) => s.updateSection);
 
   const update = useCallback(
@@ -27,13 +31,13 @@ export function SectionEditor({ sectionId, type, content }: SectionEditorProps) 
     case "personal":
       return <PersonalEditor content={content} onChange={update} />;
     case "summary":
-      return <SummaryEditor content={content} onChange={update} />;
+      return <SummaryEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} />;
     case "experience":
-      return <ExperienceEditor content={content} onChange={update} />;
+      return <ExperienceEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} />;
     case "education":
       return <EducationEditor content={content} onChange={update} />;
     case "skills":
-      return <SkillsEditor content={content} onChange={update} />;
+      return <SkillsEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} />;
     case "projects":
       return <ProjectsEditor content={content} onChange={update} />;
     case "certifications":
@@ -47,6 +51,116 @@ export function SectionEditor({ sectionId, type, content }: SectionEditorProps) 
         </p>
       );
   }
+}
+
+/* ─── AI Generate Hook ────────────────────────────────────────── */
+
+function useAIGenerate() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const generate = useCallback(
+    async (
+      type: "summary" | "experience" | "skills",
+      data: Record<string, string>,
+      resumeId?: string
+    ): Promise<{ result?: string; limitReached?: boolean }> => {
+      if (!resumeId) {
+        setError("Resume must be saved first");
+        return {};
+      }
+      setLoading(true);
+      setError("");
+
+      try {
+        const res = await fetch("/api/ai/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type, data, resumeId }),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          if (json.limitReached) {
+            setError("Free limit reached — upgrade to Pro for unlimited AI.");
+            return { limitReached: true };
+          }
+          setError(json.error || "AI generation failed. Please try again.");
+          return {};
+        }
+
+        if (json.remaining !== null && json.remaining !== undefined) {
+          toast.success(`Generated! ${json.remaining} free AI uses left.`);
+        } else {
+          toast.success("Generated!");
+        }
+
+        return { result: json.result };
+      } catch {
+        setError("AI generation failed. Please try again.");
+        return {};
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  return { generate, loading, error, clearError: () => setError("") };
+}
+
+function AIErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => void }) {
+  if (!error) return null;
+  const isLimit = error.toLowerCase().includes("limit") || error.toLowerCase().includes("upgrade");
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs",
+        isLimit
+          ? "border-amber-200 bg-amber-50 text-amber-700"
+          : "border-red-200 bg-red-50 text-red-700"
+      )}
+    >
+      {isLimit ? (
+        <Crown className="h-3.5 w-3.5 flex-shrink-0" />
+      ) : (
+        <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+      )}
+      <span className="flex-1">{error}</span>
+      <button onClick={onDismiss} className="ml-1 p-0.5 opacity-60 hover:opacity-100">
+        <X className="h-3 w-3" />
+      </button>
+    </div>
+  );
+}
+
+function AIButton({
+  onClick,
+  loading,
+  children,
+}: {
+  onClick: () => void;
+  loading: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={onClick}
+      disabled={loading}
+      className="gap-1.5 border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700"
+    >
+      {loading ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Sparkles className="h-3.5 w-3.5" />
+      )}
+      {loading ? "Generating…" : children}
+    </Button>
+  );
 }
 
 /* ─── Personal ─────────────────────────────────────────────────── */
@@ -110,18 +224,56 @@ function PersonalEditor({
 function SummaryEditor({
   content,
   onChange,
+  resumeId,
+  isPro,
 }: {
   content: any;
   onChange: (c: any) => void;
+  resumeId?: string;
+  isPro?: boolean;
 }) {
+  const { generate, loading, error, clearError } = useAIGenerate();
+  const resume = useResumeStore((s) => s.resume);
+
+  const personal = resume.sections.find((s) => s.type === "personal")?.content;
+  const skills = resume.sections.find((s) => s.type === "skills")?.content;
+  const experience = resume.sections.find((s) => s.type === "experience")?.content;
+
+  const handleGenerate = async () => {
+    const yearsExp = experience?.items?.length
+      ? `${experience.items.length} position(s)`
+      : "Not specified";
+
+    const { result } = await generate("summary", {
+      name: personal?.fullName || "",
+      target_role: experience?.items?.[0]?.title || "",
+      years_experience: yearsExp,
+      skills: (skills?.items ?? []).filter(Boolean).join(", "),
+    }, resumeId);
+
+    if (result) {
+      onChange({ ...content, text: result });
+    }
+  };
+
   return (
-    <Textarea
-      label="Professional Summary"
-      value={content.text ?? ""}
-      onChange={(e) => onChange({ ...content, text: e.target.value })}
-      placeholder="A brief summary of your professional background, key achievements, and career goals…"
-      className="min-h-[120px]"
-    />
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700">Professional Summary</span>
+        <AIButton onClick={handleGenerate} loading={loading}>
+          Generate Summary
+        </AIButton>
+      </div>
+
+      <AIErrorBanner error={error} onDismiss={clearError} />
+
+      <Textarea
+        value={content.text ?? ""}
+        onChange={(e) => onChange({ ...content, text: e.target.value })}
+        placeholder="A brief summary of your professional background, key achievements, and career goals…"
+        className="min-h-[120px]"
+      />
+    </div>
   );
 }
 
@@ -130,10 +282,16 @@ function SummaryEditor({
 function ExperienceEditor({
   content,
   onChange,
+  resumeId,
+  isPro,
 }: {
   content: any;
   onChange: (c: any) => void;
+  resumeId?: string;
+  isPro?: boolean;
 }) {
+  const { generate, loading, error, clearError } = useAIGenerate();
+  const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
   const items: any[] = content.items ?? [];
 
   const updateItem = (index: number, field: string, value: any) => {
@@ -197,8 +355,37 @@ function ExperienceEditor({
     onChange({ ...content, items: updated });
   };
 
+  const handleGenerateBullets = async (idx: number) => {
+    const item = items[idx];
+    if (!item) return;
+    setGeneratingIdx(idx);
+
+    const { result } = await generate("experience", {
+      job_title: item.title || "",
+      company: item.company || "",
+      responsibilities: (item.bullets ?? []).filter(Boolean).join("; ") || "General duties",
+    }, resumeId);
+
+    if (result) {
+      const bullets = result
+        .split("\n")
+        .map((b: string) => b.replace(/^[-•*]\s*/, "").trim())
+        .filter(Boolean);
+
+      if (bullets.length > 0) {
+        const updated = items.map((it, i) =>
+          i === idx ? { ...it, bullets } : it
+        );
+        onChange({ ...content, items: updated });
+      }
+    }
+    setGeneratingIdx(null);
+  };
+
   return (
     <div className="space-y-6">
+      <AIErrorBanner error={error} onDismiss={clearError} />
+
       {items.map((item, idx) => (
         <div
           key={item.id}
@@ -208,17 +395,25 @@ function ExperienceEditor({
             <span className="text-xs font-medium text-gray-500">
               Position {idx + 1}
             </span>
-            {items.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-gray-400 hover:text-red-500"
+            <div className="flex items-center gap-2">
+              <AIButton
+                onClick={() => handleGenerateBullets(idx)}
+                loading={loading && generatingIdx === idx}
               >
-                <Trash2 className="mr-1 h-3 w-3" />
-                Remove
-              </Button>
-            )}
+                Generate Bullets
+              </AIButton>
+              {items.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeItem(idx)}
+                  className="h-6 px-2 text-xs text-gray-400 hover:text-red-500"
+                >
+                  <Trash2 className="mr-1 h-3 w-3" />
+                  Remove
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -431,14 +626,23 @@ function EducationEditor({
 function SkillsEditor({
   content,
   onChange,
+  resumeId,
+  isPro,
 }: {
   content: any;
   onChange: (c: any) => void;
+  resumeId?: string;
+  isPro?: boolean;
 }) {
+  const { generate, loading, error, clearError } = useAIGenerate();
+  const resume = useResumeStore((s) => s.resume);
+
   const skills: string[] = (content.items ?? []).filter(
     (s: string) => s !== ""
   );
   const [inputValue, setInputValue] = React.useState("");
+
+  const experience = resume.sections.find((s) => s.type === "experience")?.content;
 
   const addSkill = () => {
     const trimmed = inputValue.trim();
@@ -461,8 +665,38 @@ function SkillsEditor({
     }
   };
 
+  const handleGenerateSkills = async () => {
+    const targetRole = experience?.items?.[0]?.title || "";
+
+    const { result } = await generate("skills", {
+      target_role: targetRole,
+      industry: "Technology",
+    }, resumeId);
+
+    if (result) {
+      const newSkills = result
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+
+      if (newSkills.length > 0) {
+        const merged = Array.from(new Set([...skills, ...newSkills]));
+        onChange({ ...content, items: merged });
+      }
+    }
+  };
+
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium text-gray-700">Skills</span>
+        <AIButton onClick={handleGenerateSkills} loading={loading}>
+          Generate Skills
+        </AIButton>
+      </div>
+
+      <AIErrorBanner error={error} onDismiss={clearError} />
+
       <div className="flex gap-2">
         <Input
           value={inputValue}

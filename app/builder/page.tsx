@@ -469,6 +469,8 @@ function BuilderPage() {
                         sectionId={section.id}
                         type={section.type}
                         content={section.content}
+                        resumeId={resume.id}
+                        isPro={userPlan === "pro"}
                       />
                     </SortableSection>
                   ))}
