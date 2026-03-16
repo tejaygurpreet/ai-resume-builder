@@ -33,6 +33,7 @@ import {
   Target,
   FileSignature,
   Search,
+  FileSearch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,11 +51,15 @@ import {
   CoverLetterModal,
   KeywordMatchModal,
 } from "@/components/editor/ai-tools-modal";
+import { ATSScorePanel } from "@/components/editor/ats-score-panel";
+import { ResumeAnalyticsPanel } from "@/components/editor/resume-analytics-panel";
+import { TailorResumeModal } from "@/components/editor/tailor-resume-modal";
 import {
   exportToPdf,
   exportToTxt,
   exportToJson,
   exportToDocx,
+  exportToMarkdown,
   type ExportFormat,
 } from "@/components/editor/pdf-export";
 import { ExportModal } from "@/components/editor/export-modal";
@@ -122,7 +127,10 @@ function BuilderPage() {
   const [aiToolsOpen, setAiToolsOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [tailorOpen, setTailorOpen] = useState(false);
   const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
+  const [exportsUsed, setExportsUsed] = useState(0);
+  const [hasOneTimeExport, setHasOneTimeExport] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -142,11 +150,12 @@ function BuilderPage() {
     const init = async () => {
       setLoading(true);
       try {
-        // Fetch plan info in parallel
         fetch("/api/resumes")
           .then((r) => r.json())
           .then((d) => {
             if (d.subscription?.plan === "pro") setUserPlan("pro");
+            if (d.subscription?.exportsUsed) setExportsUsed(d.subscription.exportsUsed);
+            if (d.subscription?.oneTimeExport) setHasOneTimeExport(true);
           })
           .catch(() => {});
 
@@ -235,6 +244,9 @@ function BuilderPage() {
           break;
         case "docx":
           exportToDocx(sections, name);
+          break;
+        case "md":
+          exportToMarkdown(sections, name);
           break;
       }
     },
@@ -431,6 +443,22 @@ function BuilderPage() {
                 <Search className="h-4 w-4 text-purple-500" />
                 Keyword Match
               </button>
+              <div className="mx-2 my-1 border-t border-gray-100" />
+              <button
+                onClick={() => {
+                  setTailorOpen(true);
+                  setAiToolsOpen(false);
+                }}
+                className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                <FileSearch className="h-4 w-4 text-purple-500" />
+                Tailor for Job
+                {userPlan !== "pro" && (
+                  <span className="ml-auto rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                    PRO
+                  </span>
+                )}
+              </button>
             </div>
           )}
         </div>
@@ -479,9 +507,9 @@ function BuilderPage() {
           </div>
         </div>
 
-        {/* Right: Live Preview */}
-        <div className="flex w-[45%] flex-col items-center overflow-y-auto bg-gray-100 p-6">
-          <div className="sticky top-0">
+        {/* Right: Live Preview + Panels */}
+        <div className="flex w-[45%] flex-col overflow-y-auto bg-gray-100 p-6">
+          <div className="mx-auto w-full max-w-[600px] space-y-4">
             <ResumePreview
               ref={previewRef}
               template={resume.template as TemplateName}
@@ -489,6 +517,10 @@ function BuilderPage() {
               color={resume.color}
               scale={0.6}
             />
+
+            {/* Analytics Panels */}
+            <ResumeAnalyticsPanel sections={sections} />
+            <ATSScorePanel sections={sections} />
           </div>
         </div>
       </div>
@@ -517,6 +549,9 @@ function BuilderPage() {
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
         isPro={userPlan === "pro"}
+        hasOneTimeExport={hasOneTimeExport}
+        exportsUsed={exportsUsed}
+        maxExports={3}
         onExport={handleExport}
         resumeTitle={resume.title}
         templateName={TEMPLATE_LABEL_MAP[resume.template] ?? resume.template}
@@ -538,6 +573,12 @@ function BuilderPage() {
       <KeywordMatchModal
         isOpen={activeModal === "keywords"}
         onClose={() => setActiveModal(null)}
+      />
+      <TailorResumeModal
+        isOpen={tailorOpen}
+        onClose={() => setTailorOpen(false)}
+        sections={sections}
+        isPro={userPlan === "pro"}
       />
     </div>
   );

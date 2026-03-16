@@ -123,6 +123,8 @@ export default function TimelineTemplate({ sections, color }: TemplateProps) {
             {personal.content.phone && <span>{personal.content.phone}</span>}
             {personal.content.location && <span>{personal.content.location}</span>}
             {personal.content.linkedin && <span>{personal.content.linkedin}</span>}
+            {personal.content.github && <span>{personal.content.github}</span>}
+            {personal.content.portfolio && <span>{personal.content.portfolio}</span>}
             {personal.content.website && <span>{personal.content.website}</span>}
           </div>
           <div style={{ width: "60px", height: "3px", backgroundColor: color, margin: "12px auto 0" }} />

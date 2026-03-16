@@ -13,6 +13,7 @@ import {
   Loader2,
   Sparkles,
   LayoutTemplate,
+  Copy,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -184,6 +185,25 @@ export default function DashboardPage() {
 
   if (status === "unauthenticated") return null;
 
+  const [duplicating, setDuplicating] = useState<string | null>(null);
+
+  async function handleDuplicate(resumeId: string) {
+    setDuplicating(resumeId);
+    try {
+      const res = await fetch("/api/resumes/duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeId }),
+      });
+      if (!res.ok) throw new Error("Failed to duplicate");
+      await fetchResumes();
+    } catch {
+      // Silently handle
+    } finally {
+      setDuplicating(null);
+    }
+  }
+
   const isPro = subscription?.plan === "pro";
 
   return (
@@ -198,7 +218,7 @@ export default function DashboardPage() {
                 My Resumes
               </h1>
               <Badge variant={isPro ? "success" : "default"}>
-                {isPro ? "Pro — $2.99/mo" : "Free Plan"}
+                {isPro ? "Pro — $7/mo" : "Free Plan"}
               </Badge>
             </div>
             <p className="mt-1 text-sm text-gray-500">
@@ -280,6 +300,19 @@ export default function DashboardPage() {
                         Edit
                       </Button>
                     </Link>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDuplicate(resume.id)}
+                      disabled={duplicating === resume.id}
+                      aria-label={`Duplicate ${resume.title}`}
+                    >
+                      {duplicating === resume.id ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

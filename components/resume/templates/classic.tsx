@@ -89,6 +89,8 @@ export default function ClassicTemplate({ sections, color }: TemplateProps) {
               personal.content.phone,
               personal.content.location,
               personal.content.linkedin,
+              personal.content.github,
+              personal.content.portfolio,
               personal.content.website,
             ]
               .filter(Boolean)

@@ -9,6 +9,8 @@ export const sampleSections = [
       phone: "(555) 123-4567",
       location: "San Francisco, CA",
       linkedin: "linkedin.com/in/alexchen",
+      github: "github.com/alexchen",
+      portfolio: "portfolio.alexchen.dev",
       website: "alexchen.dev",
     },
   },

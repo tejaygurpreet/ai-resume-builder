@@ -77,6 +77,8 @@ export default function CompactTemplate({ sections, color }: TemplateProps) {
           <div style={{ display: "flex", gap: "10px", fontSize: "9px", color: "#888", marginTop: "2px" }}>
             {personal.content.location && <span>{personal.content.location}</span>}
             {personal.content.linkedin && <span>{personal.content.linkedin}</span>}
+            {personal.content.github && <span>{personal.content.github}</span>}
+            {personal.content.portfolio && <span>{personal.content.portfolio}</span>}
             {personal.content.website && <span>{personal.content.website}</span>}
           </div>
         </div>

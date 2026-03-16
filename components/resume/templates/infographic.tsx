@@ -158,6 +158,18 @@ export default function InfographicTemplate({ sections, color }: TemplateProps) 
                 <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.linkedin}</span>
               </div>
             )}
+            {personal.content.github && (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
+                <span style={{ color, fontSize: "13px" }}>▶</span>
+                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.github}</span>
+              </div>
+            )}
+            {personal.content.portfolio && (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
+                <span style={{ color, fontSize: "13px" }}>▶</span>
+                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.portfolio}</span>
+              </div>
+            )}
             {personal.content.website && (
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
                 <span style={{ color, fontSize: "13px" }}>◆</span>

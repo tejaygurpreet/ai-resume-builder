@@ -169,6 +169,30 @@ export default function StudentTemplate({ sections, color }: TemplateProps) {
                 {personal.content.linkedin}
               </span>
             )}
+            {personal.content.github && (
+              <span
+                style={{
+                  backgroundColor: "#fff",
+                  padding: "2px 10px",
+                  borderRadius: "12px",
+                  border: "1px solid #e0e0e0",
+                }}
+              >
+                {personal.content.github}
+              </span>
+            )}
+            {personal.content.portfolio && (
+              <span
+                style={{
+                  backgroundColor: "#fff",
+                  padding: "2px 10px",
+                  borderRadius: "12px",
+                  border: "1px solid #e0e0e0",
+                }}
+              >
+                {personal.content.portfolio}
+              </span>
+            )}
             {personal.content.website && (
               <span
                 style={{

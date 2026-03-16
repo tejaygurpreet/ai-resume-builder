@@ -11,6 +11,8 @@ export async function getUserSubscription(userId: string) {
       plan: "free" as const,
       ...PLANS.free,
       isActive: true,
+      exportsUsed: subscription?.exportsUsed ?? 0,
+      oneTimeExport: subscription?.oneTimeExport ?? false,
     };
   }
 
@@ -19,13 +21,17 @@ export async function getUserSubscription(userId: string) {
     subscription.currentPeriodEnd &&
     subscription.currentPeriodEnd > new Date();
 
+  const planConfig = subscription.plan === "pro" ? PLANS.pro : PLANS.free;
+
   return {
     plan: subscription.plan as "free" | "pro",
-    ...PLANS[subscription.plan as keyof typeof PLANS],
+    ...planConfig,
     isActive: !!isActive,
     stripeCustomerId: subscription.stripeCustomerId,
     stripeSubscriptionId: subscription.stripeSubscriptionId,
     currentPeriodEnd: subscription.currentPeriodEnd,
+    exportsUsed: subscription.exportsUsed,
+    oneTimeExport: subscription.oneTimeExport,
   };
 }
 
@@ -37,12 +43,18 @@ export function canUseFeature(
   if (feature === "ai") return true;
   if (feature === "templates")
     return currentCount === undefined || currentCount < subscription.templates;
-  if (feature === "exports") return subscription.plan === "pro";
+  if (feature === "exports") {
+    if (subscription.plan === "pro") return true;
+    if (subscription.oneTimeExport) return true;
+    return subscription.exportsUsed < subscription.maxExportsPerMonth;
+  }
   return false;
 }
 
 export function requiresAdsForExport(
   subscription: Awaited<ReturnType<typeof getUserSubscription>>
 ) {
-  return subscription.plan === "free";
+  if (subscription.plan === "pro") return false;
+  if (subscription.oneTimeExport) return false;
+  return true;
 }

@@ -109,6 +109,18 @@ export default function GradientTemplate({ sections, color }: TemplateProps) {
                 <span>{personal.content.linkedin}</span>
               </>
             )}
+            {personal.content.github && (
+              <>
+                <span style={{ opacity: 0.5 }}>|</span>
+                <span>{personal.content.github}</span>
+              </>
+            )}
+            {personal.content.portfolio && (
+              <>
+                <span style={{ opacity: 0.5 }}>|</span>
+                <span>{personal.content.portfolio}</span>
+              </>
+            )}
             {personal.content.website && (
               <>
                 <span style={{ opacity: 0.5 }}>|</span>

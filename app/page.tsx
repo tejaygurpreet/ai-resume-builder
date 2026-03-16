@@ -100,7 +100,7 @@ const faqItems = [
   {
     question: "Is it free to use?",
     answer:
-      "Yes! Our free plan includes AI-powered writing and 2 templates — just watch 3 short ads before each export. For unlimited ad-free exports and all 8 templates, upgrade to Pro for just $2.99/month.",
+      "Yes! Our free plan includes AI-powered writing, 5 templates, and 3 exports per month. For unlimited exports, job tailoring, cover letter generation, and all 20+ templates, upgrade to Pro for $7/month.",
   },
   {
     question: "Are the resumes ATS-compatible?",
@@ -121,18 +121,19 @@ const faqItems = [
 
 const freePlanFeatures = [
   "AI resume builder",
-  "AI writing suggestions",
-  "2 resume templates",
-  "Export after watching 3 ads",
-  "PDF, DOCX, TXT, JSON export",
+  "3 AI generations per resume",
+  "5 basic templates",
+  "3 exports per month",
+  "PDF, DOCX, TXT, JSON, MD export",
 ];
 
 const proPlanFeatures = [
-  "AI resume builder",
-  "All 8 resume templates",
+  "Unlimited AI generations",
+  "All 20+ premium templates",
   "Unlimited exports — no ads",
-  "PDF, DOCX, TXT, JSON export",
-  "Priority support",
+  "Job description tailoring",
+  "Cover letter generator",
+  "ATS score analysis",
   "Custom color themes",
 ];
 
@@ -409,7 +410,7 @@ export default function Home() {
               </p>
               <p className="mt-6">
                 <span className="text-5xl font-extrabold text-gray-900">
-                  $2.99
+                  $7
                 </span>
                 <span className="ml-1 text-sm text-gray-500">/month</span>
               </p>

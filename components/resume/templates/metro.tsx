@@ -133,6 +133,32 @@ export default function MetroTemplate({ sections, color }: TemplateProps) {
                 {personal.content.linkedin}
               </span>
             )}
+            {personal.content.github && (
+              <span
+                style={{
+                  fontSize: "9.5px",
+                  padding: "3px 10px",
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  borderRadius: "2px",
+                  fontWeight: 500,
+                }}
+              >
+                {personal.content.github}
+              </span>
+            )}
+            {personal.content.portfolio && (
+              <span
+                style={{
+                  fontSize: "9.5px",
+                  padding: "3px 10px",
+                  backgroundColor: "rgba(255,255,255,0.2)",
+                  borderRadius: "2px",
+                  fontWeight: 500,
+                }}
+              >
+                {personal.content.portfolio}
+              </span>
+            )}
             {personal.content.website && (
               <span
                 style={{

@@ -70,7 +70,7 @@ export default function ProfessionalTemplate({ sections, color }: TemplateProps)
               color: "#555",
             }}
           >
-            {[personal.content.email, personal.content.phone, personal.content.location, personal.content.linkedin, personal.content.website]
+            {[personal.content.email, personal.content.phone, personal.content.location, personal.content.linkedin, personal.content.github, personal.content.portfolio, personal.content.website]
               .filter(Boolean)
               .map((item, i, arr) => (
                 <React.Fragment key={i}>

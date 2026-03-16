@@ -54,6 +54,13 @@ const FORMAT_OPTIONS: {
     description: "Structured data backup",
     icon: FileJson,
   },
+  {
+    format: "md",
+    label: "Markdown",
+    ext: ".md",
+    description: "Formatted text for GitHub / web",
+    icon: FileText,
+  },
 ];
 
 const ADS_REQUIRED = 3;
@@ -81,6 +88,9 @@ interface ExportModalProps {
   isOpen: boolean;
   onClose: () => void;
   isPro: boolean;
+  hasOneTimeExport?: boolean;
+  exportsUsed?: number;
+  maxExports?: number;
   onExport: (format: ExportFormat, filename: string) => void;
   resumeTitle?: string;
   templateName?: string;
@@ -90,10 +100,14 @@ export function ExportModal({
   isOpen,
   onClose,
   isPro,
+  hasOneTimeExport = false,
+  exportsUsed = 0,
+  maxExports = 3,
   onExport,
   resumeTitle = "Resume",
   templateName = "modern",
 }: ExportModalProps) {
+  const canExportFree = isPro || hasOneTimeExport || exportsUsed < maxExports;
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>("pdf");
   const [filename, setFilename] = useState("");
   const [adsWatched, setAdsWatched] = useState(0);
@@ -113,7 +127,7 @@ export function ExportModal({
     }
   }, [isOpen, resumeTitle, templateName, isPro, adsWatched]);
 
-  const adUnlocked = isPro || adsWatched >= ADS_REQUIRED;
+  const adUnlocked = isPro || hasOneTimeExport || adsWatched >= ADS_REQUIRED;
 
   const handleExportClick = useCallback(() => {
     if (adUnlocked) {
@@ -227,10 +241,17 @@ export function ExportModal({
             )}
           </div>
 
-          {!isPro && !adUnlocked && (
+          {!isPro && !hasOneTimeExport && !adUnlocked && (
             <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
               <Tv className="h-3.5 w-3.5 flex-shrink-0" />
-              Free plan: Watch 3 short ads to unlock this export
+              Free plan: Watch 3 short ads to unlock this export ({exportsUsed}/{maxExports} monthly exports used)
+            </div>
+          )}
+
+          {!isPro && !hasOneTimeExport && !canExportFree && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+              <Crown className="h-3.5 w-3.5 flex-shrink-0" />
+              Monthly export limit reached. <a href="/pricing" className="underline">Upgrade to Pro</a> or buy one-time export access.
             </div>
           )}
 

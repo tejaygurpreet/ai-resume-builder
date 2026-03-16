@@ -56,8 +56,10 @@ export default function ModernTemplate({ sections, color }: TemplateProps) {
             {personal.content.email && <span>{personal.content.email}</span>}
             {personal.content.phone && <span>{personal.content.phone}</span>}
             {personal.content.location && <span>{personal.content.location}</span>}
-            {personal.content.linkedin && <span>{personal.content.linkedin}</span>}
-            {personal.content.website && <span>{personal.content.website}</span>}
+            {personal.content.linkedin && <span>🔗 {personal.content.linkedin}</span>}
+            {personal.content.github && <span>💻 {personal.content.github}</span>}
+            {personal.content.portfolio && <span>🎨 {personal.content.portfolio}</span>}
+            {personal.content.website && <span>🌐 {personal.content.website}</span>}
           </div>
         </div>
       )}

@@ -167,6 +167,12 @@ export default function RibbonTemplate({ sections, color }: TemplateProps) {
             {personal.content.linkedin && (
               <span>{personal.content.linkedin}</span>
             )}
+            {personal.content.github && (
+              <span>{personal.content.github}</span>
+            )}
+            {personal.content.portfolio && (
+              <span>{personal.content.portfolio}</span>
+            )}
             {personal.content.website && (
               <span>{personal.content.website}</span>
             )}

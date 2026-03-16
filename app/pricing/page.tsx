@@ -7,34 +7,39 @@ import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Check, X, ChevronDown, Sparkles } from "lucide-react";
+import { Check, X, ChevronDown, Sparkles, Zap } from "lucide-react";
 
 const freeFeatures = [
   "AI resume builder",
-  "AI writing suggestions",
-  "2 resume templates",
-  "Export after watching 3 ads",
-  "PDF, DOCX, TXT, JSON export",
+  "3 AI generations per resume",
+  "5 basic templates",
+  "3 exports per month",
+  "Ads before export",
+  "PDF, DOCX, TXT, JSON, Markdown export",
 ];
 
 const proFeatures = [
-  "AI resume builder",
-  "AI writing suggestions",
-  "All 8 resume templates",
+  "Unlimited AI generations",
+  "All 20+ premium templates",
   "Unlimited exports — no ads",
-  "PDF, DOCX, TXT, JSON export",
+  "Job description resume tailoring",
+  "Cover letter generator",
+  "ATS score analysis",
+  "PDF, DOCX, TXT, JSON, Markdown export",
   "Priority support",
 ];
 
 const comparisonRows = [
   { feature: "AI-powered writing", free: true, pro: true },
+  { feature: "AI generations", free: "3 per resume", pro: "Unlimited" },
+  { feature: "Resume templates", free: "5 basic", pro: "All 20+" },
+  { feature: "Monthly exports", free: "3", pro: "Unlimited" },
+  { feature: "Job description tailoring", free: false, pro: true },
+  { feature: "Cover letter generator", free: false, pro: true },
+  { feature: "ATS score analysis", free: true, pro: true },
   { feature: "Resume scoring", free: true, pro: true },
-  { feature: "Cover letter generator", free: true, pro: true },
-  { feature: "Keyword optimization", free: true, pro: true },
-  { feature: "Resume templates", free: "2", pro: "All 8" },
-  { feature: "Export formats", free: "PDF, DOCX, TXT, JSON", pro: "PDF, DOCX, TXT, JSON" },
+  { feature: "Export formats", free: "PDF, DOCX, TXT, JSON, MD", pro: "PDF, DOCX, TXT, JSON, MD" },
   { feature: "Ad-free exports", free: false, pro: true },
-  { feature: "Unlimited exports", free: false, pro: true },
   { feature: "Priority support", free: false, pro: true },
 ];
 
@@ -42,22 +47,27 @@ const faqItems = [
   {
     question: "How does billing work?",
     answer:
-      "The Free plan is always free with no credit card required. The Pro plan is billed monthly at $2.99/month. You can upgrade or downgrade at any time from your dashboard.",
+      "The Free plan is always free with no credit card required. The Pro plan is billed monthly at $7/month. You can upgrade or downgrade at any time from your dashboard.",
   },
   {
     question: "Can I cancel my Pro subscription anytime?",
     answer:
-      "Yes, you can cancel your Pro subscription at any time with no questions asked. You'll continue to have access to Pro features until the end of your current billing period. After that, your account will revert to the free plan.",
+      "Yes, you can cancel your Pro subscription at any time with no questions asked. You'll continue to have access to Pro features until the end of your current billing period.",
+  },
+  {
+    question: "What is the one-time export option?",
+    answer:
+      "If you don't want a monthly subscription, you can pay $9 once to unlock unlimited exports permanently. This gives you all export features without needing a Pro subscription.",
   },
   {
     question: "What payment methods do you accept?",
     answer:
-      "We accept all major credit cards (Visa, Mastercard, American Express) and debit cards through our secure payment processor, Stripe. All transactions are encrypted and PCI compliant.",
+      "We accept all major credit cards (Visa, Mastercard, American Express) and debit cards through our secure payment processor, Stripe.",
   },
   {
     question: "Is there a free trial for Pro?",
     answer:
-      "You can try our Free plan with no time limit — it includes full AI features. If you want ad-free unlimited exports and all templates, upgrade to Pro for just $2.99/month. Cancel anytime.",
+      "You can try our Free plan with no time limit — it includes AI features and 3 exports per month. Upgrade to Pro for $7/month for unlimited access. Cancel anytime.",
   },
 ];
 
@@ -84,22 +94,26 @@ function FAQItem({
 export default function PricingPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
 
   const isAuthenticated = status === "authenticated" && !!session?.user;
 
-  const handleUpgradeToPro = async () => {
+  const handleCheckout = async (plan: "pro" | "one-time") => {
     if (!isAuthenticated) {
       router.push("/signup");
       return;
     }
 
-    setIsLoading(true);
+    setIsLoading(plan);
     try {
-      const res = await fetch("/api/stripe/checkout", {
+      const endpoint =
+        plan === "pro" ? "/api/stripe/checkout" : "/api/stripe/one-time-export";
+      const bodyPayload = plan === "pro" ? { plan: "pro" } : {};
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "pro" }),
+        body: JSON.stringify(bodyPayload),
       });
 
       const data = await res.json();
@@ -110,7 +124,7 @@ export default function PricingPage() {
       }
     } catch (err) {
       console.error(err);
-      setIsLoading(false);
+      setIsLoading(null);
       alert("Something went wrong. Please try again.");
     }
   };
@@ -120,7 +134,6 @@ export default function PricingPage() {
       <Navbar />
 
       <main className="relative overflow-hidden">
-        {/* Hero gradient background */}
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(59,130,246,0.08),transparent)]" />
 
         {/* Header */}
@@ -140,21 +153,19 @@ export default function PricingPage() {
         </section>
 
         {/* Pricing cards */}
-        <section className="px-4 pb-20 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-4xl flex-col items-center justify-center gap-8 lg:flex-row">
+        <section className="px-4 pb-12 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-5xl flex-col items-stretch justify-center gap-8 lg:flex-row">
             {/* Free Plan */}
-            <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md">
+            <div className="flex w-full max-w-md flex-col rounded-2xl border border-gray-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md lg:max-w-sm">
               <h3 className="text-xl font-semibold text-gray-900">Free</h3>
               <p className="mt-1 text-sm text-gray-500">
                 Perfect for getting started
               </p>
               <p className="mt-6">
-                <span className="text-4xl font-extrabold text-gray-900">
-                  $0
-                </span>
+                <span className="text-4xl font-extrabold text-gray-900">$0</span>
                 <span className="ml-1 text-gray-500">/month</span>
               </p>
-              <ul className="mt-8 space-y-4">
+              <ul className="mt-8 flex-1 space-y-4">
                 {freeFeatures.map((f) => (
                   <li key={f} className="flex items-center gap-3 text-sm text-gray-700">
                     <Check className="h-5 w-5 flex-shrink-0 text-emerald-500" />
@@ -170,7 +181,7 @@ export default function PricingPage() {
             </div>
 
             {/* Pro Plan */}
-            <div className="relative w-full max-w-md rounded-2xl border-2 border-blue-500 bg-white p-8 shadow-xl shadow-blue-100/50 transition-all hover:shadow-2xl hover:shadow-blue-100/60">
+            <div className="relative flex w-full max-w-md flex-col rounded-2xl border-2 border-blue-500 bg-white p-8 shadow-xl shadow-blue-100/50 transition-all hover:shadow-2xl hover:shadow-blue-100/60 lg:max-w-sm">
               <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md">
                 Most Popular
               </span>
@@ -179,10 +190,10 @@ export default function PricingPage() {
                 Everything you need to land the job
               </p>
               <p className="mt-6">
-                <span className="text-4xl font-extrabold text-gray-900">$2.99</span>
+                <span className="text-4xl font-extrabold text-gray-900">$7</span>
                 <span className="ml-1 text-gray-500">/month</span>
               </p>
-              <ul className="mt-8 space-y-4">
+              <ul className="mt-8 flex-1 space-y-4">
                 {proFeatures.map((f) => (
                   <li key={f} className="flex items-center gap-3 text-sm text-gray-700">
                     <Check className="h-5 w-5 flex-shrink-0 text-blue-500" />
@@ -193,10 +204,52 @@ export default function PricingPage() {
               <Button
                 className="mt-8 w-full"
                 size="lg"
-                loading={isLoading}
-                onClick={handleUpgradeToPro}
+                loading={isLoading === "pro"}
+                onClick={() => handleCheckout("pro")}
               >
                 Upgrade to Pro
+              </Button>
+            </div>
+
+            {/* One-Time Export */}
+            <div className="flex w-full max-w-md flex-col rounded-2xl border border-gray-200 bg-gradient-to-b from-amber-50/50 to-white p-8 shadow-sm transition-shadow hover:shadow-md lg:max-w-sm">
+              <div className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-amber-500" />
+                <h3 className="text-xl font-semibold text-gray-900">One-Time Export</h3>
+              </div>
+              <p className="mt-1 text-sm text-gray-500">
+                Pay once, export forever
+              </p>
+              <p className="mt-6">
+                <span className="text-4xl font-extrabold text-gray-900">$9</span>
+                <span className="ml-1 text-gray-500">one-time</span>
+              </p>
+              <ul className="mt-8 flex-1 space-y-4">
+                <li className="flex items-center gap-3 text-sm text-gray-700">
+                  <Check className="h-5 w-5 flex-shrink-0 text-amber-500" />
+                  Unlimited exports forever
+                </li>
+                <li className="flex items-center gap-3 text-sm text-gray-700">
+                  <Check className="h-5 w-5 flex-shrink-0 text-amber-500" />
+                  No ads on export
+                </li>
+                <li className="flex items-center gap-3 text-sm text-gray-700">
+                  <Check className="h-5 w-5 flex-shrink-0 text-amber-500" />
+                  All export formats
+                </li>
+                <li className="flex items-center gap-3 text-sm text-gray-700">
+                  <X className="h-5 w-5 flex-shrink-0 text-gray-300" />
+                  Pro AI features not included
+                </li>
+              </ul>
+              <Button
+                variant="outline"
+                className="mt-8 w-full border-amber-300 text-amber-700 hover:bg-amber-50"
+                size="lg"
+                loading={isLoading === "one-time"}
+                onClick={() => handleCheckout("one-time")}
+              >
+                Buy Export Access
               </Button>
             </div>
           </div>

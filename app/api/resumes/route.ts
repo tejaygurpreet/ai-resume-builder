@@ -13,6 +13,8 @@ const DEFAULT_SECTIONS = [
       phone: "",
       location: "",
       linkedin: "",
+      github: "",
+      portfolio: "",
       website: "",
     },
   },
@@ -81,13 +83,31 @@ export async function GET() {
       }),
       prisma.subscription.findUnique({
         where: { userId },
-        select: { plan: true, status: true },
+        select: {
+          plan: true,
+          status: true,
+          exportsUsed: true,
+          exportsResetAt: true,
+          oneTimeExport: true,
+        },
       }),
     ]);
 
+    let sub = subscription ?? {
+      plan: "free" as const,
+      status: "active" as const,
+      exportsUsed: 0,
+      exportsResetAt: new Date(),
+      oneTimeExport: false,
+    };
+
+    if (sub.exportsResetAt && new Date(sub.exportsResetAt).getMonth() !== new Date().getMonth()) {
+      sub = { ...sub, exportsUsed: 0 };
+    }
+
     return NextResponse.json({
       resumes,
-      subscription: subscription ?? { plan: "free", status: "active" },
+      subscription: sub,
     });
   } catch (error) {
     console.error("GET /api/resumes error:", error);

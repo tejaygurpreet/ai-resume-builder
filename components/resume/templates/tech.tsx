@@ -95,6 +95,8 @@ export default function TechTemplate({ sections, color }: TemplateProps) {
               {personal.content.phone && <div>{personal.content.phone}</div>}
               {personal.content.location && <div>{personal.content.location}</div>}
               {personal.content.linkedin && <div>{personal.content.linkedin}</div>}
+              {personal.content.github && <div>{personal.content.github}</div>}
+              {personal.content.portfolio && <div>{personal.content.portfolio}</div>}
               {personal.content.website && <div>{personal.content.website}</div>}
             </div>
           </div>

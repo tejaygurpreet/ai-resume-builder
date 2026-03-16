@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown } from "lucide-react";
+import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown, Wand2 } from "lucide-react";
 import { v4 as uuid } from "uuid";
 import { useResumeStore } from "@/hooks/use-resume-store";
 import { cn } from "@/lib/utils";
@@ -210,6 +210,18 @@ function PersonalEditor({
         placeholder="linkedin.com/in/johndoe"
       />
       <Input
+        label="GitHub"
+        value={content.github ?? ""}
+        onChange={(e) => set("github", e.target.value)}
+        placeholder="github.com/johndoe"
+      />
+      <Input
+        label="Portfolio"
+        value={content.portfolio ?? ""}
+        onChange={(e) => set("portfolio", e.target.value)}
+        placeholder="portfolio.johndoe.dev"
+      />
+      <Input
         label="Website"
         value={content.website ?? ""}
         onChange={(e) => set("website", e.target.value)}
@@ -355,6 +367,8 @@ function ExperienceEditor({
     onChange({ ...content, items: updated });
   };
 
+  const [improvingBullet, setImprovingBullet] = useState<string | null>(null);
+
   const handleGenerateBullets = async (idx: number) => {
     const item = items[idx];
     if (!item) return;
@@ -380,6 +394,55 @@ function ExperienceEditor({
       }
     }
     setGeneratingIdx(null);
+  };
+
+  const handleImproveBullet = async (itemIdx: number, bulletIdx: number) => {
+    const item = items[itemIdx];
+    const bullet = item?.bullets?.[bulletIdx];
+    if (!bullet || bullet.trim().length < 5) {
+      toast.error("Write at least a few words before improving.");
+      return;
+    }
+
+    const key = `${itemIdx}-${bulletIdx}`;
+    setImprovingBullet(key);
+
+    try {
+      const res = await fetch("/api/ai/improve-bullet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bullet,
+          jobTitle: item.title || "",
+          resumeId,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        if (json.limitReached) {
+          toast.error("Free limit reached — upgrade to Pro for unlimited AI.");
+        } else {
+          toast.error(json.error || "Failed to improve bullet.");
+        }
+        return;
+      }
+
+      if (json.result) {
+        const cleaned = json.result.replace(/^[-•*"]\s*/, "").replace(/["']$/, "").trim();
+        updateBullet(itemIdx, bulletIdx, cleaned);
+        if (json.remaining !== null && json.remaining !== undefined) {
+          toast.success(`Improved! ${json.remaining} free AI uses left.`);
+        } else {
+          toast.success("Bullet improved!");
+        }
+      }
+    } catch {
+      toast.error("AI generation failed. Please try again.");
+    } finally {
+      setImprovingBullet(null);
+    }
   };
 
   return (
@@ -466,27 +529,50 @@ function ExperienceEditor({
             <span className="text-sm font-medium text-gray-700">
               Bullet Points
             </span>
-            {(item.bullets ?? []).map((bullet: string, bi: number) => (
-              <div key={bi} className="flex items-start gap-2">
-                <span className="mt-2.5 text-gray-400">&bull;</span>
-                <Textarea
-                  value={bullet}
-                  onChange={(e) => updateBullet(idx, bi, e.target.value)}
-                  placeholder="Describe your accomplishment…"
-                  className="min-h-[60px]"
-                />
-                {(item.bullets ?? []).length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeBullet(idx, bi)}
-                    className="mt-1 h-7 w-7 shrink-0 p-0 text-gray-400 hover:text-red-500"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                )}
-              </div>
-            ))}
+            {(item.bullets ?? []).map((bullet: string, bi: number) => {
+              const bulletKey = `${idx}-${bi}`;
+              const isImproving = improvingBullet === bulletKey;
+              return (
+                <div key={bi} className="flex items-start gap-2">
+                  <span className="mt-2.5 text-gray-400">&bull;</span>
+                  <Textarea
+                    value={bullet}
+                    onChange={(e) => updateBullet(idx, bi, e.target.value)}
+                    placeholder="Describe your accomplishment…"
+                    className="min-h-[60px]"
+                  />
+                  <div className="mt-1 flex flex-col gap-1">
+                    <button
+                      onClick={() => handleImproveBullet(idx, bi)}
+                      disabled={isImproving || !bullet.trim()}
+                      title="Improve with AI"
+                      className={cn(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors",
+                        isImproving
+                          ? "border-purple-200 bg-purple-50"
+                          : "border-gray-200 text-purple-500 hover:border-purple-300 hover:bg-purple-50"
+                      )}
+                    >
+                      {isImproving ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
+                      ) : (
+                        <Wand2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    {(item.bullets ?? []).length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeBullet(idx, bi)}
+                        className="h-7 w-7 shrink-0 p-0 text-gray-400 hover:text-red-500"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
             <Button
               variant="ghost"
               size="sm"

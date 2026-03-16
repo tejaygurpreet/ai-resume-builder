@@ -87,6 +87,8 @@ export default function TwoColumnTemplate({ sections, color }: TemplateProps) {
             {personal.content.phone && <span>☎ {personal.content.phone}</span>}
             {personal.content.location && <span>⌂ {personal.content.location}</span>}
             {personal.content.linkedin && <span>{personal.content.linkedin}</span>}
+            {personal.content.github && <span>{personal.content.github}</span>}
+            {personal.content.portfolio && <span>{personal.content.portfolio}</span>}
             {personal.content.website && <span>{personal.content.website}</span>}
           </div>
         </div>
