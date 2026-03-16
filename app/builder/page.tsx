@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { Suspense, useEffect, useRef, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -75,7 +75,24 @@ const PRESET_COLORS = [
 const TEMPLATE_LABEL_MAP: Record<string, string> = {};
 templateRegistry.forEach((t) => { TEMPLATE_LABEL_MAP[t.id] = t.name; });
 
-export default function BuilderPage() {
+export default function BuilderPageWrapper() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-gray-50">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <p className="text-sm text-gray-500">Loading builder…</p>
+          </div>
+        </div>
+      }
+    >
+      <BuilderPage />
+    </Suspense>
+  );
+}
+
+function BuilderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("id");

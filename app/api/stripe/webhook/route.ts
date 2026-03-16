@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
     let event: Stripe.Event;
     try {
-      event = stripe.webhooks.constructEvent(
+      event = getStripe().webhooks.constructEvent(
         body,
         signature,
         process.env.STRIPE_WEBHOOK_SECRET
@@ -99,7 +99,7 @@ export async function POST(req: Request) {
             ? invoice.subscription
             : invoice.subscription.id;
 
-        const stripeSubscription = await stripe.subscriptions.retrieve(
+        const stripeSubscription = await getStripe().subscriptions.retrieve(
           subscriptionId
         );
 
