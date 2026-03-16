@@ -93,7 +93,7 @@ function ScoreRing({ score }: { score: number }) {
           stroke="currentColor"
           strokeWidth="6"
           fill="none"
-          className="text-gray-100"
+          className="text-slate-100"
         />
         <circle
           cx="44"
@@ -126,10 +126,10 @@ function BreakdownBar({
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
-        <span className="text-gray-600">{label}</span>
-        <span className="font-medium text-gray-900">{score}/{max}</span>
+        <span className="text-slate-600">{label}</span>
+        <span className="font-medium text-slate-900">{score}/{max}</span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500",
@@ -190,14 +190,14 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
   };
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
+    <div className="rounded-xl border border-slate-200/60 bg-white">
       <button
         onClick={() => setExpanded((e) => !e)}
         className="flex w-full items-center justify-between px-4 py-3 text-left"
       >
         <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-blue-600" />
-          <span className="text-sm font-semibold text-gray-900">ATS Score</span>
+          <Target className="h-4 w-4 text-brand-600" />
+          <span className="text-sm font-semibold text-slate-900">ATS Score</span>
           {result && (
             <span
               className={cn(
@@ -215,17 +215,17 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
         </div>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-gray-400 transition-transform",
+            "h-4 w-4 text-slate-400 transition-transform",
             expanded && "rotate-180"
           )}
         />
       </button>
 
       {expanded && (
-        <div className="border-t border-gray-100 px-4 py-3">
+        <div className="border-t border-slate-100 px-4 py-3">
           {!result && !loading && (
             <div className="flex flex-col items-center py-3">
-              <p className="mb-3 text-center text-xs text-gray-500">
+              <p className="mb-3 text-center text-xs text-slate-500">
                 Analyze your resume for ATS compatibility
               </p>
               <Button size="sm" onClick={analyze} className="gap-1.5">
@@ -237,8 +237,8 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
 
           {loading && (
             <div className="flex flex-col items-center gap-2 py-4">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-              <p className="text-xs text-gray-500">Analyzing…</p>
+              <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+              <p className="text-xs text-slate-500">Analyzing…</p>
             </div>
           )}
 
@@ -263,10 +263,10 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
 
               {result.suggestions.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-gray-700">Suggestions</p>
+                  <p className="text-xs font-medium text-slate-700">Suggestions</p>
                   <ul className="space-y-1.5">
                     {result.suggestions.map((s, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
                         <SuggestionIcon suggestion={s} />
                         <span>{s}</span>
                       </li>

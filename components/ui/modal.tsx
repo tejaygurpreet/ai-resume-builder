@@ -2,6 +2,7 @@
 
 import React, { useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,57 +41,64 @@ function Modal({ isOpen, onClose, title, children, className, size = "md" }: Mod
     };
   }, [isOpen, handleKeyDown]);
 
-  if (!isOpen) return null;
+  if (typeof window === "undefined") return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Overlay */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Content */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className={cn(
-          "relative z-10 w-full rounded-xl border border-gray-200 bg-white p-6 shadow-xl",
-          SIZE_CLASSES[size],
-          "animate-in fade-in-0 zoom-in-95",
-          className
-        )}
-      >
-        {/* Header */}
-        {title && (
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-            <button
-              onClick={onClose}
-              className="rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        )}
-
-        {/* Close button when no title */}
-        {!title && (
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
             onClick={onClose}
-            className="absolute right-4 top-4 rounded-md p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
+            aria-hidden="true"
+          />
 
-        {children}
-      </div>
-    </div>,
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.25, ease: [0.25, 0.4, 0.25, 1] }}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+            className={cn(
+              "relative z-10 w-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card-hover",
+              SIZE_CLASSES[size],
+              className
+            )}
+          >
+            {title && (
+              <div className="mb-5 flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+                <button
+                  onClick={onClose}
+                  className="rounded-xl p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600"
+                  aria-label="Close"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            )}
+
+            {!title && (
+              <button
+                onClick={onClose}
+                className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
+
+            {children}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 }

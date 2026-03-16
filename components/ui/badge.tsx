@@ -4,10 +4,10 @@ import React from "react";
 import { cn } from "@/lib/utils";
 
 const variantStyles = {
-  default: "bg-blue-100 text-blue-800 border-blue-200",
-  success: "bg-green-100 text-green-800 border-green-200",
-  warning: "bg-amber-100 text-amber-800 border-amber-200",
-  destructive: "bg-red-100 text-red-800 border-red-200",
+  default: "bg-brand-50 text-brand-700 border-brand-200/60",
+  success: "bg-emerald-50 text-emerald-700 border-emerald-200/60",
+  warning: "bg-amber-50 text-amber-700 border-amber-200/60",
+  destructive: "bg-red-50 text-red-700 border-red-200/60",
 } as const;
 
 type BadgeVariant = keyof typeof variantStyles;

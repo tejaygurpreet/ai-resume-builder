@@ -125,7 +125,7 @@ export function TailorResumeModal({
       {!result ? (
         <div className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-sm font-medium text-gray-700">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Paste Job Description
             </label>
             <Textarea
@@ -164,10 +164,10 @@ export function TailorResumeModal({
       ) : (
         <div className="space-y-5">
           {/* Match score */}
-          <div className="flex items-center justify-center gap-3 rounded-xl bg-gray-50 py-4">
-            <Target className="h-6 w-6 text-blue-600" />
+          <div className="flex items-center justify-center gap-3 rounded-xl bg-slate-50 py-4">
+            <Target className="h-6 w-6 text-brand-600" />
             <div>
-              <p className="text-xs text-gray-500">Match Score</p>
+              <p className="text-xs text-slate-500">Match Score</p>
               <p
                 className={cn(
                   "text-2xl font-bold",
@@ -186,7 +186,7 @@ export function TailorResumeModal({
           {/* Keywords found */}
           {result.keywords.length > 0 && (
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">Key Keywords</p>
+              <p className="mb-2 text-sm font-medium text-slate-700">Key Keywords</p>
               <div className="flex flex-wrap gap-1.5">
                 {result.keywords.map((kw, i) => (
                   <Badge key={i} className="text-xs">
@@ -200,7 +200,7 @@ export function TailorResumeModal({
           {/* Missing skills */}
           {result.missingSkills && result.missingSkills.length > 0 && (
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">Missing Skills</p>
+              <p className="mb-2 text-sm font-medium text-slate-700">Missing Skills</p>
               <div className="flex flex-wrap gap-1.5">
                 {result.missingSkills.map((skill, i) => (
                   <Badge key={i} variant="destructive" className="text-xs">
@@ -214,12 +214,12 @@ export function TailorResumeModal({
           {/* Optimized bullets */}
           {result.optimizedBullets.length > 0 && (
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">
+              <p className="mb-2 text-sm font-medium text-slate-700">
                 Optimized Bullet Points
               </p>
               <ul className="space-y-1.5">
                 {result.optimizedBullets.map((b, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
                     <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-500" />
                     {b}
                   </li>
@@ -231,10 +231,10 @@ export function TailorResumeModal({
           {/* Suggestions */}
           {result.suggestions.length > 0 && (
             <div>
-              <p className="mb-2 text-sm font-medium text-gray-700">Suggestions</p>
+              <p className="mb-2 text-sm font-medium text-slate-700">Suggestions</p>
               <ul className="space-y-1.5">
                 {result.suggestions.map((s, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-gray-600">
+                  <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
                     <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-500" />
                     {s}
                   </li>

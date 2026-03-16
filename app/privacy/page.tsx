@@ -10,20 +10,20 @@ export const metadata: Metadata = {
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface">
       <Navbar />
 
       <main>
         {/* Page banner */}
-        <section className="border-b border-gray-200 bg-gray-50 px-4 py-16 sm:px-6 lg:px-8">
+        <section className="border-b border-slate-200 bg-slate-50 px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
               Privacy Policy
             </h1>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-4 text-lg text-slate-600">
               Your privacy matters to us. Here&apos;s how we handle your data.
             </p>
-            <p className="mt-2 text-sm text-gray-400">
+            <p className="mt-2 text-sm text-slate-400">
               Last updated: March 14, 2026
             </p>
           </div>
@@ -34,10 +34,10 @@ export default function PrivacyPolicyPage() {
           <div className="mx-auto max-w-3xl space-y-10">
             {/* 1. Introduction */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 1. Introduction
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 Welcome to ResumeAI (&quot;we,&quot; &quot;our,&quot; or
                 &quot;us&quot;). ResumeAI is an AI-powered resume builder
                 Software-as-a-Service (SaaS) platform designed to help you
@@ -45,7 +45,7 @@ export default function PrivacyPolicyPage() {
                 explains how we collect, use, disclose, and safeguard your
                 personal information when you use our website and services.
               </p>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 By accessing or using ResumeAI, you agree to the terms of this
                 Privacy Policy. If you do not agree, please discontinue use of
                 our services.
@@ -54,42 +54,42 @@ export default function PrivacyPolicyPage() {
 
             {/* 2. Information We Collect */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 2. Information We Collect
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 We collect the following types of information to provide and
                 improve our services:
               </p>
-              <ul className="mt-4 space-y-3 text-base leading-relaxed text-gray-600">
+              <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Account Information</strong>{" "}
+                    <strong className="text-slate-900">Account Information</strong>{" "}
                     — Your name, email address, and securely hashed password when
                     you create an account.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Resume Content</strong> —
+                    <strong className="text-slate-900">Resume Content</strong> —
                     The text, work history, education, skills, and other
                     information you enter into the resume builder.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Usage Data</strong> — Pages
+                    <strong className="text-slate-900">Usage Data</strong> — Pages
                     visited, features used, session duration, and interaction
                     patterns that help us understand how our platform is used.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Payment Information</strong>{" "}
+                    <strong className="text-slate-900">Payment Information</strong>{" "}
                     — Billing details are processed securely by Stripe. We do not
                     store your credit card numbers or full payment details on our
                     servers.
@@ -100,21 +100,21 @@ export default function PrivacyPolicyPage() {
 
             {/* 3. How We Use Your Data */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 3. How We Use Your Data
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 We use the information we collect for the following purposes:
               </p>
-              <ul className="mt-4 space-y-3 text-base leading-relaxed text-gray-600">
+              <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
                     Provide, operate, and maintain our resume building services.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
                     Generate AI-powered suggestions for your resume content using
                     the OpenAI API, including bullet point generation, resume
@@ -122,14 +122,14 @@ export default function PrivacyPolicyPage() {
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
                     Process payments and manage subscriptions through our payment
                     provider.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
                     Send service-related communications such as account
                     confirmations, billing notices, and important updates about
@@ -137,7 +137,7 @@ export default function PrivacyPolicyPage() {
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
                     Improve and optimize our services based on usage patterns and
                     feedback.
@@ -148,19 +148,19 @@ export default function PrivacyPolicyPage() {
 
             {/* 4. AI Processing */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 4. AI Processing
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 ResumeAI uses artificial intelligence to enhance your resume
                 building experience. When you use AI-powered features — such as
                 bullet point generation, resume scoring, keyword analysis, and
                 cover letter generation — your resume data is sent to the OpenAI
                 API for processing.
               </p>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 Your data sent to OpenAI is used solely to generate responses for
-                your requests. It is <strong className="text-gray-900">not</strong>{" "}
+                your requests. It is <strong className="text-slate-900">not</strong>{" "}
                 used to train or improve AI models. We encourage you to review
                 OpenAI&apos;s privacy policy for additional details on their data
                 handling practices.
@@ -169,26 +169,26 @@ export default function PrivacyPolicyPage() {
 
             {/* 5. Cookies and Analytics */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 5. Cookies and Analytics
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 We use cookies and similar technologies to enhance your
                 experience:
               </p>
-              <ul className="mt-4 space-y-3 text-base leading-relaxed text-gray-600">
+              <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Essential Cookies</strong>{" "}
+                    <strong className="text-slate-900">Essential Cookies</strong>{" "}
                     — Required for authentication sessions and core platform
                     functionality. These cannot be disabled.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Analytics Cookies</strong>{" "}
+                    <strong className="text-slate-900">Analytics Cookies</strong>{" "}
                     — Help us understand usage patterns, popular features, and
                     areas for improvement. These are anonymized where possible.
                   </span>
@@ -198,32 +198,32 @@ export default function PrivacyPolicyPage() {
 
             {/* 6. Third-Party Services */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 6. Third-Party Services
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 We rely on trusted third-party providers to deliver our services:
               </p>
-              <ul className="mt-4 space-y-3 text-base leading-relaxed text-gray-600">
+              <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">OpenAI</strong> — Powers
+                    <strong className="text-slate-900">OpenAI</strong> — Powers
                     our AI features including resume bullet generation, scoring,
                     keyword optimization, and cover letter writing.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Stripe</strong> — Handles
+                    <strong className="text-slate-900">Stripe</strong> — Handles
                     all payment processing securely. Stripe is PCI-DSS compliant.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Hosting Provider</strong> —
+                    <strong className="text-slate-900">Hosting Provider</strong> —
                     Our application is hosted on infrastructure that provides
                     enterprise-grade security and uptime.
                   </span>
@@ -233,34 +233,34 @@ export default function PrivacyPolicyPage() {
 
             {/* 7. Data Security */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 7. Data Security
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 We take the security of your data seriously and implement
                 industry-standard measures to protect it:
               </p>
-              <ul className="mt-4 space-y-3 text-base leading-relaxed text-gray-600">
+              <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
                     All data is encrypted in transit using HTTPS/TLS protocols.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
                     Data at rest is encrypted using modern encryption standards.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
                     Passwords are securely hashed and never stored in plain text.
                   </span>
                 </li>
               </ul>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 While we strive to protect your data, no method of electronic
                 transmission or storage is 100% secure. We cannot guarantee
                 absolute security but are committed to maintaining the highest
@@ -270,47 +270,47 @@ export default function PrivacyPolicyPage() {
 
             {/* 8. Your Rights */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 8. Your Rights
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 You have the following rights regarding your personal data:
               </p>
-              <ul className="mt-4 space-y-3 text-base leading-relaxed text-gray-600">
+              <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Access</strong> — Request a
+                    <strong className="text-slate-900">Access</strong> — Request a
                     copy of the personal data we hold about you.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Deletion</strong> — Request
+                    <strong className="text-slate-900">Deletion</strong> — Request
                     that we delete your account and associated personal data.
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Export</strong> — Export
+                    <strong className="text-slate-900">Export</strong> — Export
                     your resume data in multiple formats (PDF, DOCX, TXT, JSON).
                   </span>
                 </li>
                 <li className="flex gap-3">
-                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-blue-500" />
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    <strong className="text-gray-900">Opt Out</strong> — Opt out
+                    <strong className="text-slate-900">Opt Out</strong> — Opt out
                     of marketing communications at any time.
                   </span>
                 </li>
               </ul>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 To exercise any of these rights, please contact us at{" "}
                 <a
                   href="mailto:support@resumeai.com"
-                  className="font-medium text-blue-600 hover:text-blue-700"
+                  className="font-medium text-brand-600 hover:text-brand-700"
                 >
                   support@resumeai.com
                 </a>
@@ -320,10 +320,10 @@ export default function PrivacyPolicyPage() {
 
             {/* 9. Data Retention */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 9. Data Retention
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 We retain your personal data for as long as your account is
                 active or as needed to provide you with our services. If you
                 request account deletion, we will delete your personal data and
@@ -334,10 +334,10 @@ export default function PrivacyPolicyPage() {
 
             {/* 10. Children's Privacy */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 10. Children&apos;s Privacy
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 ResumeAI is not intended for use by individuals under the age of
                 13. We do not knowingly collect personal information from children
                 under 13. If we become aware that a child under 13 has provided
@@ -346,7 +346,7 @@ export default function PrivacyPolicyPage() {
                 provided us with personal data, please contact us at{" "}
                 <a
                   href="mailto:support@resumeai.com"
-                  className="font-medium text-blue-600 hover:text-blue-700"
+                  className="font-medium text-brand-600 hover:text-brand-700"
                 >
                   support@resumeai.com
                 </a>
@@ -356,10 +356,10 @@ export default function PrivacyPolicyPage() {
 
             {/* 11. Changes to This Policy */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 11. Changes to This Policy
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 We may update this Privacy Policy from time to time to reflect
                 changes in our practices or for other operational, legal, or
                 regulatory reasons. When we make material changes, we will notify
@@ -371,20 +371,20 @@ export default function PrivacyPolicyPage() {
 
             {/* 12. Contact Us */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-slate-900">
                 12. Contact Us
               </h2>
-              <p className="mt-3 text-base leading-relaxed text-gray-600">
+              <p className="mt-3 text-base leading-relaxed text-slate-600">
                 If you have any questions, concerns, or requests regarding this
                 Privacy Policy or our data practices, please contact us:
               </p>
-              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-6">
-                <p className="text-base font-medium text-gray-900">ResumeAI</p>
-                <p className="mt-1 text-base text-gray-600">
+              <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-6">
+                <p className="text-base font-medium text-slate-900">ResumeAI</p>
+                <p className="mt-1 text-base text-slate-600">
                   Email:{" "}
                   <a
                     href="mailto:support@resumeai.com"
-                    className="font-medium text-blue-600 hover:text-blue-700"
+                    className="font-medium text-brand-600 hover:text-brand-700"
                   >
                     support@resumeai.com
                   </a>

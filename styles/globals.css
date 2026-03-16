@@ -2,12 +2,34 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@layer base {
+  :root {
+    --brand-primary: 79 70 229;
+    --brand-accent: 99 102 241;
+  }
 
-body {
-  font-family: 'Inter', system-ui, sans-serif;
-  background: #ffffff;
-  color: #171717;
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    font-family: var(--font-inter), "Inter", system-ui, -apple-system, sans-serif;
+    background: #f8fafc;
+    color: #0f172a;
+  }
+
+  ::selection {
+    background: rgb(var(--brand-accent) / 0.15);
+    color: #1e1b4b;
+  }
+
+  /* Better focus rings */
+  :focus-visible {
+    outline: 2px solid rgb(var(--brand-accent) / 0.5);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
@@ -17,11 +39,64 @@ body {
     background: white;
     color: black;
   }
-}
 
-@keyframes progress {
-  from { width: 0%; }
-  to { width: 100%; }
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+  }
+
+  .glass-dark {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
+  }
+
+  .gradient-text {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-border {
+    position: relative;
+    background: white;
+    border-radius: 1rem;
+  }
+
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, #e0e7ff, #c7d2fe, #ddd6fe);
+    z-index: -1;
+  }
+
+  .section-fade {
+    animation: fade-up 0.6s ease-out both;
+  }
+
+  /* Smooth scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 999px;
+  }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
 }
 
 @media print {

@@ -176,8 +176,8 @@ export default function DashboardPage() {
     return (
       <>
         <Navbar />
-        <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+        <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-surface">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
         </main>
       </>
     );
@@ -209,19 +209,19 @@ export default function DashboardPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto min-h-[calc(100vh-4rem)] max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto min-h-[calc(100vh-4rem)] max-w-7xl bg-surface px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+              <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
                 My Resumes
               </h1>
               <Badge variant={isPro ? "success" : "default"}>
                 {isPro ? "Pro — $7/mo" : "Free Plan"}
               </Badge>
             </div>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               {session?.user?.name
                 ? `Welcome back, ${session.user.name}`
                 : "Manage and create your resumes"}
@@ -230,7 +230,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-3">
             <Link
               href="/templates"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
             >
               <LayoutTemplate className="h-4 w-4" />
               Browse Templates
@@ -244,14 +244,14 @@ export default function DashboardPage() {
 
         {/* Resume Grid or Empty State */}
         {resumes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 px-6 py-20">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-blue-50">
-              <FileText className="h-10 w-10 text-blue-500" />
+          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200/60 bg-white px-6 py-20">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-50">
+              <FileText className="h-10 w-10 text-brand-500" />
             </div>
-            <h2 className="mt-6 text-xl font-semibold text-gray-900">
+            <h2 className="mt-6 text-xl font-semibold text-slate-900">
               No resumes yet
             </h2>
-            <p className="mt-2 max-w-sm text-center text-sm text-gray-500">
+            <p className="mt-2 max-w-sm text-center text-sm text-slate-500">
               Create your first AI-powered resume and land your dream job
               faster.
             </p>
@@ -265,7 +265,7 @@ export default function DashboardPage() {
             {resumes.map((resume) => (
               <Card
                 key={resume.id}
-                className="group relative transition-shadow hover:shadow-md"
+                className="group relative transition-all duration-300 hover:-translate-y-1 hover:shadow-card-hover"
               >
                 {/* Color accent bar */}
                 <div
@@ -274,7 +274,7 @@ export default function DashboardPage() {
                 />
                 <CardContent className="p-5">
                   <div className="mb-3 flex items-start justify-between gap-2">
-                    <h3 className="truncate text-base font-semibold text-gray-900">
+                    <h3 className="truncate text-base font-semibold text-slate-900">
                       {resume.title}
                     </h3>
                     <Badge className="shrink-0 text-[11px]">
@@ -282,7 +282,7 @@ export default function DashboardPage() {
                     </Badge>
                   </div>
 
-                  <p className="text-xs text-gray-400">
+                  <p className="text-xs text-slate-400">
                     Updated {formatDate(resume.updatedAt)}
                   </p>
 
@@ -344,9 +344,9 @@ export default function DashboardPage() {
         onClose={() => !deleting && setDeleteTarget(null)}
         title="Delete Resume"
       >
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-slate-600">
           Are you sure you want to delete{" "}
-          <span className="font-medium text-gray-900">
+          <span className="font-medium text-slate-900">
             {deleteTarget?.title}
           </span>
           ? This action cannot be undone.

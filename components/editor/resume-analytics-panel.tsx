@@ -143,17 +143,17 @@ function Metric({
   status: "good" | "warning" | "neutral";
 }) {
   return (
-    <div className="flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2">
+    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
       <div className="flex items-center gap-2">
-        <Icon className="h-3.5 w-3.5 text-gray-400" />
-        <span className="text-xs text-gray-600">{label}</span>
+        <Icon className="h-3.5 w-3.5 text-slate-400" />
+        <span className="text-xs text-slate-600">{label}</span>
       </div>
       <span
         className={cn(
           "text-xs font-semibold",
           status === "good" && "text-emerald-600",
           status === "warning" && "text-amber-600",
-          status === "neutral" && "text-gray-700"
+          status === "neutral" && "text-slate-700"
         )}
       >
         {value}
@@ -173,28 +173,28 @@ export function ResumeAnalyticsPanel({ sections }: ResumeAnalyticsPanelProps) {
   const completedSections = completeness.filter((c) => c.complete).length;
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white">
+    <div className="rounded-xl border border-slate-200/60 bg-white">
       <button
         onClick={() => setExpanded((e) => !e)}
         className="flex w-full items-center justify-between px-4 py-3 text-left"
       >
         <div className="flex items-center gap-2">
           <Eye className="h-4 w-4 text-emerald-600" />
-          <span className="text-sm font-semibold text-gray-900">Resume Health</span>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500">
+          <span className="text-sm font-semibold text-slate-900">Resume Health</span>
+          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
             {completedSections}/{completeness.length}
           </span>
         </div>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-gray-400 transition-transform",
+            "h-4 w-4 text-slate-400 transition-transform",
             expanded && "rotate-180"
           )}
         />
       </button>
 
       {expanded && (
-        <div className="space-y-3 border-t border-gray-100 px-4 py-3">
+        <div className="space-y-3 border-t border-slate-100 px-4 py-3">
           <div className="space-y-1.5">
             <Metric
               icon={FileText}
@@ -217,7 +217,7 @@ export function ResumeAnalyticsPanel({ sections }: ResumeAnalyticsPanelProps) {
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-medium text-gray-700">Section Checklist</p>
+            <p className="mb-2 text-xs font-medium text-slate-700">Section Checklist</p>
             <div className="space-y-1">
               {completeness.map(({ label, complete }) => (
                 <div
@@ -229,7 +229,7 @@ export function ResumeAnalyticsPanel({ sections }: ResumeAnalyticsPanelProps) {
                   ) : (
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
                   )}
-                  <span className={complete ? "text-gray-600" : "text-amber-600"}>
+                  <span className={complete ? "text-slate-600" : "text-amber-600"}>
                     {label}
                   </span>
                 </div>

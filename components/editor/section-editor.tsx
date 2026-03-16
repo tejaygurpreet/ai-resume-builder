@@ -46,7 +46,7 @@ export function SectionEditor({ sectionId, type, content, resumeId, isPro }: Sec
       return <LanguagesEditor content={content} onChange={update} />;
     default:
       return (
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-slate-500">
           No editor available for section type &ldquo;{type}&rdquo;.
         </p>
       );
@@ -271,7 +271,7 @@ function SummaryEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">Professional Summary</span>
+        <span className="text-sm font-medium text-slate-700">Professional Summary</span>
         <AIButton onClick={handleGenerate} loading={loading}>
           Generate Summary
         </AIButton>
@@ -452,10 +452,10 @@ function ExperienceEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-lg border border-gray-100 bg-gray-50/50 p-4"
+          className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-500">
+            <span className="text-xs font-medium text-slate-500">
               Position {idx + 1}
             </span>
             <div className="flex items-center gap-2">
@@ -470,7 +470,7 @@ function ExperienceEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => removeItem(idx)}
-                  className="h-6 px-2 text-xs text-gray-400 hover:text-red-500"
+                  className="h-6 px-2 text-xs text-slate-400 hover:text-red-500"
                 >
                   <Trash2 className="mr-1 h-3 w-3" />
                   Remove
@@ -515,18 +515,18 @@ function ExperienceEditor({
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-600">
+          <label className="flex items-center gap-2 text-sm text-slate-600">
             <input
               type="checkbox"
               checked={item.current ?? false}
               onChange={(e) => updateItem(idx, "current", e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
             I currently work here
           </label>
 
           <div className="space-y-2">
-            <span className="text-sm font-medium text-gray-700">
+            <span className="text-sm font-medium text-slate-700">
               Bullet Points
             </span>
             {(item.bullets ?? []).map((bullet: string, bi: number) => {
@@ -534,7 +534,7 @@ function ExperienceEditor({
               const isImproving = improvingBullet === bulletKey;
               return (
                 <div key={bi} className="flex items-start gap-2">
-                  <span className="mt-2.5 text-gray-400">&bull;</span>
+                  <span className="mt-2.5 text-slate-400">&bull;</span>
                   <Textarea
                     value={bullet}
                     onChange={(e) => updateBullet(idx, bi, e.target.value)}
@@ -550,7 +550,7 @@ function ExperienceEditor({
                         "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors",
                         isImproving
                           ? "border-purple-200 bg-purple-50"
-                          : "border-gray-200 text-purple-500 hover:border-purple-300 hover:bg-purple-50"
+                          : "border-slate-200 text-purple-500 hover:border-purple-300 hover:bg-purple-50"
                       )}
                     >
                       {isImproving ? (
@@ -564,7 +564,7 @@ function ExperienceEditor({
                         variant="ghost"
                         size="sm"
                         onClick={() => removeBullet(idx, bi)}
-                        className="h-7 w-7 shrink-0 p-0 text-gray-400 hover:text-red-500"
+                        className="h-7 w-7 shrink-0 p-0 text-slate-400 hover:text-red-500"
                       >
                         <X className="h-3.5 w-3.5" />
                       </Button>
@@ -577,7 +577,7 @@ function ExperienceEditor({
               variant="ghost"
               size="sm"
               onClick={() => addBullet(idx)}
-              className="text-blue-600 hover:text-blue-700"
+              className="text-brand-600 hover:text-brand-700"
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
               Add Bullet
@@ -639,10 +639,10 @@ function EducationEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-lg border border-gray-100 bg-gray-50/50 p-4"
+          className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-500">
+            <span className="text-xs font-medium text-slate-500">
               Education {idx + 1}
             </span>
             {items.length > 1 && (
@@ -650,7 +650,7 @@ function EducationEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-gray-400 hover:text-red-500"
+                className="h-6 px-2 text-xs text-slate-400 hover:text-red-500"
               >
                 <Trash2 className="mr-1 h-3 w-3" />
                 Remove
@@ -775,7 +775,7 @@ function SkillsEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-gray-700">Skills</span>
+        <span className="text-sm font-medium text-slate-700">Skills</span>
         <AIButton onClick={handleGenerateSkills} loading={loading}>
           Generate Skills
         </AIButton>
@@ -803,7 +803,7 @@ function SkillsEditor({
               {skill}
               <button
                 onClick={() => removeSkill(idx)}
-                className="ml-1 rounded-full p-0.5 hover:bg-blue-200"
+                className="ml-1 rounded-full p-0.5 hover:bg-brand-200"
                 aria-label={`Remove ${skill}`}
               >
                 <X className="h-3 w-3" />
@@ -859,10 +859,10 @@ function ProjectsEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-lg border border-gray-100 bg-gray-50/50 p-4"
+          className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-500">
+            <span className="text-xs font-medium text-slate-500">
               Project {idx + 1}
             </span>
             {items.length > 1 && (
@@ -870,7 +870,7 @@ function ProjectsEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-gray-400 hover:text-red-500"
+                className="h-6 px-2 text-xs text-slate-400 hover:text-red-500"
               >
                 <Trash2 className="mr-1 h-3 w-3" />
                 Remove
@@ -962,10 +962,10 @@ function CertificationsEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-lg border border-gray-100 bg-gray-50/50 p-4"
+          className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-gray-500">
+            <span className="text-xs font-medium text-slate-500">
               Certification {idx + 1}
             </span>
             {items.length > 1 && (
@@ -973,7 +973,7 @@ function CertificationsEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-gray-400 hover:text-red-500"
+                className="h-6 px-2 text-xs text-slate-400 hover:text-red-500"
               >
                 <Trash2 className="mr-1 h-3 w-3" />
                 Remove
@@ -1068,14 +1068,14 @@ function LanguagesEditor({
           />
           <div className="w-full">
             {idx === 0 && (
-              <label className="mb-1.5 block text-sm font-medium text-gray-700">
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 Proficiency
               </label>
             )}
             <select
               value={item.proficiency ?? "Native"}
               onChange={(e) => updateItem(idx, "proficiency", e.target.value)}
-              className="flex h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:ring-offset-1"
+              className="flex h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:ring-offset-1"
             >
               {proficiencyLevels.map((level) => (
                 <option key={level} value={level}>
@@ -1089,7 +1089,7 @@ function LanguagesEditor({
               variant="ghost"
               size="sm"
               onClick={() => removeItem(idx)}
-              className="mb-0.5 h-8 w-8 shrink-0 p-0 text-gray-400 hover:text-red-500"
+              className="mb-0.5 h-8 w-8 shrink-0 p-0 text-slate-400 hover:text-red-500"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>

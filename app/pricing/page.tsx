@@ -79,12 +79,12 @@ function FAQItem({
   answer: string;
 }) {
   return (
-    <details className="group border-b border-gray-200 last:border-b-0">
-      <summary className="flex cursor-pointer items-center justify-between py-5 text-left text-base font-medium text-gray-900 transition-colors hover:text-blue-600 [&::-webkit-details-marker]:hidden">
+    <details className="group border-b border-slate-200 last:border-b-0">
+      <summary className="flex cursor-pointer items-center justify-between py-5 text-left text-base font-medium text-slate-900 transition-colors hover:text-brand-600 [&::-webkit-details-marker]:hidden">
         {question}
-        <ChevronDown className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform duration-200 group-open:rotate-180" />
+        <ChevronDown className="h-5 w-5 flex-shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-180" />
       </summary>
-      <div className="pb-5 pr-12 text-sm leading-relaxed text-gray-600">
+      <div className="pb-5 pr-12 text-sm leading-relaxed text-slate-600">
         {answer}
       </div>
     </details>
@@ -130,23 +130,23 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface">
       <Navbar />
 
       <main className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(59,130,246,0.08),transparent)]" />
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_50%_at_50%_-10%,rgba(99,102,241,0.06),transparent)]" />
 
         {/* Header */}
         <section className="px-4 pt-16 pb-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
               <Sparkles className="h-3.5 w-3.5" />
               Simple pricing
             </span>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
               Choose Your Plan
             </h1>
-            <p className="mt-4 text-lg text-gray-600">
+            <p className="mt-4 text-lg text-slate-600">
               Start free and upgrade when you need more power
             </p>
           </div>
@@ -156,18 +156,18 @@ export default function PricingPage() {
         <section className="px-4 pb-12 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-5xl flex-col items-stretch justify-center gap-8 lg:flex-row">
             {/* Free Plan */}
-            <div className="flex w-full max-w-md flex-col rounded-2xl border border-gray-200 bg-white p-8 shadow-sm transition-shadow hover:shadow-md lg:max-w-sm">
-              <h3 className="text-xl font-semibold text-gray-900">Free</h3>
-              <p className="mt-1 text-sm text-gray-500">
+            <div className="flex w-full max-w-md flex-col rounded-2xl border border-slate-200/60 bg-white p-8 shadow-card transition-all duration-300 hover:shadow-card-hover lg:max-w-sm">
+              <h3 className="text-xl font-semibold text-slate-900">Free</h3>
+              <p className="mt-1 text-sm text-slate-500">
                 Perfect for getting started
               </p>
               <p className="mt-6">
-                <span className="text-4xl font-extrabold text-gray-900">$0</span>
-                <span className="ml-1 text-gray-500">/month</span>
+                <span className="text-4xl font-extrabold text-slate-900">$0</span>
+                <span className="ml-1 text-slate-500">/month</span>
               </p>
               <ul className="mt-8 flex-1 space-y-4">
                 {freeFeatures.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-gray-700">
+                  <li key={f} className="flex items-center gap-3 text-sm text-slate-700">
                     <Check className="h-5 w-5 flex-shrink-0 text-emerald-500" />
                     {f}
                   </li>
@@ -181,22 +181,22 @@ export default function PricingPage() {
             </div>
 
             {/* Pro Plan */}
-            <div className="relative flex w-full max-w-md flex-col rounded-2xl border-2 border-blue-500 bg-white p-8 shadow-xl shadow-blue-100/50 transition-all hover:shadow-2xl hover:shadow-blue-100/60 lg:max-w-sm">
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md">
+            <div className="relative flex w-full max-w-md flex-col rounded-2xl border-2 border-brand-500 bg-white p-8 shadow-card transition-all duration-300 hover:shadow-card-hover lg:max-w-sm">
+              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-brand-600 px-4 py-1.5 text-xs font-semibold text-white shadow-md">
                 Most Popular
               </span>
-              <h3 className="text-xl font-semibold text-gray-900">Pro</h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <h3 className="text-xl font-semibold text-slate-900">Pro</h3>
+              <p className="mt-1 text-sm text-slate-500">
                 Everything you need to land the job
               </p>
               <p className="mt-6">
-                <span className="text-4xl font-extrabold text-gray-900">$7</span>
-                <span className="ml-1 text-gray-500">/month</span>
+                <span className="text-4xl font-extrabold text-slate-900">$7</span>
+                <span className="ml-1 text-slate-500">/month</span>
               </p>
               <ul className="mt-8 flex-1 space-y-4">
                 {proFeatures.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-gray-700">
-                    <Check className="h-5 w-5 flex-shrink-0 text-blue-500" />
+                  <li key={f} className="flex items-center gap-3 text-sm text-slate-700">
+                    <Check className="h-5 w-5 flex-shrink-0 text-brand-500" />
                     {f}
                   </li>
                 ))}
@@ -212,33 +212,33 @@ export default function PricingPage() {
             </div>
 
             {/* One-Time Export */}
-            <div className="flex w-full max-w-md flex-col rounded-2xl border border-gray-200 bg-gradient-to-b from-amber-50/50 to-white p-8 shadow-sm transition-shadow hover:shadow-md lg:max-w-sm">
+            <div className="flex w-full max-w-md flex-col rounded-2xl border border-slate-200/60 bg-gradient-to-b from-amber-50/50 to-white p-8 shadow-card transition-all duration-300 hover:shadow-card-hover lg:max-w-sm">
               <div className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-amber-500" />
-                <h3 className="text-xl font-semibold text-gray-900">One-Time Export</h3>
+                <h3 className="text-xl font-semibold text-slate-900">One-Time Export</h3>
               </div>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-slate-500">
                 Pay once, export forever
               </p>
               <p className="mt-6">
-                <span className="text-4xl font-extrabold text-gray-900">$9</span>
-                <span className="ml-1 text-gray-500">one-time</span>
+                <span className="text-4xl font-extrabold text-slate-900">$9</span>
+                <span className="ml-1 text-slate-500">one-time</span>
               </p>
               <ul className="mt-8 flex-1 space-y-4">
-                <li className="flex items-center gap-3 text-sm text-gray-700">
+                <li className="flex items-center gap-3 text-sm text-slate-700">
                   <Check className="h-5 w-5 flex-shrink-0 text-amber-500" />
                   Unlimited exports forever
                 </li>
-                <li className="flex items-center gap-3 text-sm text-gray-700">
+                <li className="flex items-center gap-3 text-sm text-slate-700">
                   <Check className="h-5 w-5 flex-shrink-0 text-amber-500" />
                   No ads on export
                 </li>
-                <li className="flex items-center gap-3 text-sm text-gray-700">
+                <li className="flex items-center gap-3 text-sm text-slate-700">
                   <Check className="h-5 w-5 flex-shrink-0 text-amber-500" />
                   All export formats
                 </li>
-                <li className="flex items-center gap-3 text-sm text-gray-700">
-                  <X className="h-5 w-5 flex-shrink-0 text-gray-300" />
+                <li className="flex items-center gap-3 text-sm text-slate-700">
+                  <X className="h-5 w-5 flex-shrink-0 text-slate-300" />
                   Pro AI features not included
                 </li>
               </ul>
@@ -256,27 +256,27 @@ export default function PricingPage() {
         </section>
 
         {/* Feature comparison table */}
-        <section className="border-t border-gray-200 bg-gray-50/50 px-4 py-20 sm:px-6 lg:px-8">
+        <section className="border-t border-slate-200 bg-slate-50/80 px-4 py-20 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-4xl">
-            <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Compare Plans
             </h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-gray-600">
+            <p className="mx-auto mt-2 max-w-xl text-center text-slate-600">
               See exactly what&apos;s included in each plan
             </p>
 
-            <div className="mt-12 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="mt-12 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[500px]">
                   <thead>
-                    <tr className="border-b border-gray-200 bg-gray-50">
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                    <tr className="border-b border-slate-200 bg-slate-50">
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-900">
                         Feature
                       </th>
-                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-slate-900">
                         Free
                       </th>
-                      <th className="px-6 py-4 text-center text-sm font-semibold text-blue-600">
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-brand-600">
                         Pro
                       </th>
                     </tr>
@@ -285,9 +285,9 @@ export default function PricingPage() {
                     {comparisonRows.map((row) => (
                       <tr
                         key={row.feature}
-                        className="border-b border-gray-100 last:border-b-0"
+                        className="border-b border-slate-100 last:border-b-0"
                       >
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        <td className="px-6 py-4 text-sm text-slate-700">
                           {row.feature}
                         </td>
                         <td className="px-6 py-4 text-center">
@@ -295,10 +295,10 @@ export default function PricingPage() {
                             row.free ? (
                               <Check className="mx-auto h-5 w-5 text-emerald-500" />
                             ) : (
-                              <X className="mx-auto h-5 w-5 text-gray-300" />
+                              <X className="mx-auto h-5 w-5 text-slate-300" />
                             )
                           ) : (
-                            <span className="text-sm text-gray-600">
+                            <span className="text-sm text-slate-600">
                               {row.free}
                             </span>
                           )}
@@ -306,12 +306,12 @@ export default function PricingPage() {
                         <td className="px-6 py-4 text-center">
                           {typeof row.pro === "boolean" ? (
                             row.pro ? (
-                              <Check className="mx-auto h-5 w-5 text-blue-500" />
+                              <Check className="mx-auto h-5 w-5 text-brand-500" />
                             ) : (
-                              <X className="mx-auto h-5 w-5 text-gray-300" />
+                              <X className="mx-auto h-5 w-5 text-slate-300" />
                             )
                           ) : (
-                            <span className="text-sm font-medium text-gray-900">
+                            <span className="text-sm font-medium text-slate-900">
                               {row.pro}
                             </span>
                           )}
@@ -328,14 +328,14 @@ export default function PricingPage() {
         {/* FAQ */}
         <section className="px-4 py-20 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-center text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+            <h2 className="text-center text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
               Pricing FAQ
             </h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-gray-600">
+            <p className="mx-auto mt-2 max-w-xl text-center text-slate-600">
               Common questions about billing and plans
             </p>
 
-            <div className="mt-12 rounded-2xl border border-gray-200 bg-white px-6 shadow-sm">
+            <div className="mt-12 rounded-2xl border border-slate-200 bg-white px-6 shadow-sm">
               {faqItems.map((item) => (
                 <FAQItem
                   key={item.question}

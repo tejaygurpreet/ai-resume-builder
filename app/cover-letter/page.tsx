@@ -164,14 +164,14 @@ ${coverLetter
       <>
         <Navbar />
         <main className="flex min-h-[60vh] items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
         </main>
       </>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-surface">
       <Navbar />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -180,10 +180,10 @@ ${coverLetter
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
               Cover Letter Generator
             </h1>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-slate-500">
               Generate a professional cover letter tailored to your target job
             </p>
           </div>
@@ -204,9 +204,9 @@ ${coverLetter
 
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Input Form */}
-          <div className="space-y-4 rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <FileSignature className="h-5 w-5 text-blue-600" />
+          <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+              <FileSignature className="h-5 w-5 text-brand-600" />
               Job Details
             </h2>
 
@@ -259,13 +259,13 @@ ${coverLetter
           </div>
 
           {/* Output */}
-          <div className="flex flex-col rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-gray-900">Preview</h2>
+          <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-lg font-semibold text-slate-900">Preview</h2>
 
             {!coverLetter ? (
               <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">
-                <FileSignature className="h-12 w-12 text-gray-200" />
-                <p className="mt-3 text-sm text-gray-400">
+                <FileSignature className="h-12 w-12 text-slate-200" />
+                <p className="mt-3 text-sm text-slate-400">
                   Your cover letter will appear here
                 </p>
               </div>
@@ -273,9 +273,9 @@ ${coverLetter
               <>
                 <div
                   ref={letterRef}
-                  className="flex-1 rounded-lg border border-gray-100 bg-white p-6"
+                  className="flex-1 rounded-lg border border-slate-100 bg-white p-6"
                 >
-                  <div className="prose prose-sm max-w-none whitespace-pre-wrap text-gray-800">
+                  <div className="prose prose-sm max-w-none whitespace-pre-wrap text-slate-800">
                     {coverLetter}
                   </div>
                 </div>

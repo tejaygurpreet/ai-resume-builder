@@ -180,9 +180,9 @@ export function ExportModal({
           <div className="mb-5">
             <label
               htmlFor="export-filename"
-              className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-gray-700"
+              className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700"
             >
-              <Pencil className="h-3.5 w-3.5 text-gray-400" />
+              <Pencil className="h-3.5 w-3.5 text-slate-400" />
               File Name
             </label>
             <div className="flex items-stretch">
@@ -192,16 +192,16 @@ export function ExportModal({
                 value={filename}
                 onChange={(e) => setFilename(e.target.value)}
                 placeholder="resume"
-                className="min-w-0 flex-1 rounded-l-lg border border-r-0 border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                className="min-w-0 flex-1 rounded-l-lg border border-r-0 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
-              <span className="flex items-center rounded-r-lg border border-gray-200 bg-gray-50 px-3 text-sm font-medium text-gray-500">
+              <span className="flex items-center rounded-r-lg border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-500">
                 {currentExt}
               </span>
             </div>
           </div>
 
           {/* Format selector */}
-          <p className="mb-3 text-sm font-medium text-gray-700">Format</p>
+          <p className="mb-3 text-sm font-medium text-slate-700">Format</p>
           <div className="grid grid-cols-2 gap-3">
             {FORMAT_OPTIONS.map(
               ({ format, label, description, icon: Icon }) => (
@@ -209,31 +209,31 @@ export function ExportModal({
                   key={format}
                   onClick={() => setSelectedFormat(format)}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all hover:border-blue-200 hover:bg-blue-50/50",
+                    "flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all duration-200 hover:border-brand-200 hover:bg-brand-50/50",
                     selectedFormat === format
-                      ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500/20"
-                      : "border-gray-200 bg-white"
+                      ? "border-brand-500 bg-brand-50 ring-1 ring-brand-500/20"
+                      : "border-slate-200 bg-white"
                   )}
                 >
                   <Icon
                     className={cn(
                       "h-6 w-6",
                       selectedFormat === format
-                        ? "text-blue-600"
-                        : "text-gray-400"
+                        ? "text-brand-600"
+                        : "text-slate-400"
                     )}
                   />
                   <span
                     className={cn(
                       "text-sm font-semibold",
                       selectedFormat === format
-                        ? "text-blue-700"
-                        : "text-gray-700"
+                        ? "text-brand-700"
+                        : "text-slate-700"
                     )}
                   >
                     {label}
                   </span>
-                  <span className="text-[11px] leading-tight text-gray-400">
+                  <span className="text-[11px] leading-tight text-slate-400">
                     {description}
                   </span>
                 </button>
@@ -309,20 +309,20 @@ function AdGateView({
 
   return (
     <div className="flex flex-col items-center py-2">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-blue-50">
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50">
         {allDone ? (
           <CheckCircle2 className="h-8 w-8 text-emerald-500" />
         ) : (
-          <Tv className="h-8 w-8 text-blue-500" />
+          <Tv className="h-8 w-8 text-brand-500" />
         )}
       </div>
 
-      <h3 className="text-lg font-semibold text-gray-900">
+      <h3 className="text-lg font-semibold text-slate-900">
         {allDone
           ? "Export Unlocked!"
           : "Watch 3 Short Ads to Unlock Export"}
       </h3>
-      <p className="mt-1 text-center text-sm text-gray-500">
+      <p className="mt-1 text-center text-sm text-slate-500">
         {allDone
           ? "You can now export your resume. Go back to choose your format and filename."
           : "Support ResumeAI by watching a few brief ads to enable your free export."}
@@ -331,18 +331,18 @@ function AdGateView({
       {/* Progress bar */}
       <div className="mt-6 w-full max-w-xs">
         <div className="mb-2 flex justify-between text-xs font-medium">
-          <span className="text-gray-500">Progress</span>
+          <span className="text-slate-500">Progress</span>
           <span
-            className={cn(allDone ? "text-emerald-600" : "text-blue-600")}
+            className={cn(allDone ? "text-emerald-600" : "text-brand-600")}
           >
             {adsWatched}/{adsRequired}
           </span>
         </div>
-        <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
           <div
             className={cn(
               "h-full rounded-full transition-all duration-500",
-              allDone ? "bg-emerald-500" : "bg-blue-500"
+              allDone ? "bg-emerald-500" : "bg-brand-500"
             )}
             style={{
               width: `${(adsWatched / adsRequired) * 100}%`,
@@ -361,8 +361,8 @@ function AdGateView({
               i < adsWatched
                 ? "border-emerald-500 bg-emerald-50 text-emerald-600"
                 : i === adsWatched && adPlaying
-                  ? "border-blue-500 bg-blue-50 text-blue-600 animate-pulse"
-                  : "border-gray-200 bg-gray-50 text-gray-400"
+                  ? "border-brand-500 bg-brand-50 text-brand-600 animate-pulse"
+                  : "border-slate-200 bg-slate-50 text-slate-400"
             )}
           >
             {i < adsWatched ? (
@@ -378,13 +378,13 @@ function AdGateView({
       {!allDone && (
         <div className="mt-6 w-full max-w-xs">
           {adPlaying ? (
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-6">
-              <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
-              <span className="text-sm font-medium text-gray-600">
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6">
+              <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
+              <span className="text-sm font-medium text-slate-600">
                 Ad playing…
               </span>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
-                <div className="h-full animate-[progress_2.5s_linear] rounded-full bg-blue-500" />
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                <div className="h-full animate-[progress_2.5s_linear] rounded-full bg-brand-500" />
               </div>
             </div>
           ) : (

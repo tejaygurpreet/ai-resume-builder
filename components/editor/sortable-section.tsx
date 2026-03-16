@@ -52,15 +52,15 @@ export function SortableSection({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow",
-        isDragging && "z-50 shadow-lg ring-2 ring-blue-500/20"
+        "rounded-xl border border-slate-200/60 bg-white shadow-soft transition-shadow",
+        isDragging && "z-50 shadow-lg ring-2 ring-brand-500/20"
       )}
     >
-      <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-3">
         <button
           {...attributes}
           {...listeners}
-          className="cursor-grab touch-none rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 active:cursor-grabbing"
+          className="cursor-grab touch-none rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:cursor-grabbing"
           aria-label="Drag to reorder"
         >
           <GripVertical className="h-4 w-4" />
@@ -71,11 +71,11 @@ export function SortableSection({
           className="flex flex-1 items-center gap-2 text-left"
         >
           {isCollapsed ? (
-            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <ChevronRight className="h-4 w-4 text-slate-400" />
           ) : (
-            <ChevronDown className="h-4 w-4 text-gray-400" />
+            <ChevronDown className="h-4 w-4 text-slate-400" />
           )}
-          <span className="text-sm font-medium text-gray-800">
+          <span className="text-sm font-medium text-slate-800">
             {sectionLabels[type] || type}
           </span>
         </button>
@@ -85,7 +85,7 @@ export function SortableSection({
             variant="ghost"
             size="sm"
             onClick={onRemove}
-            className="h-7 w-7 p-0 text-gray-400 hover:text-red-500"
+            className="h-7 w-7 p-0 text-slate-400 hover:text-red-500"
             aria-label={`Remove ${sectionLabels[type] || type}`}
           >
             <Trash2 className="h-3.5 w-3.5" />

@@ -66,11 +66,11 @@ const faqItems = [
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   return (
     <details className="group [&_summary::-webkit-details-marker]:hidden">
-      <summary className="flex cursor-pointer items-center justify-between px-6 py-5 text-left text-base font-medium text-gray-900 transition-colors hover:text-blue-600">
+      <summary className="flex cursor-pointer items-center justify-between px-6 py-5 text-left text-base font-medium text-slate-900 transition-colors hover:text-brand-600">
         {question}
-        <ChevronDown className="h-5 w-5 flex-shrink-0 text-gray-400 transition-transform duration-200 group-open:rotate-180" />
+        <ChevronDown className="h-5 w-5 flex-shrink-0 text-slate-400 transition-transform duration-200 group-open:rotate-180" />
       </summary>
-      <div className="px-6 pb-5 text-sm leading-relaxed text-gray-600">
+      <div className="px-6 pb-5 text-sm leading-relaxed text-slate-600">
         {answer}
       </div>
     </details>
@@ -79,26 +79,26 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-surface">
       <Navbar />
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-blue-50 to-white">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(59,130,246,0.12),transparent)]" />
+      <section className="relative overflow-hidden bg-gradient-to-b from-brand-50 to-white">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(99,102,241,0.12),transparent)]" />
         <div className="relative mx-auto max-w-3xl px-4 pb-16 pt-20 text-center sm:px-6 md:pt-28 lg:px-8">
-          <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+          <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
             <Sparkles className="h-3.5 w-3.5" />
             Got questions?
           </span>
-          <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+          <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
             Frequently Asked Questions
           </h1>
-          <p className="mt-4 text-lg text-gray-600">
+          <p className="mt-4 text-lg text-slate-600">
             Everything you need to know about ResumeAI. Can&apos;t find what
             you&apos;re looking for?{" "}
             <Link
               href="/contact"
-              className="font-medium text-blue-600 underline-offset-4 hover:underline"
+              className="font-medium text-brand-600 underline-offset-4 hover:underline"
             >
               Contact our team
             </Link>
@@ -110,7 +110,7 @@ export default function FAQPage() {
       {/* FAQ List */}
       <section className="bg-white py-16">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-          <div className="divide-y divide-gray-200 rounded-2xl border border-gray-200 shadow-sm">
+          <div className="divide-y divide-slate-200 rounded-2xl border border-slate-200 shadow-card">
             {faqItems.map((item) => (
               <FAQItem
                 key={item.question}
@@ -123,18 +123,18 @@ export default function FAQPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-gray-50 py-24">
+      <section className="bg-slate-50 py-24">
         <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
             Still Have Questions?
           </h2>
-          <p className="mt-4 text-lg text-gray-600">
+          <p className="mt-4 text-lg text-slate-600">
             Our support team is happy to help. Reach out and we&apos;ll get back
             to you within 24 hours.
           </p>
           <Link
             href="/contact"
-            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 text-sm font-semibold text-white shadow-lg shadow-blue-600/25 transition-all hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30"
+            className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-brand-600 px-8 text-sm font-semibold text-white shadow-lg shadow-brand-600/25 transition-all hover:bg-brand-700 hover:shadow-xl hover:shadow-brand-600/30"
           >
             Contact Us
             <ArrowRight className="h-4 w-4" />

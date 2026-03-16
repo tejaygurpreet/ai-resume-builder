@@ -61,15 +61,15 @@ export function TemplateGallery({
   return (
     <div>
       {/* Search and Filters */}
-      <div className="mb-6 space-y-4">
+      <div className="mb-8 space-y-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
             placeholder="Search templates..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-700 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+            className="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-700 shadow-soft placeholder:text-slate-400 transition-all duration-200 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20 hover:border-slate-300"
           />
         </div>
 
@@ -79,10 +79,10 @@ export function TemplateGallery({
               key={key}
               onClick={() => setCategory(key)}
               className={cn(
-                "rounded-full px-3.5 py-1.5 text-xs font-medium transition-all",
+                "rounded-full px-4 py-1.5 text-xs font-medium transition-all duration-200",
                 category === key
-                  ? "bg-blue-600 text-white shadow-sm"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-brand-600 text-white shadow-sm shadow-brand-600/20"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
               )}
             >
               {label}
@@ -93,8 +93,8 @@ export function TemplateGallery({
 
       {/* Grid */}
       {filtered.length === 0 ? (
-        <div className="flex flex-col items-center py-12 text-center">
-          <p className="text-sm text-gray-500">
+        <div className="flex flex-col items-center py-16 text-center">
+          <p className="text-sm text-slate-500">
             No templates match your search.
           </p>
         </div>
@@ -138,23 +138,21 @@ function TemplateCard({
         }
       }}
       className={cn(
-        "group relative flex cursor-pointer flex-col overflow-hidden rounded-xl border-2 bg-white text-left",
+        "group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border-2 bg-white text-left",
         "transition-all duration-300 ease-out",
-        "hover:scale-[1.03] hover:shadow-xl hover:shadow-gray-200/80",
+        "hover:scale-[1.02] hover:shadow-card-hover hover:-translate-y-1",
         isSelected
-          ? "border-blue-500 ring-2 ring-blue-500/20 shadow-lg shadow-blue-100"
-          : "border-gray-200 shadow-sm hover:border-blue-400"
+          ? "border-brand-500 ring-2 ring-brand-500/20 shadow-card-hover"
+          : "border-slate-200/80 shadow-card hover:border-brand-300"
       )}
     >
-      {/* Selected badge */}
       {isSelected && (
-        <div className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 shadow-lg">
+        <div className="absolute right-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-xl bg-brand-600 shadow-md shadow-brand-600/20">
           <Check className="h-4 w-4 text-white" />
         </div>
       )}
 
-      {/* Mini preview */}
-      <div className="relative overflow-hidden bg-gray-50" style={{ height: 260 }}>
+      <div className="relative overflow-hidden bg-slate-50" style={{ height: 260 }}>
         <div
           style={{
             width: 794,
@@ -170,16 +168,15 @@ function TemplateCard({
           <TemplateComponent sections={sampleSections} color={info.accent} />
         </div>
 
-        {/* Hover overlay with button */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/40">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/30 group-hover:backdrop-blur-[1px]">
           <span
             className={cn(
-              "flex items-center gap-1.5 rounded-lg px-5 py-2.5 text-sm font-semibold shadow-xl",
-              "translate-y-2 opacity-0 transition-all duration-300",
+              "flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-lg",
+              "translate-y-3 opacity-0 transition-all duration-300",
               "group-hover:translate-y-0 group-hover:opacity-100",
               isSelected
-                ? "bg-blue-600 text-white"
-                : "bg-white text-gray-900 hover:bg-blue-600 hover:text-white"
+                ? "bg-brand-600 text-white"
+                : "bg-white text-slate-900 hover:bg-brand-600 hover:text-white"
             )}
           >
             {isSelected ? (
@@ -194,15 +191,14 @@ function TemplateCard({
         </div>
       </div>
 
-      {/* Info */}
-      <div className="border-t border-gray-100 px-4 py-3">
+      <div className="border-t border-slate-100 px-4 py-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-gray-900">{info.name}</h3>
-          <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium capitalize text-gray-500">
+          <h3 className="text-sm font-semibold text-slate-900">{info.name}</h3>
+          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-medium capitalize text-slate-500">
             {info.category}
           </span>
         </div>
-        <p className="mt-0.5 text-xs leading-tight text-gray-400">
+        <p className="mt-0.5 text-xs leading-tight text-slate-400">
           {info.description}
         </p>
       </div>

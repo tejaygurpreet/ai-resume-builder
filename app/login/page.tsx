@@ -48,7 +48,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-brand-50/30 to-indigo-50/40 px-4">
       <div className="w-full max-w-md">
         <Link
           href="/"
@@ -58,7 +58,7 @@ export default function LoginPage() {
           ResumeAI
         </Link>
 
-        <div className="rounded-2xl border border-slate-200/80 bg-white/90 backdrop-blur-sm shadow-xl shadow-slate-200/50 p-8">
+        <div className="rounded-2xl border border-slate-200/60 bg-white/90 backdrop-blur-sm shadow-card shadow-slate-200/50 p-8">
           <h1 className="text-2xl font-semibold text-slate-800 mb-2">
             Sign in to your account
           </h1>

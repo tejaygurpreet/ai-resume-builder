@@ -4,8 +4,8 @@ import { FileText, Twitter, Linkedin, Github } from "lucide-react";
 
 const productLinks = [
   { href: "/#features", label: "Resume Builder" },
-  { href: "/#templates", label: "Templates" },
-  { href: "/#features", label: "AI Features" },
+  { href: "/templates", label: "Templates" },
+  { href: "/cover-letter", label: "Cover Letters" },
   { href: "/pricing", label: "Pricing" },
 ];
 
@@ -30,27 +30,46 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+    <footer className="relative bg-slate-950 text-white">
+      {/* Gradient top border */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent" />
+
+      <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           {/* Brand column */}
           <div className="sm:col-span-2 lg:col-span-1">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 text-xl font-semibold text-white transition-opacity hover:opacity-90"
+              className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-90"
             >
-              <FileText className="h-6 w-6 text-blue-400" aria-hidden />
-              <span>ResumeAI</span>
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-brand-600">
+                <FileText className="h-4 w-4 text-white" aria-hidden />
+              </div>
+              <span className="text-lg font-bold tracking-tight">ResumeAI</span>
             </Link>
-            <p className="mt-4 max-w-xs text-sm leading-relaxed text-gray-400">
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-400">
               Build professional, ATS-optimized resumes in minutes with the power
               of AI. Land your dream job faster.
             </p>
+            <div className="mt-6 flex items-center gap-3">
+              {socialLinks.map(({ href, label, Icon }) => (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800/60 text-slate-400 transition-all hover:bg-slate-800 hover:text-white"
+                  aria-label={label}
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Product column */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-300">
+            <h3 className="text-[13px] font-semibold uppercase tracking-wider text-slate-400">
               Product
             </h3>
             <ul className="mt-4 space-y-3">
@@ -58,7 +77,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
+                    className="text-sm text-slate-400 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>
@@ -69,7 +88,7 @@ export function Footer() {
 
           {/* Company column */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-300">
+            <h3 className="text-[13px] font-semibold uppercase tracking-wider text-slate-400">
               Company
             </h3>
             <ul className="mt-4 space-y-3">
@@ -77,7 +96,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
+                    className="text-sm text-slate-400 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>
@@ -88,7 +107,7 @@ export function Footer() {
 
           {/* Legal column */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-300">
+            <h3 className="text-[13px] font-semibold uppercase tracking-wider text-slate-400">
               Legal
             </h3>
             <ul className="mt-4 space-y-3">
@@ -96,7 +115,7 @@ export function Footer() {
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-gray-400 transition-colors hover:text-white"
+                    className="text-sm text-slate-400 transition-colors hover:text-white"
                   >
                     {link.label}
                   </Link>
@@ -107,24 +126,13 @@ export function Footer() {
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-gray-800 pt-8 sm:flex-row">
-          <p className="text-sm text-gray-500">
-            © {currentYear} ResumeAI. All rights reserved.
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-slate-800/80 pt-8 sm:flex-row">
+          <p className="text-sm text-slate-500">
+            &copy; {currentYear} ResumeAI. All rights reserved.
           </p>
-          <div className="flex items-center gap-6">
-            {socialLinks.map(({ href, label, Icon }) => (
-              <a
-                key={href}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 transition-colors hover:text-white"
-                aria-label={label}
-              >
-                <Icon className="h-5 w-5" />
-              </a>
-            ))}
-          </div>
+          <p className="text-xs text-slate-600">
+            Built with AI for job seekers worldwide
+          </p>
         </div>
       </div>
     </footer>
