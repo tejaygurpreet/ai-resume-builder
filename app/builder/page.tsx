@@ -54,7 +54,7 @@ import {
   GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PDFPreview } from "@/components/editor/pdf-preview";
+import { LivePreview } from "@/components/editor/live-preview";
 import { templateRegistry, type TemplateName } from "@/components/resume/templates";
 import { templates } from "@/components/resume/templates";
 import { TemplateGallery } from "@/components/resume/template-gallery";
@@ -499,15 +499,19 @@ function BuilderPage() {
           </DndContext>
         </div>
 
-        {/* Center: live preview (~45–50%) — matches final PDF exactly */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-slate-100">
-          <div className="flex-1 overflow-auto p-8">
-            <div className="mx-auto max-w-[210mm] rounded-lg border border-slate-200 bg-white shadow-2xl">
-              <PDFPreview
-                sections={sections}
-                color={resume.color}
-                className="min-h-[297mm]"
-              />
+        {/* Center: live preview (~45–50%) — clean HTML/DOM, no PDF toolbar */}
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0a0b]">
+          <div className="flex flex-1 flex-col overflow-hidden p-8">
+            <div className="mx-auto flex min-h-0 flex-1 max-w-[210mm] flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-[#111113] shadow-2xl shadow-black/40">
+              <div className="flex flex-1 overflow-hidden p-6">
+                <div className="w-full overflow-hidden rounded-lg border border-white/[0.04] bg-white shadow-xl">
+                  <LivePreview
+                    template={resume.template}
+                    sections={sections}
+                    color={resume.color}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -647,3 +651,13 @@ function BuilderPage() {
     </div>
   );
 }
+
+/* === COMBINED FIX: CLEAN PREVIEW + WORKING TEMPLATE SWITCHING ===
+ * 1. Replaced PDFPreview (iframe + PDF blob) with LivePreview — pure HTML/DOM
+ *    rendering via the selected template component. No toolbar, zoom, or PDF controls.
+ * 2. LivePreview receives template, sections, color from Zustand store and
+ *    re-renders instantly when user selects a different template.
+ * 3. updateTemplate() in store updates resume.template + resume.color (from
+ *    template accent). TemplateGallery/Modal/Templates page all call this.
+ * 4. Export remains via top Export button only; no export UI in preview.
+ */
