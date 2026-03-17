@@ -5,22 +5,14 @@ import {
   templates,
   templateRegistry,
   type TemplateName,
-  type TemplateCategory,
   type TemplateInfo,
 } from "./templates";
+import { TEMPLATE_CATEGORIES } from "@/lib/template-config";
+import type { TemplateCategory } from "@/lib/template-config";
 import { sampleSections } from "@/lib/sample-resume";
 import { cn } from "@/lib/utils";
 import { Check, Search } from "lucide-react";
-
-const CATEGORIES: { key: TemplateCategory | "all"; label: string }[] = [
-  { key: "all", label: "All" },
-  { key: "modern", label: "Modern" },
-  { key: "minimal", label: "Minimal" },
-  { key: "professional", label: "Professional" },
-  { key: "creative", label: "Creative" },
-  { key: "technical", label: "Technical" },
-  { key: "academic", label: "Academic" },
-];
+import { TemplatePreviewModal } from "@/components/landing/template-preview-modal";
 
 interface TemplateGalleryProps {
   selected?: TemplateName;
@@ -31,6 +23,7 @@ interface TemplateGalleryProps {
 export function TemplateGallery({ selected, onSelect, columns = 3 }: TemplateGalleryProps) {
   const [category, setCategory] = useState<TemplateCategory | "all">("all");
   const [search, setSearch] = useState("");
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     return templateRegistry.filter((t) => {
@@ -60,7 +53,7 @@ export function TemplateGallery({ selected, onSelect, columns = 3 }: TemplateGal
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map(({ key, label }) => (
+          {TEMPLATE_CATEGORIES.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => setCategory(key)}
@@ -84,15 +77,30 @@ export function TemplateGallery({ selected, onSelect, columns = 3 }: TemplateGal
       ) : (
         <div className={cn("grid gap-5", gridClass)}>
           {filtered.map((info) => (
-            <TemplateCard key={info.id} info={info} isSelected={selected === info.id} onSelect={() => onSelect(info.id)} />
+            <TemplateCard
+              key={info.id}
+              info={info}
+              isSelected={selected === info.id}
+              onSelect={() => onSelect(info.id as TemplateName)}
+              onPreview={() => setPreviewId(info.id)}
+            />
           ))}
         </div>
       )}
+
+      <TemplatePreviewModal
+        templateId={previewId}
+        onClose={() => setPreviewId(null)}
+        onUseTemplate={(id) => {
+          onSelect(id as TemplateName);
+          setPreviewId(null);
+        }}
+      />
     </div>
   );
 }
 
-function TemplateCard({ info, isSelected, onSelect }: { info: TemplateInfo; isSelected: boolean; onSelect: () => void }) {
+function TemplateCard({ info, isSelected, onSelect, onPreview }: { info: TemplateInfo; isSelected: boolean; onSelect: () => void; onPreview: () => void }) {
   const TemplateComponent = templates[info.id];
   const previewScale = 0.22;
 
@@ -100,8 +108,8 @@ function TemplateCard({ info, isSelected, onSelect }: { info: TemplateInfo; isSe
     <div
       role="button"
       tabIndex={0}
-      onClick={onSelect}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSelect(); } }}
+      onClick={onPreview}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreview(); } }}
       className={cn(
         "group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl text-left",
         "transition-all duration-300 ease-out",

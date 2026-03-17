@@ -38,11 +38,13 @@ function resumeToPlainText(sections: ResumeSection[]): string {
     if (!c) continue;
 
     switch (section.type) {
-      case "personal":
-        if (c.fullName) lines.push(c.fullName);
+      case "personal": {
+        const name = c.fullName || [c.firstName, c.lastName].filter(Boolean).join(" ").trim();
+        if (name) lines.push(name);
         if (c.email) lines.push(c.email);
         if (c.location) lines.push(c.location);
         break;
+      }
       case "summary":
         if (c.text) lines.push(c.text);
         break;
@@ -93,7 +95,7 @@ function ScoreRing({ score }: { score: number }) {
           stroke="currentColor"
           strokeWidth="6"
           fill="none"
-          className="text-slate-100"
+          className="text-white/10"
         />
         <circle
           cx="44"
@@ -126,10 +128,10 @@ function BreakdownBar({
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
-        <span className="text-slate-600">{label}</span>
-        <span className="font-medium text-slate-900">{score}/{max}</span>
+        <span className="text-slate-400">{label}</span>
+        <span className="font-medium text-slate-300">{score}/{max}</span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500",
@@ -190,42 +192,46 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
   };
 
   return (
-    <div className="rounded-xl border border-slate-200/60 bg-white">
+    <div className="rounded-2xl border border-white/[0.08] bg-dark-50/80 shadow-glass">
       <button
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        className="flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
       >
-        <div className="flex items-center gap-2">
-          <Target className="h-4 w-4 text-brand-600" />
-          <span className="text-sm font-semibold text-slate-900">ATS Score</span>
-          {result && (
-            <span
-              className={cn(
-                "ml-1 rounded-full px-2 py-0.5 text-xs font-bold",
-                result.score >= 80
-                  ? "bg-emerald-50 text-emerald-700"
-                  : result.score >= 50
-                    ? "bg-amber-50 text-amber-700"
-                    : "bg-red-50 text-red-700"
-              )}
-            >
-              {result.score}/100
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/15">
+            <Target className="h-4 w-4 text-brand-400" />
+          </div>
+          <div>
+            <span className="text-sm font-semibold text-white">ATS Readiness</span>
+            {result && (
+              <span
+                className={cn(
+                  "ml-2 rounded-lg px-2 py-0.5 text-xs font-bold",
+                  result.score >= 80
+                    ? "bg-emerald-500/20 text-emerald-400"
+                    : result.score >= 50
+                      ? "bg-amber-500/20 text-amber-400"
+                      : "bg-red-500/20 text-red-400"
+                )}
+              >
+                {result.score}/100
+              </span>
+            )}
+          </div>
         </div>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-slate-400 transition-transform",
+            "h-4 w-4 text-slate-500 transition-transform",
             expanded && "rotate-180"
           )}
         />
       </button>
 
       {expanded && (
-        <div className="border-t border-slate-100 px-4 py-3">
+        <div className="border-t border-white/[0.06] px-4 py-4">
           {!result && !loading && (
             <div className="flex flex-col items-center py-3">
-              <p className="mb-3 text-center text-xs text-slate-500">
+              <p className="mb-3 text-center text-xs text-slate-400">
                 Analyze your resume for ATS compatibility
               </p>
               <Button size="sm" onClick={analyze} className="gap-1.5">
@@ -238,12 +244,12 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
           {loading && (
             <div className="flex flex-col items-center gap-2 py-4">
               <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
-              <p className="text-xs text-slate-500">Analyzing…</p>
+              <p className="text-xs text-slate-400">Analyzing…</p>
             </div>
           )}
 
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
+            <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
               {error}
             </p>
           )}
@@ -263,10 +269,10 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
 
               {result.suggestions.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-xs font-medium text-slate-700">Suggestions</p>
+                  <p className="text-xs font-medium text-slate-400">Suggestions</p>
                   <ul className="space-y-1.5">
                     {result.suggestions.map((s, i) => (
-                      <li key={i} className="flex items-start gap-2 text-xs text-slate-600">
+                      <li key={i} className="flex items-start gap-2 text-xs text-slate-400">
                         <SuggestionIcon suggestion={s} />
                         <span>{s}</span>
                       </li>
@@ -279,7 +285,7 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
                 variant="outline"
                 size="sm"
                 onClick={analyze}
-                className="w-full gap-1.5"
+                className="w-full gap-1.5 border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white"
               >
                 <RefreshCw className="h-3.5 w-3.5" />
                 Re-analyze

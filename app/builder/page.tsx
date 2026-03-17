@@ -63,6 +63,8 @@ import {
   type ExportFormat,
 } from "@/components/editor/pdf-export";
 import { ExportModal } from "@/components/editor/export-modal";
+import { ResumeCompletionModal } from "@/components/editor/resume-completion-modal";
+import { validateResumeCompletion } from "@/lib/resume-validation";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -102,6 +104,7 @@ function BuilderPage() {
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("id");
   const templateParam = searchParams.get("template");
+  const exportParam = searchParams.get("export");
   const { data: session, status } = useSession();
 
   const {
@@ -127,6 +130,7 @@ function BuilderPage() {
   const [aiToolsOpen, setAiToolsOpen] = useState(false);
   const [activeModal, setActiveModal] = useState<string | null>(null);
   const [exportOpen, setExportOpen] = useState(false);
+  const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [tailorOpen, setTailorOpen] = useState(false);
   const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
   const [exportsUsed, setExportsUsed] = useState(0);
@@ -164,9 +168,30 @@ function BuilderPage() {
           if (!res.ok) throw new Error("Failed to load resume");
           const data = await res.json();
           const loaded = data.resume ?? data;
-          setResume({ ...loaded, sections: loaded.sections ?? [] });
+          const sections = (loaded.sections ?? []).map((s: any) => {
+            if (s.type === "personal" && s.content) {
+              const c = s.content;
+              if ((!c.firstName || !c.lastName) && c.fullName) {
+                const parts = (c.fullName ?? "").trim().split(/\s+/);
+                return {
+                  ...s,
+                  content: {
+                    ...c,
+                    firstName: c.firstName ?? parts[0] ?? "",
+                    lastName: c.lastName ?? parts.slice(1).join(" ") ?? "",
+                  },
+                };
+              }
+            }
+            return s;
+          });
+          setResume({ ...loaded, sections });
           if (templateParam && templateParam in templates) {
             updateTemplate(templateParam as TemplateName);
+          }
+          if (exportParam === "1") {
+            setExportOpen(true);
+            router.replace(`/builder?id=${resumeId}`, { scroll: false });
           }
         } else {
           const body: Record<string, string> = { title: "Untitled Resume" };
@@ -196,7 +221,7 @@ function BuilderPage() {
     };
 
     init();
-  }, [resumeId, status, setResume, router]);
+  }, [resumeId, templateParam, exportParam, status, setResume, router]);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -354,6 +379,18 @@ function BuilderPage() {
 
         <div className="mx-1 h-5 w-px bg-white/[0.08]" />
 
+        {/* Completion badge */}
+        <div
+          className={cn(
+            "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium",
+            validateResumeCompletion(sections).isComplete
+              ? "bg-emerald-500/15 text-emerald-400"
+              : "bg-amber-500/15 text-amber-400"
+          )}
+        >
+          {validateResumeCompletion(sections).percentage}% Complete
+        </div>
+
         {/* Save indicator */}
         <div className="flex items-center gap-1.5 text-xs">
           {isSaving ? (
@@ -455,7 +492,18 @@ function BuilderPage() {
         </div>
 
         {/* Export */}
-        <Button size="sm" onClick={() => setExportOpen(true)} className="gap-1.5">
+        <Button
+          size="sm"
+          onClick={() => {
+            const validation = validateResumeCompletion(sections);
+            if (validation.isComplete) {
+              setExportOpen(true);
+            } else {
+              setCompletionModalOpen(true);
+            }
+          }}
+          className="gap-1.5"
+        >
           <Download className="h-4 w-4" />
           <span className="hidden sm:inline">Export</span>
         </Button>
@@ -464,7 +512,7 @@ function BuilderPage() {
       {/* ── Main Content ────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Editor Panel */}
-        <div className="flex w-[55%] flex-col overflow-y-auto border-r border-white/[0.06] bg-dark-50 scrollbar-thin">
+        <div className="flex w-[55%] flex-col overflow-y-auto border-r border-white/[0.06] bg-dark scrollbar-thin">
           <div className="flex-1 space-y-3 p-4">
             <DndContext
               sensors={sensors}
@@ -500,14 +548,19 @@ function BuilderPage() {
 
         {/* Right: Live Preview + Panels */}
         <div className="flex w-[45%] flex-col overflow-y-auto bg-dark p-6 scrollbar-thin">
-          <div className="mx-auto w-full max-w-[600px] space-y-4">
-            <ResumePreview
-              ref={previewRef}
-              template={resume.template as TemplateName}
-              sections={sections}
-              color={resume.color}
-              scale={0.6}
-            />
+          <div className="mx-auto w-full max-w-[640px] space-y-5">
+            {/* Resume preview in premium off-white container */}
+            <div className="rounded-2xl border border-white/[0.08] bg-dark-50/50 p-6 shadow-glass">
+              <div className="rounded-xl border border-white/[0.06] bg-[#fafaf9] p-4 shadow-inner" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
+                <ResumePreview
+                  ref={previewRef}
+                  template={resume.template as TemplateName}
+                  sections={sections}
+                  color={resume.color}
+                  scale={0.6}
+                />
+              </div>
+            </div>
 
             {/* Analytics Panels */}
             <ResumeAnalyticsPanel sections={sections} />
@@ -534,6 +587,13 @@ function BuilderPage() {
           />
         </div>
       </Modal>
+
+      {/* ── Completion Modal (blocks export when incomplete) ──────── */}
+      <ResumeCompletionModal
+        isOpen={completionModalOpen}
+        onClose={() => setCompletionModalOpen(false)}
+        validation={validateResumeCompletion(sections)}
+      />
 
       {/* ── Export Modal ─────────────────────────────────────────── */}
       <ExportModal

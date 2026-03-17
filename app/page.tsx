@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Navbar } from "@/components/navbar";
@@ -26,6 +27,11 @@ import {
 } from "lucide-react";
 import { HeroProductPreview } from "@/components/landing/hero-product-preview";
 import { AnimatedStat } from "@/components/landing/animated-counter";
+import { TemplatePreviewCard } from "@/components/landing/template-preview-card";
+import { TemplatePreviewModal } from "@/components/landing/template-preview-modal";
+import { templateRegistry } from "@/components/resume/templates";
+import { TEMPLATE_CATEGORIES, type TemplateCategory } from "@/lib/template-config";
+import { cn } from "@/lib/utils";
 
 const features = [
   { Icon: Sparkles, title: "AI-Powered Writing", description: "AI crafts compelling bullet points and summaries tailored to your experience and target role.", color: "from-blue-500 to-cyan-400" },
@@ -34,17 +40,6 @@ const features = [
   { Icon: Download, title: "Multi-Format Export", description: "Download as PDF, DOCX, TXT, JSON, or Markdown — perfectly formatted.", color: "from-amber-500 to-orange-400" },
   { Icon: GripVertical, title: "Drag & Drop Editor", description: "Rearrange sections effortlessly with an intuitive drag-and-drop interface.", color: "from-pink-500 to-rose-400" },
   { Icon: Target, title: "Job Keyword Matching", description: "Paste a job description and see which keywords are missing from your resume.", color: "from-indigo-500 to-blue-400" },
-];
-
-const landingTemplates = [
-  { name: "Modern", from: "from-blue-600", to: "to-cyan-500" },
-  { name: "Professional", from: "from-slate-600", to: "to-slate-400" },
-  { name: "Minimal", from: "from-emerald-600", to: "to-teal-500" },
-  { name: "Executive", from: "from-amber-600", to: "to-orange-500" },
-  { name: "Creative", from: "from-purple-600", to: "to-pink-500" },
-  { name: "Elegant", from: "from-yellow-600", to: "to-amber-500" },
-  { name: "Timeline", from: "from-teal-600", to: "to-cyan-500" },
-  { name: "Bold", from: "from-red-600", to: "to-orange-500" },
 ];
 
 const testimonials = [
@@ -62,12 +57,12 @@ const faqItems = [
 ];
 
 const freePlanFeatures = ["AI resume builder", "3 AI generations per resume", "5 basic templates", "3 exports per month", "ATS scoring"];
-const proPlanFeatures = ["Unlimited AI generations", "All 20+ premium templates", "Unlimited exports — no ads", "Job description tailoring", "Cover letter generator", "ATS score analysis", "Priority support"];
+const proPlanFeatures = ["Unlimited AI generations", "All 50+ premium templates", "Unlimited exports — no ads", "Job description tailoring", "Cover letter generator", "ATS score analysis", "Priority support"];
 
 const stats = [
   { value: 50, suffix: "K+", label: "Resumes Created", icon: FileText },
   { value: 89, suffix: "%", label: "Interview Rate", icon: TrendingUp },
-  { value: 20, suffix: "+", label: "ATS Templates", icon: LayoutTemplate },
+  { value: 50, suffix: "+", label: "ATS Templates", icon: LayoutTemplate },
   { value: 4.9, suffix: "★", label: "User Rating", icon: Star },
 ];
 
@@ -84,6 +79,14 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function Home() {
+  const [templateFilter, setTemplateFilter] = useState<TemplateCategory | "all">("all");
+  const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
+
+  const filteredTemplates = useMemo(() => {
+    if (templateFilter === "all") return templateRegistry;
+    return templateRegistry.filter((t) => t.category === templateFilter);
+  }, [templateFilter]);
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -229,7 +232,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ TEMPLATES — Darker, richer ═══ */}
+      {/* ═══ TEMPLATES — Real previews, 50 templates, filter ═══ */}
       <section id="templates" className="relative section-darker py-36">
         <div className="divider-wave divider-wave-dark-top" />
         <div className="orb orb-blue absolute -left-40 top-1/3 h-[600px] w-[600px] animate-pulse-glow" />
@@ -244,48 +247,27 @@ export default function Home() {
             <p className="mt-5 text-xl text-slate-400">Recruiter-approved designs built for ATS compatibility.</p>
           </FadeUp>
 
-          <Stagger className="mt-20 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {landingTemplates.map(({ name, from, to }) => (
-              <StaggerChild key={name}>
-                <motion.div
-                  whileHover={{ scale: 1.03, y: -8 }}
-                  className="group relative overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02] transition-all duration-400 hover:border-white/[0.2] hover:shadow-[0_0_40px_-12px_rgba(99,102,241,0.3)]"
-                >
-                  <div className={`relative flex h-60 items-end bg-gradient-to-br ${from} ${to} p-5`}>
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                      <AuthCTA
-                        guestHref="/signup"
-                        authHref="/templates"
-                        className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-900 shadow-lg transition-all hover:bg-slate-100 hover:scale-105"
-                      >
-                        Use Template <ArrowRight className="h-4 w-4" />
-                      </AuthCTA>
-                    </div>
-                    <div className="w-full rounded-t-2xl bg-white/95 px-5 pb-0 pt-5 shadow-2xl backdrop-blur">
-                      <div className="mb-4 flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-slate-200" />
-                        <div className="space-y-2">
-                          <div className="h-3 w-24 rounded bg-slate-300" />
-                          <div className="h-2.5 w-16 rounded bg-slate-200" />
-                        </div>
-                      </div>
-                      <div className="space-y-2 pb-3">
-                        <div className="h-2.5 w-full rounded bg-slate-200" />
-                        <div className="h-2.5 w-4/5 rounded bg-slate-200" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between p-5">
-                    <span className="text-base font-bold text-white">{name}</span>
-                    <AuthCTA
-                      guestHref="/signup"
-                      authHref="/templates"
-                      className="inline-flex items-center gap-1.5 rounded-xl border-2 border-brand-500/30 bg-brand-500/15 px-5 py-2.5 text-sm font-bold text-brand-300 transition-all duration-300 group-hover:bg-brand-500 group-hover:text-white group-hover:border-brand-500 group-hover:shadow-glow"
-                    >
-                      Use <ArrowRight className="h-4 w-4" />
-                    </AuthCTA>
-                  </div>
-                </motion.div>
+          <FadeUp className="mt-12 flex flex-wrap justify-center gap-2">
+            {TEMPLATE_CATEGORIES.map(({ key, label }) => (
+              <button
+                key={key}
+                onClick={() => setTemplateFilter(key)}
+                className={cn(
+                  "rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200",
+                  templateFilter === key
+                    ? "bg-brand-500 text-white shadow-glow"
+                    : "border border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/[0.15] hover:bg-white/[0.06] hover:text-white"
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </FadeUp>
+
+          <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {filteredTemplates.map((t) => (
+              <StaggerChild key={t.id}>
+                <TemplatePreviewCard templateId={t.id} onPreview={setPreviewTemplateId} />
               </StaggerChild>
             ))}
           </Stagger>
@@ -296,11 +278,13 @@ export default function Home() {
               authHref="/templates"
               className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-white/[0.12] bg-white/[0.04] px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:bg-white/[0.1] hover:border-white/[0.25] hover:-translate-y-[2px]"
             >
-              Browse All 20+ Templates <ArrowRight className="h-5 w-5" />
+              Browse All 50 Templates <ArrowRight className="h-5 w-5" />
             </AuthCTA>
           </FadeUp>
         </div>
       </section>
+
+      <TemplatePreviewModal templateId={previewTemplateId} onClose={() => setPreviewTemplateId(null)} />
 
       {/* ═══ PRICING — Pure white, strong cards ═══ */}
       <section id="pricing" className="relative section-light py-36">

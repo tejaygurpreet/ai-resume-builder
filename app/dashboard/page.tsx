@@ -13,10 +13,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { formatDate } from "@/lib/utils";
+import { templateRegistry } from "@/components/resume/templates";
+
+const TEMPLATE_LABELS: Record<string, string> = {};
+templateRegistry.forEach((t) => { TEMPLATE_LABELS[t.id] = t.name; });
 
 interface Section { id: string; type: string; order: number; content: unknown; }
 interface Resume { id: string; title: string; template: string; color: string; createdAt: string; updatedAt: string; sections: Section[]; }
-interface UserSubscription { plan: string; status: string; }
+interface UserSubscription { plan: string; status: string; exportsUsed?: number; oneTimeExport?: boolean; }
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -65,31 +69,10 @@ export default function DashboardPage() {
     } catch {} finally { setDeleting(false); }
   }
 
-  async function handleDownload(resume: Resume) {
-    try {
-      const { default: jsPDF } = await import("jspdf");
-      const doc = new jsPDF();
-      doc.setFontSize(22); doc.setFont("helvetica", "bold"); doc.text(resume.title, 20, 25);
-      doc.setFontSize(10); doc.setTextColor(120);
-      doc.text(`Template: ${resume.template}`, 20, 35);
-      doc.text(`Last updated: ${formatDate(resume.updatedAt)}`, 20, 42);
-      let yOffset = 55;
-      resume.sections.sort((a, b) => a.order - b.order).forEach((section) => {
-        if (yOffset > 270) { doc.addPage(); yOffset = 20; }
-        doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(37, 99, 235);
-        doc.text(section.type.charAt(0).toUpperCase() + section.type.slice(1), 20, yOffset);
-        yOffset += 8;
-        doc.setFontSize(10); doc.setFont("helvetica", "normal"); doc.setTextColor(60);
-        const content = typeof section.content === "string" ? section.content : JSON.stringify(section.content, null, 2);
-        const lines = doc.splitTextToSize(content, 170);
-        doc.text(lines, 20, yOffset);
-        yOffset += lines.length * 5 + 10;
-      });
-      doc.save(`${resume.title.replace(/\s+/g, "_")}.pdf`);
-    } catch {}
+  function handleExport(resume: Resume) {
+    router.push(`/builder?id=${resume.id}&export=1`);
   }
 
-  const templateLabels: Record<string, string> = { modern: "Modern", classic: "Classic", minimal: "Minimal", professional: "Professional", creative: "Creative" };
 
   if (status === "loading" || loading) {
     return (
@@ -162,7 +145,7 @@ export default function DashboardPage() {
                 <CardContent className="p-5">
                   <div className="mb-3 flex items-start justify-between gap-2">
                     <h3 className="truncate text-base font-semibold text-white">{resume.title}</h3>
-                    <Badge className="shrink-0 text-[11px]">{templateLabels[resume.template] ?? resume.template}</Badge>
+                    <Badge className="shrink-0 text-[11px]">{TEMPLATE_LABELS[resume.template] ?? resume.template}</Badge>
                   </div>
                   <p className="text-xs text-slate-500">Updated {formatDate(resume.updatedAt)}</p>
                   <div className="mt-4 flex items-center gap-2">
@@ -172,7 +155,7 @@ export default function DashboardPage() {
                     <Button variant="secondary" size="sm" onClick={() => handleDuplicate(resume.id)} disabled={duplicating === resume.id} aria-label={`Duplicate ${resume.title}`}>
                       {duplicating === resume.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleDownload(resume)} aria-label={`Download ${resume.title}`}>
+                    <Button variant="secondary" size="sm" onClick={() => handleExport(resume)} aria-label={`Export ${resume.title}`}>
                       <Download className="h-3.5 w-3.5" />
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(resume)} className="text-red-400 hover:bg-red-500/10 hover:text-red-300" aria-label={`Delete ${resume.title}`}>

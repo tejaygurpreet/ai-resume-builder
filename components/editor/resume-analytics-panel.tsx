@@ -8,9 +8,12 @@ import {
   CheckCircle2,
   AlertTriangle,
   ChevronDown,
+  Target,
+  Lightbulb,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ResumeSection } from "@/hooks/use-resume-store";
+import { validateResumeCompletion } from "@/lib/resume-validation";
 
 interface ResumeAnalyticsPanelProps {
   sections: ResumeSection[];
@@ -35,7 +38,8 @@ function countWords(sections: ResumeSection[]): number {
     if (!c) continue;
 
     if (s.type === "personal") {
-      total += [c.fullName, c.email, c.phone, c.location]
+      const name = c.fullName || [c.firstName, c.lastName].filter(Boolean).join(" ");
+      total += [name, c.email, c.phone, c.location]
         .filter(Boolean)
         .join(" ")
         .split(/\s+/).length;
@@ -87,50 +91,6 @@ function readabilityGrade(sections: ResumeSection[]): "Easy" | "Good" | "Dense" 
   return "Easy";
 }
 
-function sectionCompleteness(sections: ResumeSection[]): {
-  label: string;
-  complete: boolean;
-}[] {
-  const expected = [
-    "personal",
-    "summary",
-    "experience",
-    "education",
-    "skills",
-  ];
-
-  return expected.map((type) => {
-    const s = sections.find((sec) => sec.type === type);
-    let complete = false;
-
-    if (s?.content) {
-      const c = s.content;
-      switch (type) {
-        case "personal":
-          complete = !!(c.fullName && c.email);
-          break;
-        case "summary":
-          complete = !!(c.text && c.text.trim().length > 20);
-          break;
-        case "experience":
-          complete = (c.items ?? []).length > 0 && !!(c.items[0]?.title);
-          break;
-        case "education":
-          complete = (c.items ?? []).length > 0 && !!(c.items[0]?.degree);
-          break;
-        case "skills":
-          complete = (c.items ?? []).filter(Boolean).length >= 3;
-          break;
-      }
-    }
-
-    return {
-      label: type.charAt(0).toUpperCase() + type.slice(1),
-      complete,
-    };
-  });
-}
-
 function Metric({
   icon: Icon,
   label,
@@ -143,17 +103,17 @@ function Metric({
   status: "good" | "warning" | "neutral";
 }) {
   return (
-    <div className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2">
+    <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5">
       <div className="flex items-center gap-2">
-        <Icon className="h-3.5 w-3.5 text-slate-400" />
-        <span className="text-xs text-slate-600">{label}</span>
+        <Icon className="h-3.5 w-3.5 text-slate-500" />
+        <span className="text-xs text-slate-400">{label}</span>
       </div>
       <span
         className={cn(
           "text-xs font-semibold",
-          status === "good" && "text-emerald-600",
-          status === "warning" && "text-amber-600",
-          status === "neutral" && "text-slate-700"
+          status === "good" && "text-emerald-400",
+          status === "warning" && "text-amber-400",
+          status === "neutral" && "text-slate-300"
         )}
       >
         {value}
@@ -165,37 +125,51 @@ function Metric({
 export function ResumeAnalyticsPanel({ sections }: ResumeAnalyticsPanelProps) {
   const [expanded, setExpanded] = React.useState(true);
 
+  const validation = validateResumeCompletion(sections);
   const wordCount = countWords(sections);
   const bulletCount = countBullets(sections);
   const pages = estimatePages(wordCount);
   const readability = readabilityGrade(sections);
-  const completeness = sectionCompleteness(sections);
-  const completedSections = completeness.filter((c) => c.complete).length;
 
   return (
-    <div className="rounded-xl border border-slate-200/60 bg-white">
+    <div className="rounded-2xl border border-white/[0.08] bg-dark-50/80 shadow-glass">
       <button
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center justify-between px-4 py-3 text-left"
+        className="flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
       >
-        <div className="flex items-center gap-2">
-          <Eye className="h-4 w-4 text-emerald-600" />
-          <span className="text-sm font-semibold text-slate-900">Resume Health</span>
-          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
-            {completedSections}/{completeness.length}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/15">
+            <Target className="h-4 w-4 text-brand-400" />
+          </div>
+          <div>
+            <span className="text-sm font-semibold text-white">Resume Health</span>
+            <div className="mt-0.5 flex items-center gap-2">
+              <div className="h-1.5 w-20 overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all",
+                    validation.percentage >= 100 ? "bg-emerald-500" : "bg-amber-500"
+                  )}
+                  style={{ width: `${validation.percentage}%` }}
+                />
+              </div>
+              <span className="text-xs font-medium text-slate-400">
+                {validation.percentage}% Complete
+              </span>
+            </div>
+          </div>
         </div>
         <ChevronDown
           className={cn(
-            "h-4 w-4 text-slate-400 transition-transform",
+            "h-4 w-4 text-slate-500 transition-transform",
             expanded && "rotate-180"
           )}
         />
       </button>
 
       {expanded && (
-        <div className="space-y-3 border-t border-slate-100 px-4 py-3">
-          <div className="space-y-1.5">
+        <div className="space-y-4 border-t border-white/[0.06] px-4 py-4">
+          <div className="space-y-2">
             <Metric
               icon={FileText}
               label="Resume Length"
@@ -216,26 +190,54 @@ export function ResumeAnalyticsPanel({ sections }: ResumeAnalyticsPanelProps) {
             />
           </div>
 
-          <div>
-            <p className="mb-2 text-xs font-medium text-slate-700">Section Checklist</p>
-            <div className="space-y-1">
-              {completeness.map(({ label, complete }) => (
-                <div
-                  key={label}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  {complete ? (
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                  ) : (
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-                  )}
-                  <span className={complete ? "text-slate-600" : "text-amber-600"}>
-                    {label}
-                  </span>
-                </div>
-              ))}
+          {validation.missingItems.length > 0 && (
+            <div>
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                Required fields missing
+              </p>
+              <ul className="space-y-1.5">
+                {validation.missingItems.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-200/90"
+                  >
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
+          )}
+
+          {validation.suggestions.length > 0 && (
+            <div>
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-slate-400">
+                <Lightbulb className="h-3.5 w-3.5 text-brand-400" />
+                Suggestions
+              </p>
+              <ul className="space-y-1.5">
+                {validation.suggestions.map((item) => (
+                  <li
+                    key={item}
+                    className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-xs text-slate-400"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {validation.isComplete && validation.missingItems.length === 0 && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2.5">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+              <span className="text-sm font-medium text-emerald-300">
+                Resume ready to export
+              </span>
+            </div>
+          )}
         </div>
       )}
     </div>

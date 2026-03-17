@@ -8,6 +8,8 @@ const DEFAULT_SECTIONS = [
     type: "personal",
     order: 0,
     content: {
+      firstName: "",
+      lastName: "",
       fullName: "",
       email: "",
       phone: "",
@@ -75,11 +77,11 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const [resumes, subscription] = await Promise.all([
+    const [resumesRaw, subscription] = await Promise.all([
       prisma.resume.findMany({
         where: { userId },
         include: { sections: { orderBy: { order: "asc" } } },
-        orderBy: { updatedAt: "desc" },
+        orderBy: { createdAt: "asc" },
       }),
       prisma.subscription.findUnique({
         where: { userId },
@@ -105,6 +107,26 @@ export async function GET() {
       sub = { ...sub, exportsUsed: 0 };
     }
 
+    // Fix "Untitled Resume" to sequential names (Resume 1, Resume 2, ...) by createdAt order
+    const resumes = [...resumesRaw];
+    const toFix = resumes.filter((r) => r.title === "Untitled Resume");
+    if (toFix.length > 0) {
+      for (let i = 0; i < resumes.length; i++) {
+        const r = resumes[i];
+        if (r.title === "Untitled Resume") {
+          const newTitle = `Resume ${i + 1}`;
+          await prisma.resume.update({
+            where: { id: r.id },
+            data: { title: newTitle },
+          });
+          (r as { title: string }).title = newTitle;
+        }
+      }
+    }
+
+    // Return ordered by updatedAt desc for dashboard display
+    resumes.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
     return NextResponse.json({
       resumes,
       subscription: sub,
@@ -126,10 +148,13 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const count = await prisma.resume.count({ where: { userId } });
+    const title = `Resume ${count + 1}`;
+
     const resume = await prisma.resume.create({
       data: {
         userId,
-        title: "Untitled Resume",
+        title,
         template: "modern",
         color: "#2563eb",
         sections: {

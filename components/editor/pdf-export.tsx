@@ -59,8 +59,9 @@ function sectionsToPlainText(
     lines.push("-".repeat(heading.length));
 
     switch (section.type) {
-      case "personal":
-        if (c.fullName) lines.push(c.fullName);
+      case "personal": {
+        const name = c.fullName || [c.firstName, c.lastName].filter(Boolean).join(" ").trim();
+        if (name) lines.push(name);
         if (c.email) lines.push(`Email: ${c.email}`);
         if (c.phone) lines.push(`Phone: ${c.phone}`);
         if (c.location) lines.push(`Location: ${c.location}`);
@@ -69,6 +70,7 @@ function sectionsToPlainText(
         if (c.portfolio) lines.push(`Portfolio: ${c.portfolio}`);
         if (c.website) lines.push(`Website: ${c.website}`);
         break;
+      }
       case "summary":
         if (c.text) lines.push(c.text);
         break;
@@ -187,8 +189,9 @@ function sectionsToMarkdown(
     const heading = section.type.charAt(0).toUpperCase() + section.type.slice(1);
 
     switch (section.type) {
-      case "personal":
-        if (c.fullName) lines.push(`**${c.fullName}**`, "");
+      case "personal": {
+        const name = c.fullName || [c.firstName, c.lastName].filter(Boolean).join(" ").trim();
+        if (name) lines.push(`**${name}**`, "");
         {
           const contactParts: string[] = [];
           if (c.email) contactParts.push(c.email);
@@ -203,6 +206,7 @@ function sectionsToMarkdown(
           if (linkParts.length) lines.push(linkParts.join(" | "), "");
         }
         break;
+      }
       case "summary":
         lines.push(`## ${heading}`, "");
         if (c.text) lines.push(c.text, "");

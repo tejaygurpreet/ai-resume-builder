@@ -37,10 +37,13 @@ export async function POST(request: Request) {
       );
     }
 
+    const count = await prisma.resume.count({ where: { userId } });
+    const title = `Resume ${count + 1}`;
+
     const duplicate = await prisma.resume.create({
       data: {
         userId,
-        title: `${original.title} (Copy)`,
+        title,
         template: original.template,
         color: original.color,
         sections: {

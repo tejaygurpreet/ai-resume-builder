@@ -117,10 +117,10 @@ function AIErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => v
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-lg border px-3 py-2 text-xs",
+        "flex items-center gap-2 rounded-xl border px-3 py-2 text-xs",
         isLimit
-          ? "border-amber-200 bg-amber-50 text-amber-700"
-          : "border-red-200 bg-red-50 text-red-700"
+          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+          : "border-red-500/30 bg-red-500/10 text-red-300"
       )}
     >
       {isLimit ? (
@@ -129,7 +129,7 @@ function AIErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => v
         <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
       )}
       <span className="flex-1">{error}</span>
-      <button onClick={onDismiss} className="ml-1 p-0.5 opacity-60 hover:opacity-100">
+      <button onClick={onDismiss} className="ml-1 rounded p-0.5 text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
         <X className="h-3 w-3" />
       </button>
     </div>
@@ -151,7 +151,7 @@ function AIButton({
       size="sm"
       onClick={onClick}
       disabled={loading}
-      className="gap-1.5 border-purple-200 text-purple-600 hover:bg-purple-50 hover:text-purple-700"
+      className="gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20 hover:text-purple-200"
     >
       {loading ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -165,6 +165,18 @@ function AIButton({
 
 /* ─── Personal ─────────────────────────────────────────────────── */
 
+function getPersonalDisplayName(content: any) {
+  const fn = (content?.firstName ?? "").trim();
+  const ln = (content?.lastName ?? "").trim();
+  if (fn || ln) return { firstName: fn, lastName: ln };
+  const full = (content?.fullName ?? "").trim();
+  const parts = full.split(/\s+/);
+  return {
+    firstName: parts[0] ?? "",
+    lastName: parts.slice(1).join(" ") ?? "",
+  };
+}
+
 function PersonalEditor({
   content,
   onChange,
@@ -172,23 +184,41 @@ function PersonalEditor({
   content: any;
   onChange: (c: any) => void;
 }) {
-  const set = (field: string, value: string) =>
-    onChange({ ...content, [field]: value });
+  const { firstName, lastName } = getPersonalDisplayName(content);
+
+  const set = (field: string, value: string) => {
+    const next = { ...content, [field]: value };
+    if (field === "firstName" || field === "lastName") {
+      const fn = field === "firstName" ? value : (content.firstName ?? firstName);
+      const ln = field === "lastName" ? value : (content.lastName ?? lastName);
+      next.fullName = `${fn} ${ln}`.trim();
+    }
+    onChange(next);
+  };
 
   return (
     <div className="grid grid-cols-2 gap-3">
       <Input
-        label="Full Name"
-        value={content.fullName ?? ""}
-        onChange={(e) => set("fullName", e.target.value)}
-        placeholder="John Doe"
+        label="First Name *"
+        value={firstName}
+        onChange={(e) => set("firstName", e.target.value)}
+        placeholder="John"
+        variant="dark"
       />
       <Input
-        label="Email"
+        label="Last Name *"
+        value={lastName}
+        onChange={(e) => set("lastName", e.target.value)}
+        placeholder="Doe"
+        variant="dark"
+      />
+      <Input
+        label="Email *"
         type="email"
         value={content.email ?? ""}
         onChange={(e) => set("email", e.target.value)}
         placeholder="john@example.com"
+        variant="dark"
       />
       <Input
         label="Phone"
@@ -196,36 +226,42 @@ function PersonalEditor({
         value={content.phone ?? ""}
         onChange={(e) => set("phone", e.target.value)}
         placeholder="(555) 123-4567"
+        variant="dark"
       />
       <Input
         label="Location"
         value={content.location ?? ""}
         onChange={(e) => set("location", e.target.value)}
         placeholder="New York, NY"
+        variant="dark"
       />
       <Input
         label="LinkedIn"
         value={content.linkedin ?? ""}
         onChange={(e) => set("linkedin", e.target.value)}
         placeholder="linkedin.com/in/johndoe"
+        variant="dark"
       />
       <Input
         label="GitHub"
         value={content.github ?? ""}
         onChange={(e) => set("github", e.target.value)}
         placeholder="github.com/johndoe"
+        variant="dark"
       />
       <Input
         label="Portfolio"
         value={content.portfolio ?? ""}
         onChange={(e) => set("portfolio", e.target.value)}
         placeholder="portfolio.johndoe.dev"
+        variant="dark"
       />
       <Input
         label="Website"
         value={content.website ?? ""}
         onChange={(e) => set("website", e.target.value)}
         placeholder="johndoe.dev"
+        variant="dark"
       />
     </div>
   );
@@ -257,7 +293,7 @@ function SummaryEditor({
       : "Not specified";
 
     const { result } = await generate("summary", {
-      name: personal?.fullName || "",
+      name: personal?.fullName || [personal?.firstName, personal?.lastName].filter(Boolean).join(" ") || "",
       target_role: experience?.items?.[0]?.title || "",
       years_experience: yearsExp,
       skills: (skills?.items ?? []).filter(Boolean).join(", "),
@@ -271,7 +307,7 @@ function SummaryEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-700">Professional Summary</span>
+        <span className="text-sm font-medium text-slate-300">Professional Summary</span>
         <AIButton onClick={handleGenerate} loading={loading}>
           Generate Summary
         </AIButton>
@@ -282,8 +318,9 @@ function SummaryEditor({
       <Textarea
         value={content.text ?? ""}
         onChange={(e) => onChange({ ...content, text: e.target.value })}
-        placeholder="A brief summary of your professional background, key achievements, and career goals…"
+        placeholder="A brief summary of your professional background, key achievements, and career goals (at least 20 characters)…"
         className="min-h-[120px]"
+        variant="dark"
       />
     </div>
   );
@@ -452,7 +489,7 @@ function ExperienceEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
+          className="relative space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
@@ -470,7 +507,7 @@ function ExperienceEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => removeItem(idx)}
-                  className="h-6 px-2 text-xs text-slate-400 hover:text-red-500"
+                  className="h-6 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
                 >
                   <Trash2 className="mr-1 h-3 w-3" />
                   Remove
@@ -485,18 +522,21 @@ function ExperienceEditor({
               value={item.title ?? ""}
               onChange={(e) => updateItem(idx, "title", e.target.value)}
               placeholder="Software Engineer"
+              variant="dark"
             />
             <Input
               label="Company"
               value={item.company ?? ""}
               onChange={(e) => updateItem(idx, "company", e.target.value)}
               placeholder="Acme Inc."
+              variant="dark"
             />
             <Input
               label="Location"
               value={item.location ?? ""}
               onChange={(e) => updateItem(idx, "location", e.target.value)}
               placeholder="San Francisco, CA"
+              variant="dark"
             />
             <div className="flex items-end gap-3">
               <Input
@@ -504,6 +544,7 @@ function ExperienceEditor({
                 value={item.startDate ?? ""}
                 onChange={(e) => updateItem(idx, "startDate", e.target.value)}
                 placeholder="Jan 2022"
+                variant="dark"
               />
               <Input
                 label="End Date"
@@ -511,22 +552,23 @@ function ExperienceEditor({
                 onChange={(e) => updateItem(idx, "endDate", e.target.value)}
                 placeholder="Dec 2023"
                 disabled={item.current}
+                variant="dark"
               />
             </div>
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-slate-600">
+          <label className="flex items-center gap-2 text-sm text-slate-400">
             <input
               type="checkbox"
               checked={item.current ?? false}
               onChange={(e) => updateItem(idx, "current", e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+              className="h-4 w-4 rounded border-white/20 bg-white/5 text-brand-500 focus:ring-brand-500/50"
             />
             I currently work here
           </label>
 
           <div className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium text-slate-300">
               Bullet Points
             </span>
             {(item.bullets ?? []).map((bullet: string, bi: number) => {
@@ -540,6 +582,7 @@ function ExperienceEditor({
                     onChange={(e) => updateBullet(idx, bi, e.target.value)}
                     placeholder="Describe your accomplishment…"
                     className="min-h-[60px]"
+                    variant="dark"
                   />
                   <div className="mt-1 flex flex-col gap-1">
                     <button
@@ -547,10 +590,10 @@ function ExperienceEditor({
                       disabled={isImproving || !bullet.trim()}
                       title="Improve with AI"
                       className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-md border transition-colors",
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors",
                         isImproving
-                          ? "border-purple-200 bg-purple-50"
-                          : "border-slate-200 text-purple-500 hover:border-purple-300 hover:bg-purple-50"
+                          ? "border-purple-500/40 bg-purple-500/20"
+                          : "border-white/[0.1] text-purple-400 hover:border-purple-500/40 hover:bg-purple-500/10"
                       )}
                     >
                       {isImproving ? (
@@ -577,7 +620,7 @@ function ExperienceEditor({
               variant="ghost"
               size="sm"
               onClick={() => addBullet(idx)}
-              className="text-brand-600 hover:text-brand-700"
+              className="text-brand-400 hover:bg-brand-500/10 hover:text-brand-300"
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
               Add Bullet
@@ -586,7 +629,7 @@ function ExperienceEditor({
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem}>
+      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
         <Plus className="mr-1.5 h-4 w-4" />
         Add Position
       </Button>
@@ -639,7 +682,7 @@ function EducationEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
+          className="relative space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
@@ -650,7 +693,7 @@ function EducationEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-slate-400 hover:text-red-500"
+                className="h-6 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
               >
                 <Trash2 className="mr-1 h-3 w-3" />
                 Remove
@@ -660,46 +703,52 @@ function EducationEditor({
 
           <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Degree"
+              label="Degree or Program"
               value={item.degree ?? ""}
               onChange={(e) => updateItem(idx, "degree", e.target.value)}
               placeholder="B.S. Computer Science"
+              variant="dark"
             />
             <Input
               label="School"
               value={item.school ?? ""}
               onChange={(e) => updateItem(idx, "school", e.target.value)}
               placeholder="MIT"
+              variant="dark"
             />
             <Input
               label="Location"
               value={item.location ?? ""}
               onChange={(e) => updateItem(idx, "location", e.target.value)}
               placeholder="Cambridge, MA"
+              variant="dark"
             />
             <Input
               label="GPA"
               value={item.gpa ?? ""}
               onChange={(e) => updateItem(idx, "gpa", e.target.value)}
               placeholder="3.8/4.0"
+              variant="dark"
             />
             <Input
               label="Start Date"
               value={item.startDate ?? ""}
               onChange={(e) => updateItem(idx, "startDate", e.target.value)}
               placeholder="Aug 2018"
+              variant="dark"
             />
             <Input
               label="End Date"
               value={item.endDate ?? ""}
               onChange={(e) => updateItem(idx, "endDate", e.target.value)}
               placeholder="May 2022"
+              variant="dark"
             />
           </div>
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem}>
+      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
         <Plus className="mr-1.5 h-4 w-4" />
         Add Education
       </Button>
@@ -775,7 +824,7 @@ function SkillsEditor({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-700">Skills</span>
+        <span className="text-sm font-medium text-slate-300">Skills (at least 3 required)</span>
         <AIButton onClick={handleGenerateSkills} loading={loading}>
           Generate Skills
         </AIButton>
@@ -789,8 +838,9 @@ function SkillsEditor({
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type a skill and press Enter…"
+          variant="dark"
         />
-        <Button variant="outline" size="sm" onClick={addSkill} className="shrink-0">
+        <Button variant="outline" size="sm" onClick={addSkill} className="shrink-0 border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
           <Plus className="mr-1 h-3.5 w-3.5" />
           Add
         </Button>
@@ -799,11 +849,11 @@ function SkillsEditor({
       {skills.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {skills.map((skill, idx) => (
-            <Badge key={idx} className="gap-1 pr-1">
+            <Badge key={idx} className="gap-1 border-white/[0.12] bg-white/[0.06] pr-1 text-slate-300">
               {skill}
               <button
                 onClick={() => removeSkill(idx)}
-                className="ml-1 rounded-full p-0.5 hover:bg-brand-200"
+                className="ml-1 rounded-full p-0.5 transition-colors hover:bg-red-500/20 hover:text-red-400"
                 aria-label={`Remove ${skill}`}
               >
                 <X className="h-3 w-3" />
@@ -859,7 +909,7 @@ function ProjectsEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
+          className="relative space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
@@ -870,7 +920,7 @@ function ProjectsEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-slate-400 hover:text-red-500"
+                className="h-6 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
               >
                 <Trash2 className="mr-1 h-3 w-3" />
                 Remove
@@ -884,12 +934,14 @@ function ProjectsEditor({
               value={item.name ?? ""}
               onChange={(e) => updateItem(idx, "name", e.target.value)}
               placeholder="My Awesome Project"
+              variant="dark"
             />
             <Input
               label="Technologies"
               value={item.technologies ?? ""}
               onChange={(e) => updateItem(idx, "technologies", e.target.value)}
               placeholder="React, Node.js, PostgreSQL"
+              variant="dark"
             />
             <div className="col-span-2">
               <Textarea
@@ -898,6 +950,7 @@ function ProjectsEditor({
                 onChange={(e) => updateItem(idx, "description", e.target.value)}
                 placeholder="Brief description of the project and your role…"
                 className="min-h-[70px]"
+                variant="dark"
               />
             </div>
             <div className="col-span-2">
@@ -906,13 +959,14 @@ function ProjectsEditor({
                 value={item.link ?? ""}
                 onChange={(e) => updateItem(idx, "link", e.target.value)}
                 placeholder="https://github.com/johndoe/project"
+                variant="dark"
               />
             </div>
           </div>
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem}>
+      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
         <Plus className="mr-1.5 h-4 w-4" />
         Add Project
       </Button>
@@ -962,7 +1016,7 @@ function CertificationsEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-xl border border-slate-100 bg-slate-50/50 p-4"
+          className="relative space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4"
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
@@ -973,7 +1027,7 @@ function CertificationsEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-slate-400 hover:text-red-500"
+                className="h-6 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
               >
                 <Trash2 className="mr-1 h-3 w-3" />
                 Remove
@@ -987,24 +1041,27 @@ function CertificationsEditor({
               value={item.name ?? ""}
               onChange={(e) => updateItem(idx, "name", e.target.value)}
               placeholder="AWS Solutions Architect"
+              variant="dark"
             />
             <Input
               label="Issuer"
               value={item.issuer ?? ""}
               onChange={(e) => updateItem(idx, "issuer", e.target.value)}
               placeholder="Amazon Web Services"
+              variant="dark"
             />
             <Input
               label="Date"
               value={item.date ?? ""}
               onChange={(e) => updateItem(idx, "date", e.target.value)}
               placeholder="Jun 2023"
+              variant="dark"
             />
           </div>
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem}>
+      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
         <Plus className="mr-1.5 h-4 w-4" />
         Add Certification
       </Button>
@@ -1065,20 +1122,21 @@ function LanguagesEditor({
             value={item.language ?? ""}
             onChange={(e) => updateItem(idx, "language", e.target.value)}
             placeholder="Spanish"
+            variant="dark"
           />
           <div className="w-full">
             {idx === 0 && (
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              <label className="mb-1.5 block text-sm font-medium text-slate-300">
                 Proficiency
               </label>
             )}
             <select
               value={item.proficiency ?? "Native"}
               onChange={(e) => updateItem(idx, "proficiency", e.target.value)}
-              className="flex h-10 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm transition-colors focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:ring-offset-1"
+              className="flex h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.05] px-3.5 py-2 text-sm text-white transition-colors focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
             >
               {proficiencyLevels.map((level) => (
-                <option key={level} value={level}>
+                <option key={level} value={level} className="bg-dark-100 text-white">
                   {level}
                 </option>
               ))}
@@ -1089,7 +1147,7 @@ function LanguagesEditor({
               variant="ghost"
               size="sm"
               onClick={() => removeItem(idx)}
-              className="mb-0.5 h-8 w-8 shrink-0 p-0 text-slate-400 hover:text-red-500"
+              className="mb-0.5 h-8 w-8 shrink-0 p-0 text-slate-500 hover:bg-red-500/10 hover:text-red-400"
             >
               <Trash2 className="h-3.5 w-3.5" />
             </Button>
@@ -1097,7 +1155,7 @@ function LanguagesEditor({
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem}>
+      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
         <Plus className="mr-1.5 h-4 w-4" />
         Add Language
       </Button>
