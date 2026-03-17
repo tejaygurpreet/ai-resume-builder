@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName, filterValidSkills } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -22,6 +23,7 @@ function hasContent(section: any): boolean {
   if (!c) return false;
   if (c.text && c.text.trim()) return true;
   if (c.fullName && c.fullName.trim()) return true;
+  if (c.firstName || c.lastName) return true;
   if (c.items && c.items.length > 0) return true;
   return false;
 }
@@ -41,7 +43,7 @@ export default function ModernTemplate({ sections, color }: TemplateProps) {
           <h1
             style={{ fontSize: "28px", fontWeight: 700, color, margin: 0, letterSpacing: "-0.5px", lineHeight: 1.2 }}
           >
-            {personal.content.fullName}
+            {getFullName(personal.content)}
           </h1>
           <div
             style={{
@@ -110,9 +112,9 @@ export default function ModernTemplate({ sections, color }: TemplateProps) {
                         {item.startDate}{item.endDate || item.current ? ` – ${item.current ? "Present" : item.endDate}` : ""}
                       </span>
                     </div>
-                    {item.bullets && item.bullets.length > 0 && (
-                      <ul style={{ margin: "4px 0 0 0", paddingLeft: "16px", listStyleType: "disc" }}>
-                        {item.bullets.map((b: string, i: number) => (
+                    {item.bullets && item.bullets.filter((b: string) => (b ?? "").trim()).length > 0 && (
+                      <ul style={{ margin: "8px 0 0 0", paddingLeft: "18px", listStyleType: "disc" }}>
+                        {item.bullets.filter((b: string) => (b ?? "").trim()).map((b: string, i: number) => (
                           <li key={i} style={{ fontSize: "10.5px", lineHeight: 1.55, color: "#444", marginBottom: "2px" }}>
                             {b}
                           </li>
@@ -130,7 +132,7 @@ export default function ModernTemplate({ sections, color }: TemplateProps) {
                   <div key={item.id} style={{ marginBottom: "8px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                       <div>
-                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#222" }}>{item.degree}</span>
+                        <span style={{ fontSize: "12px", fontWeight: 600, color: "#222" }}>{item.degree}{item.field ? ` in ${item.field}` : ""}</span>
                         {item.school && (
                           <span style={{ fontSize: "11px", color: "#555" }}> — {item.school}</span>
                         )}
@@ -152,7 +154,7 @@ export default function ModernTemplate({ sections, color }: TemplateProps) {
 
             {section.type === "skills" && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                {section.content.items.map((skill: string, i: number) => (
+                {filterValidSkills(section.content.items).map((skill: string, i: number) => (
                   <span
                     key={i}
                     style={{

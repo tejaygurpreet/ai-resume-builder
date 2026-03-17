@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -71,7 +72,7 @@ export default function BoldTemplate({ sections, color }: TemplateProps) {
               textTransform: "uppercase",
             }}
           >
-            {personal.content.fullName}
+            {getFullName(personal.content)}
           </h1>
           <div
             style={{

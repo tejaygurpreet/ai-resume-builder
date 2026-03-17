@@ -5,26 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
-  DndContext,
-  closestCenter,
-  type DragEndEvent,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import {
   ArrowLeft,
   ChevronDown,
+  ChevronRight,
+  ChevronLeft,
   Download,
   Sparkles,
   Palette,
   LayoutTemplate,
-  Check,
   Loader2,
   CloudOff,
   Cloud,
@@ -34,16 +22,18 @@ import {
   FileSignature,
   Search,
   FileSearch,
+  User,
+  Briefcase,
+  GraduationCap,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import ResumePreview from "@/components/resume/resume-preview";
 import { templates, templateRegistry, type TemplateName } from "@/components/resume/templates";
 import { TemplateGallery } from "@/components/resume/template-gallery";
 import { Modal } from "@/components/ui/modal";
 import { useResumeStore, type ResumeSection } from "@/hooks/use-resume-store";
 import { useAutosave } from "@/hooks/use-autosave";
-import { SortableSection } from "@/components/editor/sortable-section";
 import { SectionEditor } from "@/components/editor/section-editor";
 import {
   BulletGeneratorModal,
@@ -65,6 +55,7 @@ import {
 import { ExportModal } from "@/components/editor/export-modal";
 import { ResumeCompletionModal } from "@/components/editor/resume-completion-modal";
 import { validateResumeCompletion } from "@/lib/resume-validation";
+import { BUILDER_STEPS, type BuilderStepId } from "@/lib/builder-steps";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
@@ -81,6 +72,15 @@ const PRESET_COLORS = [
 
 const TEMPLATE_LABEL_MAP: Record<string, string> = {};
 templateRegistry.forEach((t) => { TEMPLATE_LABEL_MAP[t.id] = t.name; });
+
+const STEP_ICONS: Record<string, React.ElementType> = {
+  user: User,
+  "file-text": FileText,
+  briefcase: Briefcase,
+  "graduation-cap": GraduationCap,
+  sparkles: Sparkles,
+  "check-circle": CheckCircle2,
+};
 
 export default function BuilderPageWrapper() {
   return (
@@ -116,7 +116,6 @@ function BuilderPage() {
     updateTemplate,
     updateColor,
     removeSection,
-    reorderSections,
   } = useResumeStore();
 
   useAutosave();
@@ -125,6 +124,7 @@ function BuilderPage() {
 
   const previewRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
+  const [currentStep, setCurrentStep] = useState(0);
   const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
   const [colorOpen, setColorOpen] = useState(false);
   const [aiToolsOpen, setAiToolsOpen] = useState(false);
@@ -136,9 +136,7 @@ function BuilderPage() {
   const [exportsUsed, setExportsUsed] = useState(0);
   const [hasOneTimeExport, setHasOneTimeExport] = useState(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
-  );
+  const validation = validateResumeCompletion(sections);
 
   // Auth guard
   useEffect(() => {
@@ -223,7 +221,6 @@ function BuilderPage() {
     init();
   }, [resumeId, templateParam, exportParam, status, setResume, router]);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -235,24 +232,6 @@ function BuilderPage() {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
-
-  const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
-      if (!over || active.id === over.id) return;
-
-      const currentSections = [...(resume?.sections ?? [])];
-      const oldIndex = currentSections.findIndex((s) => s.id === active.id);
-      const newIndex = currentSections.findIndex((s) => s.id === over.id);
-      if (oldIndex === -1 || newIndex === -1) return;
-
-      const reordered = arrayMove(currentSections, oldIndex, newIndex).map(
-        (s, i) => ({ ...s, order: i })
-      );
-      reorderSections(reordered);
-    },
-    [resume?.sections, reorderSections]
-  );
 
   const handleExport = useCallback(
     (format: ExportFormat, filename: string) => {
@@ -278,6 +257,24 @@ function BuilderPage() {
     [resume.title, resume.template, resume.color, sections]
   );
 
+  const getSection = (type: string) => sections.find((s) => s.type === type);
+
+  const handleNext = () => {
+    if (currentStep < BUILDER_STEPS.length - 1) setCurrentStep((s) => s + 1);
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) setCurrentStep((s) => s - 1);
+  };
+
+  const handleExportClick = () => {
+    if (validation.isComplete) {
+      setExportOpen(true);
+    } else {
+      setCompletionModalOpen(true);
+    }
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-dark">
@@ -291,10 +288,13 @@ function BuilderPage() {
 
   if (!session) return null;
 
+  const step = BUILDER_STEPS[currentStep];
+  const isReviewStep = step.id === "review";
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-dark">
-      {/* ── Toolbar ─────────────────────────────────────────────── */}
-      <header className="z-30 flex shrink-0 items-center gap-2 border-b border-white/[0.06] bg-dark/90 backdrop-blur-xl px-4 py-2.5">
+      {/* Top bar */}
+      <header className="z-30 flex shrink-0 items-center gap-2 border-b border-white/[0.06] bg-dark/95 backdrop-blur-xl px-4 py-2.5">
         <Link
           href="/dashboard"
           className="mr-1 rounded-xl p-2 text-slate-500 transition-all duration-200 hover:bg-white/[0.05] hover:text-white"
@@ -303,54 +303,38 @@ function BuilderPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
 
-        {/* Title */}
         <input
           type="text"
           value={resume.title}
           onChange={(e) => updateTitle(e.target.value)}
-          className="min-w-0 max-w-[200px] rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-semibold text-white transition-all duration-200 hover:border-white/[0.1] focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          className="min-w-0 max-w-[180px] rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-semibold text-white transition-all duration-200 hover:border-white/[0.1] focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
           aria-label="Resume title"
         />
 
         <div className="mx-1 h-5 w-px bg-white/[0.08]" />
 
-        {/* Template selector */}
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => {
-            setTemplateGalleryOpen(true);
-            setColorOpen(false);
-            setAiToolsOpen(false);
-          }}
+          onClick={() => setTemplateGalleryOpen(true)}
           className="gap-1.5 text-slate-400"
         >
           <LayoutTemplate className="h-4 w-4" />
-          <span className="hidden sm:inline">
-            {TEMPLATE_LABEL_MAP[resume.template] ?? "Template"}
-          </span>
+          <span className="hidden sm:inline">{TEMPLATE_LABEL_MAP[resume.template] ?? "Template"}</span>
           <ChevronDown className="h-3 w-3" />
         </Button>
 
-        {/* Color picker */}
         <div className="relative" data-dropdown>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setColorOpen((o) => !o);
-              setAiToolsOpen(false);
-            }}
-          className="gap-1.5 text-slate-400"
-        >
+            onClick={() => setColorOpen((o) => !o)}
+            className="gap-1.5 text-slate-400"
+          >
             <Palette className="h-4 w-4" />
-            <span
-              className="h-4 w-4 rounded-full border border-white/[0.15]"
-              style={{ backgroundColor: resume.color }}
-            />
+            <span className="h-4 w-4 rounded-full border border-white/[0.15]" style={{ backgroundColor: resume.color }} />
             <ChevronDown className="h-3 w-3" />
           </Button>
-
           {colorOpen && (
             <div className="absolute left-0 top-full z-40 mt-1.5 w-56 rounded-xl border border-white/[0.08] bg-dark-100 p-3 shadow-glass-lg">
               <p className="mb-2 text-xs font-medium text-slate-500">Accent Color</p>
@@ -371,7 +355,6 @@ function BuilderPage() {
               <div className="flex items-center gap-2">
                 <label className="text-xs text-slate-500">Custom:</label>
                 <input type="color" value={resume.color} onChange={(e) => updateColor(e.target.value)} className="h-7 w-10 cursor-pointer rounded-lg border border-white/[0.1] bg-transparent" />
-                <span className="text-xs text-slate-500">{resume.color}</span>
               </div>
             </div>
           )}
@@ -379,177 +362,151 @@ function BuilderPage() {
 
         <div className="mx-1 h-5 w-px bg-white/[0.08]" />
 
-        {/* Completion badge */}
         <div
           className={cn(
             "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium",
-            validateResumeCompletion(sections).isComplete
-              ? "bg-emerald-500/15 text-emerald-400"
-              : "bg-amber-500/15 text-amber-400"
+            validation.isComplete ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"
           )}
         >
-          {validateResumeCompletion(sections).percentage}% Complete
+          {validation.percentage}% Complete
         </div>
 
-        {/* Save indicator */}
-        <div className="flex items-center gap-1.5 text-xs">
+        <div className="flex items-center gap-1.5 text-xs text-slate-500">
           {isSaving ? (
-            <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-500" />
-              <span className="text-brand-600">Saving…</span>
-            </>
+            <><Loader2 className="h-3.5 w-3.5 animate-spin text-brand-500" /><span className="text-brand-400">Saving…</span></>
           ) : isDirty ? (
-            <>
-              <CloudOff className="h-3.5 w-3.5 text-amber-500" />
-              <span className="text-amber-600">Unsaved changes</span>
-            </>
+            <><CloudOff className="h-3.5 w-3.5 text-amber-500" /><span className="text-amber-400">Unsaved</span></>
           ) : (
-            <>
-              <Cloud className="h-3.5 w-3.5 text-green-500" />
-              <span className="text-green-600">Saved</span>
-            </>
+            <><Cloud className="h-3.5 w-3.5 text-emerald-500" /><span className="text-emerald-400">Saved</span></>
           )}
         </div>
 
         <div className="flex-1" />
 
-        {/* AI Tools dropdown */}
         <div className="relative" data-dropdown>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setAiToolsOpen((o) => !o);
-              setColorOpen(false);
-            }}
-            className="gap-1.5 text-purple-600 hover:bg-purple-50 hover:text-purple-700"
-          >
+          <Button variant="ghost" size="sm" onClick={() => setAiToolsOpen((o) => !o)} className="gap-1.5 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300">
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">AI Tools</span>
             <ChevronDown className="h-3 w-3" />
           </Button>
-
           {aiToolsOpen && (
             <div className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-xl border border-white/[0.08] bg-dark-100 py-1 shadow-glass-lg">
-              <button
-                onClick={() => {
-                  setActiveModal("bullets");
-                  setAiToolsOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                <List className="h-4 w-4 text-violet-500" />
-                Generate Bullets
+              <button onClick={() => { setActiveModal("bullets"); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
+                <List className="h-4 w-4 text-violet-500" /> Generate Bullets
               </button>
-              <button
-                onClick={() => {
-                  setActiveModal("score");
-                  setAiToolsOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                <Target className="h-4 w-4 text-violet-500" />
-                Score Resume
+              <button onClick={() => { setActiveModal("score"); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
+                <Target className="h-4 w-4 text-violet-500" /> Score Resume
               </button>
-              <button
-                onClick={() => {
-                  setActiveModal("coverLetter");
-                  setAiToolsOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                <FileSignature className="h-4 w-4 text-violet-500" />
-                Generate Cover Letter
+              <button onClick={() => { setActiveModal("coverLetter"); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
+                <FileSignature className="h-4 w-4 text-violet-500" /> Generate Cover Letter
               </button>
-              <button
-                onClick={() => {
-                  setActiveModal("keywords");
-                  setAiToolsOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                <Search className="h-4 w-4 text-violet-500" />
-                Keyword Match
+              <button onClick={() => { setActiveModal("keywords"); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
+                <Search className="h-4 w-4 text-violet-500" /> Keyword Match
               </button>
-              <div className="mx-2 my-1 border-t border-slate-100" />
-              <button
-                onClick={() => {
-                  setTailorOpen(true);
-                  setAiToolsOpen(false);
-                }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                <FileSearch className="h-4 w-4 text-violet-500" />
-                Tailor for Job
-                {userPlan !== "pro" && (
-                  <span className="ml-auto rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
-                    PRO
-                  </span>
-                )}
+              <div className="mx-2 my-1 border-t border-white/[0.06]" />
+              <button onClick={() => { setTailorOpen(true); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
+                <FileSearch className="h-4 w-4 text-violet-500" /> Tailor for Job
+                {userPlan !== "pro" && <span className="ml-auto rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">PRO</span>}
               </button>
             </div>
           )}
         </div>
 
-        {/* Export */}
-        <Button
-          size="sm"
-          onClick={() => {
-            const validation = validateResumeCompletion(sections);
-            if (validation.isComplete) {
-              setExportOpen(true);
-            } else {
-              setCompletionModalOpen(true);
-            }
-          }}
-          className="gap-1.5"
-        >
+        <Button size="sm" onClick={handleExportClick} className="gap-1.5">
           <Download className="h-4 w-4" />
           <span className="hidden sm:inline">Export</span>
         </Button>
       </header>
 
-      {/* ── Main Content ────────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left: Editor Panel */}
-        <div className="flex w-[55%] flex-col overflow-y-auto border-r border-white/[0.06] bg-dark scrollbar-thin">
-          <div className="flex-1 space-y-3 p-4">
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={sections.map((s) => s.id)}
-                strategy={verticalListSortingStrategy}
+      {/* Step progress */}
+      <div className="shrink-0 border-b border-white/[0.06] bg-dark-50/50 px-4 py-2">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin">
+          {BUILDER_STEPS.map((s, i) => {
+            const Icon = STEP_ICONS[s.icon] ?? FileText;
+            const isActive = i === currentStep;
+            const isPast = i < currentStep;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setCurrentStep(i)}
+                className={cn(
+                  "flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                  isActive && "bg-brand-500/20 text-brand-300 ring-1 ring-brand-500/30",
+                  isPast && !isActive && "text-slate-400 hover:bg-white/[0.05] hover:text-white",
+                  !isActive && !isPast && "text-slate-500 hover:bg-white/[0.05] hover:text-slate-400"
+                )}
               >
-                {[...sections]
-                  .sort((a, b) => a.order - b.order)
-                  .map((section) => (
-                    <SortableSection
-                      key={section.id}
-                      id={section.id}
-                      type={section.type}
-                      onRemove={() => removeSection(section.id)}
-                    >
-                      <SectionEditor
-                        sectionId={section.id}
-                        type={section.type}
-                        content={section.content}
-                        resumeId={resume.id}
-                        isPro={userPlan === "pro"}
-                      />
-                    </SortableSection>
-                  ))}
-              </SortableContext>
-            </DndContext>
+                <Icon className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{s.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left: Guided editing panel */}
+        <div className="flex w-[50%] flex-col overflow-y-auto border-r border-white/[0.06] bg-dark scrollbar-thin">
+          <div className="flex-1 p-6">
+            {isReviewStep ? (
+              <ReviewStep
+                sections={sections}
+                validation={validation}
+                onExportClick={handleExportClick}
+                onGoToStep={(stepIndex) => setCurrentStep(stepIndex)}
+              />
+            ) : (
+              <div className="mx-auto max-w-xl">
+                <h2 className="mb-2 text-lg font-semibold text-white">{step.label}</h2>
+                <p className="mb-6 text-sm text-slate-400">
+                  {step.id === "personal" && "Enter your contact information. First name, last name, and email are required."}
+                  {step.id === "summary" && "Write a brief professional summary. Use AI to generate or improve it."}
+                  {step.id === "experience" && "Add your work history. Include job title, company, dates, and achievement bullets."}
+                  {step.id === "education" && "Add your education. School, degree, and dates are required."}
+                  {step.id === "skills" && "Add at least 3 professional skills. Use AI to suggest relevant skills."}
+                </p>
+                {getSection(step.id) && (
+                  <SectionEditor
+                    sectionId={getSection(step.id)!.id}
+                    type={step.id}
+                    content={getSection(step.id)!.content}
+                    resumeId={resume.id}
+                    isPro={userPlan === "pro"}
+                  />
+                )}
+              </div>
+            )}
           </div>
+
+          {/* Step navigation */}
+          {!isReviewStep && (
+            <div className="flex shrink-0 items-center justify-between border-t border-white/[0.06] px-6 py-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleBack}
+                disabled={currentStep === 0}
+                className="gap-1.5 border-white/[0.12] text-slate-400 hover:bg-white/[0.06] disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" /> Back
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleNext}
+                disabled={currentStep >= BUILDER_STEPS.length - 1}
+                className="gap-1.5"
+              >
+                {currentStep === BUILDER_STEPS.length - 2 ? "Review" : "Next"}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
         </div>
 
-        {/* Right: Live Preview + Panels */}
-        <div className="flex w-[45%] flex-col overflow-y-auto bg-dark p-6 scrollbar-thin">
-          <div className="mx-auto w-full max-w-[640px] space-y-5">
-            {/* Resume preview in premium off-white container */}
+        {/* Right: Live preview */}
+        <div className="flex w-[50%] flex-col overflow-y-auto bg-dark p-6 scrollbar-thin">
+          <div className="mx-auto w-full max-w-[600px] space-y-5">
             <div className="rounded-2xl border border-white/[0.08] bg-dark-50/50 p-6 shadow-glass">
               <div className="rounded-xl border border-white/[0.06] bg-[#fafaf9] p-4 shadow-inner" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
                 <ResumePreview
@@ -557,46 +514,35 @@ function BuilderPage() {
                   template={resume.template as TemplateName}
                   sections={sections}
                   color={resume.color}
-                  scale={0.6}
+                  scale={0.55}
                 />
               </div>
             </div>
-
-            {/* Analytics Panels */}
             <ResumeAnalyticsPanel sections={sections} />
             <ATSScorePanel sections={sections} />
           </div>
         </div>
       </div>
 
-      {/* ── Template Gallery Modal ──────────────────────────────── */}
-      <Modal
-        isOpen={templateGalleryOpen}
-        onClose={() => setTemplateGalleryOpen(false)}
-        title="Choose a Template"
-        size="xl"
-      >
+      <Modal isOpen={templateGalleryOpen} onClose={() => setTemplateGalleryOpen(false)} title="Choose a Template" size="xl">
         <div className="max-h-[70vh] overflow-y-auto -mx-2 px-2">
           <TemplateGallery
             selected={resume.template as TemplateName}
-            onSelect={(t) => {
-              updateTemplate(t);
-              setTemplateGalleryOpen(false);
-            }}
+            onSelect={(t) => { updateTemplate(t); setTemplateGalleryOpen(false); }}
             columns={3}
             selectionMode="direct"
           />
         </div>
       </Modal>
 
-      {/* ── Completion Modal (blocks export when incomplete) ──────── */}
       <ResumeCompletionModal
         isOpen={completionModalOpen}
         onClose={() => setCompletionModalOpen(false)}
-        validation={validateResumeCompletion(sections)}
+        validation={validation}
+        onGoToStep={(idx) => { setCurrentStep(idx); setCompletionModalOpen(false); }}
+        getStepForMissing={getStepForMissing}
       />
 
-      {/* ── Export Modal ─────────────────────────────────────────── */}
       <ExportModal
         isOpen={exportOpen}
         onClose={() => setExportOpen(false)}
@@ -609,29 +555,98 @@ function BuilderPage() {
         templateName={TEMPLATE_LABEL_MAP[resume.template] ?? resume.template}
       />
 
-      {/* ── AI Tool Modals ──────────────────────────────────────── */}
-      <BulletGeneratorModal
-        isOpen={activeModal === "bullets"}
-        onClose={() => setActiveModal(null)}
-      />
-      <ScoreModal
-        isOpen={activeModal === "score"}
-        onClose={() => setActiveModal(null)}
-      />
-      <CoverLetterModal
-        isOpen={activeModal === "coverLetter"}
-        onClose={() => setActiveModal(null)}
-      />
-      <KeywordMatchModal
-        isOpen={activeModal === "keywords"}
-        onClose={() => setActiveModal(null)}
-      />
-      <TailorResumeModal
-        isOpen={tailorOpen}
-        onClose={() => setTailorOpen(false)}
-        sections={sections}
-        isPro={userPlan === "pro"}
-      />
+      <BulletGeneratorModal isOpen={activeModal === "bullets"} onClose={() => setActiveModal(null)} />
+      <ScoreModal isOpen={activeModal === "score"} onClose={() => setActiveModal(null)} />
+      <CoverLetterModal isOpen={activeModal === "coverLetter"} onClose={() => setActiveModal(null)} />
+      <KeywordMatchModal isOpen={activeModal === "keywords"} onClose={() => setActiveModal(null)} />
+      <TailorResumeModal isOpen={tailorOpen} onClose={() => setTailorOpen(false)} sections={sections} isPro={userPlan === "pro"} />
+    </div>
+  );
+}
+
+function getStepForMissing(item: string): number | null {
+  if (item.includes("name") || item.includes("Email")) return 0;
+  if (item.includes("summary")) return 1;
+  if (item.includes("experience")) return 2;
+  if (item.includes("education")) return 3;
+  if (item.includes("skill")) return 4;
+  return null;
+}
+
+function ReviewStep({
+  sections,
+  validation,
+  onExportClick,
+  onGoToStep,
+}: {
+  sections: ResumeSection[];
+  validation: ReturnType<typeof validateResumeCompletion>;
+  onExportClick: () => void;
+  onGoToStep: (stepIndex: number) => void;
+}) {
+  return (
+    <div className="mx-auto max-w-xl space-y-8">
+      <h2 className="text-xl font-semibold text-white">Review & Export</h2>
+
+      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
+        <div className="mb-6 flex items-center justify-between">
+          <span className="text-sm font-medium text-slate-400">Resume Score</span>
+          <div className="flex items-center gap-2">
+            <div className="h-2 w-28 overflow-hidden rounded-full bg-white/10">
+              <div
+                className={cn(
+                  "h-full rounded-full transition-all",
+                  validation.percentage >= 100 ? "bg-emerald-500" : "bg-amber-500"
+                )}
+                style={{ width: `${validation.percentage}%` }}
+              />
+            </div>
+            <span className="text-sm font-bold text-white">{validation.percentage}%</span>
+          </div>
+        </div>
+
+        {validation.isComplete ? (
+          <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+            <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-400" />
+            <div>
+              <p className="font-medium text-emerald-300">Your resume is ready to export</p>
+              <p className="text-sm text-slate-400">Download as PDF, DOCX, or other formats.</p>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-amber-400">Complete these to export:</p>
+            <ul className="space-y-2">
+              {validation.missingItems.map((item) => {
+                const stepIdx = getStepForMissing(item);
+                return (
+                  <li key={item} className="flex items-center justify-between gap-2 text-sm text-slate-400">
+                    <span className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                      {item}
+                    </span>
+                    {stepIdx !== null && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onGoToStep(stepIdx)}
+                        className="h-7 shrink-0 text-xs text-brand-400 hover:bg-brand-500/10 hover:text-brand-300"
+                      >
+                        Go to step
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      <Button size="lg" onClick={onExportClick} className="w-full gap-2" disabled={!validation.isComplete}>
+        <Download className="h-5 w-5" />
+        {validation.isComplete ? "Export Resume" : "Complete Required Fields to Export"}
+      </Button>
     </div>
   );
 }

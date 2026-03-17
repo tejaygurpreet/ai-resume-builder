@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -67,7 +68,7 @@ export default function CompactTemplate({ sections, color }: TemplateProps) {
         <div style={{ marginBottom: "12px", borderBottom: `2px solid ${color}`, paddingBottom: "8px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#1a1a1a", margin: 0 }}>
-              {personal.content.fullName}
+              {getFullName(personal.content)}
             </h1>
             <div style={{ display: "flex", gap: "10px", fontSize: "9px", color: "#666" }}>
               {personal.content.email && <span>{personal.content.email}</span>}

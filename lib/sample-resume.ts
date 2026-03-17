@@ -4,6 +4,8 @@ export const sampleSections = [
     type: "personal",
     order: 0,
     content: {
+      firstName: "Alexandra",
+      lastName: "Chen",
       fullName: "Alexandra Chen",
       email: "alex.chen@email.com",
       phone: "(555) 123-4567",

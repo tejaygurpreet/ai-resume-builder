@@ -11,13 +11,16 @@ interface ResumeCompletionModalProps {
   isOpen: boolean;
   onClose: () => void;
   validation: ValidationResult;
-  onGoToSection?: () => void;
+  onGoToStep?: (stepIndex: number) => void;
+  getStepForMissing?: (item: string) => number | null;
 }
 
 export function ResumeCompletionModal({
   isOpen,
   onClose,
   validation,
+  onGoToStep,
+  getStepForMissing,
 }: ResumeCompletionModalProps) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Complete Your Resume" size="md">
@@ -54,15 +57,33 @@ export function ResumeCompletionModal({
           <div>
             <p className="mb-2 text-sm font-medium text-slate-300">Missing required fields</p>
             <ul className="space-y-2">
-              {validation.missingItems.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-slate-400"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
-                  {item}
-                </li>
-              ))}
+              {validation.missingItems.map((item) => {
+                const stepIdx = getStepForMissing?.(item);
+                return (
+                  <li
+                    key={item}
+                    className="flex items-center justify-between gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-sm text-slate-400"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
+                      {item}
+                    </span>
+                    {stepIdx != null && onGoToStep && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          onGoToStep(stepIdx);
+                          onClose();
+                        }}
+                        className="h-7 text-xs text-brand-400 hover:bg-brand-500/10 hover:text-brand-300"
+                      >
+                        Go to step
+                      </Button>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
         )}

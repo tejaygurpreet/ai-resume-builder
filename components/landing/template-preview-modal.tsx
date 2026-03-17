@@ -29,13 +29,23 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
 
   useEffect(() => {
     if (templateId) {
+      const scrollY = window.scrollY;
+      document.body.style.position = "fixed";
+      document.body.style.top = `-${scrollY}px`;
+      document.body.style.left = "0";
+      document.body.style.right = "0";
       document.body.style.overflow = "hidden";
       window.addEventListener("keydown", handleEscape);
+      return () => {
+        document.body.style.position = "";
+        document.body.style.top = "";
+        document.body.style.left = "";
+        document.body.style.right = "";
+        document.body.style.overflow = "";
+        window.scrollTo(0, scrollY);
+        window.removeEventListener("keydown", handleEscape);
+      };
     }
-    return () => {
-      document.body.style.overflow = "";
-      window.removeEventListener("keydown", handleEscape);
-    };
   }, [templateId, handleEscape]);
 
   const info = templateId ? templateRegistry.find((t) => t.id === templateId) : null;
@@ -50,25 +60,28 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
   const content = (
     <AnimatePresence>
       {templateId && info && TemplateComponent && (
-        <>
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          style={{ isolation: "isolate" }}
+        >
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-md"
+            className="absolute inset-0 bg-black/80 backdrop-blur-md"
             onClick={onClose}
             aria-hidden="true"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="fixed left-1/2 top-1/2 z-[100] w-[95vw] max-w-2xl -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/[0.08] bg-dark-100 p-6 shadow-2xl"
+            className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-dark-100 shadow-2xl"
           >
-            <div className="mb-4 flex items-center justify-between">
+            <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-6 py-4">
               <div>
                 <h3 className="text-xl font-bold text-white">{info.name}</h3>
                 <span className="text-xs font-medium capitalize text-slate-500">{info.category}</span>
@@ -82,15 +95,24 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
               </button>
             </div>
 
-            <p className="mb-6 text-sm text-slate-400">{info.description}</p>
+            <p className="shrink-0 px-6 py-3 text-sm text-slate-400">{info.description}</p>
 
-            <div className="mb-6 flex max-h-[min(60vh,500px)] justify-center overflow-auto rounded-2xl border border-white/[0.06] bg-[#fafaf9] p-4">
-              <div style={{ transform: "scale(0.5)", transformOrigin: "top center" }}>
-                <TemplateComponent sections={sampleSections} color={info.accent} />
+            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+              <div className="rounded-xl border border-white/[0.06] bg-[#fafaf9] p-4 shadow-inner">
+                <div
+                  className="mx-auto"
+                  style={{
+                    width: 794,
+                    transform: "scale(0.45)",
+                    transformOrigin: "top center",
+                  }}
+                >
+                  <TemplateComponent sections={sampleSections} color={info.accent} />
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex shrink-0 gap-3 border-t border-white/[0.06] px-6 py-4">
               {onUseTemplate ? (
                 <button
                   onClick={() => {
@@ -98,7 +120,7 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
                     onClose();
                   }}
                   className={cn(
-                    "inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-4 text-base font-bold text-white shadow-glow",
+                    "inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-3.5 text-base font-bold text-white shadow-glow",
                     "transition-all hover:-translate-y-[1px] hover:shadow-glow"
                   )}
                 >
@@ -109,7 +131,7 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
                   href={useHref}
                   onClick={onClose}
                   className={cn(
-                    "inline-flex flex-1 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-4 text-base font-bold text-white shadow-glow",
+                    "inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-6 py-3.5 text-base font-bold text-white shadow-glow",
                     "transition-all hover:-translate-y-[1px] hover:shadow-glow"
                   )}
                 >
@@ -118,13 +140,13 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
               )}
               <button
                 onClick={onClose}
-                className="rounded-2xl border border-white/[0.12] bg-white/[0.04] px-6 py-4 text-base font-semibold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white"
+                className="rounded-xl border border-white/[0.12] bg-white/[0.04] px-6 py-3.5 text-base font-semibold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white"
               >
                 Close
               </button>
             </div>
           </motion.div>
-        </>
+        </div>
       )}
     </AnimatePresence>
   );

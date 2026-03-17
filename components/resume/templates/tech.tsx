@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -88,7 +89,7 @@ export default function TechTemplate({ sections, color }: TemplateProps) {
         {personal && hasContent(personal) && (
           <div style={{ marginBottom: "24px" }}>
             <h1 style={{ fontSize: "20px", fontWeight: 700, margin: 0, lineHeight: 1.3, color: "#fff" }}>
-              {personal.content.fullName}
+              {getFullName(personal.content)}
             </h1>
             <div style={{ marginTop: "12px", fontSize: "9.5px", color: "rgba(255,255,255,0.8)", lineHeight: 2 }}>
               {personal.content.email && <div>{personal.content.email}</div>}

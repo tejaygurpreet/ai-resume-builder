@@ -55,17 +55,19 @@ function buildPrompt(type: GenerationType, data: Record<string, string>): string
 
     case "skills":
       return [
-        "Generate a resume skills section.",
+        "You are a professional resume writer. Generate a resume skills section.",
         "",
         "Rules:",
-        "- 10–15 skills",
-        "- mix of technical and soft skills",
-        "- optimized for ATS",
+        "- Return 8–12 real, professional skills only",
+        "- Use industry-standard skill names (e.g. JavaScript, Project Management, Agile)",
+        "- Mix technical and soft skills relevant to the role",
+        "- NO placeholder text, NO generic filler (e.g. 'skill 1', 'etc'), NO made-up skills",
+        "- Each skill should be 2–4 words max, commonly recognized by recruiters and ATS",
         "",
-        `Role: ${data.target_role || "Not provided"}`,
-        `Industry: ${data.industry || "Not provided"}`,
+        `Target Role: ${data.target_role || "Not specified"}`,
+        `Industry: ${data.industry || "Not specified"}`,
         "",
-        "Return only the skills as a comma-separated list.",
+        "Return ONLY a comma-separated list of skills. No numbering, bullets, or extra text.",
       ].join("\n");
 
     default:

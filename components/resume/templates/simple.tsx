@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -56,7 +57,7 @@ export default function SimpleTemplate({ sections, color }: TemplateProps) {
       {personal && hasContent(personal) && (
         <div style={{ marginBottom: "20px" }}>
           <h1 style={{ fontSize: "26px", fontWeight: 700, color, margin: 0 }}>
-            {personal.content.fullName}
+            {getFullName(personal.content)}
           </h1>
           <div
             style={{

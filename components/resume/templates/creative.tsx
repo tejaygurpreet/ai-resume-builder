@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -75,7 +76,7 @@ export default function CreativeTemplate({ sections, color }: TemplateProps) {
           }}
         >
           <h1 style={{ fontSize: "28px", fontWeight: 700, margin: 0, letterSpacing: "0.5px" }}>
-            {personal.content.fullName}
+            {getFullName(personal.content)}
           </h1>
           <div
             style={{

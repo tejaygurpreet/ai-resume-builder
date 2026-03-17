@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName, filterValidSkills } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -22,6 +23,7 @@ function hasContent(section: any): boolean {
   if (!c) return false;
   if (c.text && c.text.trim()) return true;
   if (c.fullName && c.fullName.trim()) return true;
+  if (c.firstName || c.lastName) return true;
   if (c.items && c.items.length > 0) return true;
   return false;
 }
@@ -58,7 +60,7 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
       {personal && hasContent(personal) && (
         <div style={{ marginBottom: "32px" }}>
           <h1 style={{ fontSize: "32px", fontWeight: 300, color, margin: 0, letterSpacing: "1px" }}>
-            {personal.content.fullName}
+            {getFullName(personal.content)}
           </h1>
           <div
             style={{
@@ -129,7 +131,7 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
                 {section.content.items.map((item: any) => (
                   <div key={item.id} style={{ marginBottom: "10px" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#222" }}>{item.degree}</span>
+                      <span style={{ fontSize: "12px", fontWeight: 500, color: "#222" }}>{item.degree}{item.field ? ` in ${item.field}` : ""}</span>
                       <span style={{ fontSize: "9.5px", color: "#aaa", letterSpacing: "0.5px" }}>
                         {item.startDate}{item.endDate ? ` — ${item.endDate}` : ""}
                       </span>
@@ -147,9 +149,9 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
 
             {section.type === "skills" && (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {section.content.items.map((skill: string, i: number) => (
+                {filterValidSkills(section.content.items).map((skill: string, i: number) => (
                   <span key={i} style={{ fontSize: "10px", color: "#666", fontWeight: 300, letterSpacing: "0.3px" }}>
-                    {skill}{i < section.content.items.length - 1 ? " ·" : ""}
+                    {skill}{i < filterValidSkills(section.content.items).length - 1 ? " ·" : ""}
                   </span>
                 ))}
               </div>

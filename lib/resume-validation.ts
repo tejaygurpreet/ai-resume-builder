@@ -4,6 +4,15 @@
 
 import type { ResumeSection } from "@/hooks/use-resume-store";
 
+function isValidSkill(s: string): boolean {
+  const t = (s ?? "").trim();
+  if (t.length < 2 || t.length > 40) return false;
+  if (/^\d+$/.test(t) || /^[^a-zA-Z]+$/.test(t)) return false;
+  const junk = ["skill", "example", "placeholder", "etc", "n/a", "tbd", "todo", "test"];
+  if (junk.some((j) => t.toLowerCase().includes(j))) return false;
+  return true;
+}
+
 export interface ValidationResult {
   isComplete: boolean;
   percentage: number;
@@ -69,10 +78,12 @@ export function validateResumeCompletion(sections: ResumeSection[]): ValidationR
     missing.push("At least one education entry with school name and degree/program");
   }
 
-  // Skills: at least 3
-  const skillItems = (skills?.items ?? []).filter((s: string) => (s ?? "").trim());
+  // Skills: at least 3 valid (no junk)
+  const skillItems = (skills?.items ?? [])
+    .filter((s: string) => (s ?? "").trim())
+    .filter((s: string) => isValidSkill(s));
   if (skillItems.length < 3) {
-    missing.push(`At least 3 skills (you have ${skillItems.length})`);
+    missing.push(`At least 3 valid skills (you have ${skillItems.length})`);
   }
 
   // Suggestions (optional improvements)

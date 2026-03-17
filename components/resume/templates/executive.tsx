@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -52,7 +53,7 @@ export default function ExecutiveTemplate({ sections, color }: TemplateProps) {
           }}
         >
           <h1 style={{ fontSize: "28px", fontWeight: 700, margin: 0, letterSpacing: "1px", textTransform: "uppercase" }}>
-            {personal.content.fullName}
+            {getFullName(personal.content)}
           </h1>
           <div
             style={{

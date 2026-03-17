@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown, Wand2 } from "lucide-react";
+import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown, Wand2, Copy, BarChart2, Minus } from "lucide-react";
 import { v4 as uuid } from "uuid";
 import { useResumeStore } from "@/hooks/use-resume-store";
 import { cn } from "@/lib/utils";
@@ -197,21 +197,23 @@ function PersonalEditor({
   };
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      <Input
-        label="First Name *"
-        value={firstName}
-        onChange={(e) => set("firstName", e.target.value)}
-        placeholder="John"
-        variant="dark"
-      />
-      <Input
-        label="Last Name *"
-        value={lastName}
-        onChange={(e) => set("lastName", e.target.value)}
-        placeholder="Doe"
-        variant="dark"
-      />
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="First Name *"
+          value={firstName}
+          onChange={(e) => set("firstName", e.target.value)}
+          placeholder="John"
+          variant="dark"
+        />
+        <Input
+          label="Last Name *"
+          value={lastName}
+          onChange={(e) => set("lastName", e.target.value)}
+          placeholder="Doe"
+          variant="dark"
+        />
+      </div>
       <Input
         label="Email *"
         type="email"
@@ -220,49 +222,54 @@ function PersonalEditor({
         placeholder="john@example.com"
         variant="dark"
       />
-      <Input
-        label="Phone"
-        type="tel"
-        value={content.phone ?? ""}
-        onChange={(e) => set("phone", e.target.value)}
-        placeholder="(555) 123-4567"
-        variant="dark"
-      />
-      <Input
-        label="Location"
-        value={content.location ?? ""}
-        onChange={(e) => set("location", e.target.value)}
-        placeholder="New York, NY"
-        variant="dark"
-      />
-      <Input
-        label="LinkedIn"
-        value={content.linkedin ?? ""}
-        onChange={(e) => set("linkedin", e.target.value)}
-        placeholder="linkedin.com/in/johndoe"
-        variant="dark"
-      />
-      <Input
-        label="GitHub"
-        value={content.github ?? ""}
-        onChange={(e) => set("github", e.target.value)}
-        placeholder="github.com/johndoe"
-        variant="dark"
-      />
-      <Input
-        label="Portfolio"
-        value={content.portfolio ?? ""}
-        onChange={(e) => set("portfolio", e.target.value)}
-        placeholder="portfolio.johndoe.dev"
-        variant="dark"
-      />
-      <Input
-        label="Website"
-        value={content.website ?? ""}
-        onChange={(e) => set("website", e.target.value)}
-        placeholder="johndoe.dev"
-        variant="dark"
-      />
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Phone"
+          type="tel"
+          value={content.phone ?? ""}
+          onChange={(e) => set("phone", e.target.value)}
+          placeholder="(555) 123-4567"
+          variant="dark"
+        />
+        <Input
+          label="Location"
+          value={content.location ?? ""}
+          onChange={(e) => set("location", e.target.value)}
+          placeholder="New York, NY"
+          variant="dark"
+        />
+      </div>
+      <p className="text-xs text-slate-500">Optional links for recruiters</p>
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="LinkedIn"
+          value={content.linkedin ?? ""}
+          onChange={(e) => set("linkedin", e.target.value)}
+          placeholder="linkedin.com/in/johndoe"
+          variant="dark"
+        />
+        <Input
+          label="GitHub"
+          value={content.github ?? ""}
+          onChange={(e) => set("github", e.target.value)}
+          placeholder="github.com/johndoe"
+          variant="dark"
+        />
+        <Input
+          label="Portfolio"
+          value={content.portfolio ?? ""}
+          onChange={(e) => set("portfolio", e.target.value)}
+          placeholder="portfolio.johndoe.dev"
+          variant="dark"
+        />
+        <Input
+          label="Website"
+          value={content.website ?? ""}
+          onChange={(e) => set("website", e.target.value)}
+          placeholder="johndoe.dev"
+          variant="dark"
+        />
+      </div>
     </div>
   );
 }
@@ -282,6 +289,7 @@ function SummaryEditor({
 }) {
   const { generate, loading, error, clearError } = useAIGenerate();
   const resume = useResumeStore((s) => s.resume);
+  const [transformLoading, setTransformLoading] = useState<"improve" | "shorten" | null>(null);
 
   const personal = resume.sections.find((s) => s.type === "personal")?.content;
   const skills = resume.sections.find((s) => s.type === "skills")?.content;
@@ -304,24 +312,84 @@ function SummaryEditor({
     }
   };
 
+  const handleTransform = async (action: "improve" | "shorten") => {
+    const text = (content.text ?? "").trim();
+    if (text.length < 20) {
+      toast.error("Write at least 20 characters before improving or shortening.");
+      return;
+    }
+    if (!resumeId) {
+      toast.error("Save your resume first.");
+      return;
+    }
+    setTransformLoading(action);
+    try {
+      const res = await fetch("/api/ai/summary-transform", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ summary: text, action, resumeId }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        if (json.limitReached) toast.error("Free limit reached — upgrade to Pro.");
+        else toast.error(json.error || "Failed to transform.");
+        return;
+      }
+      if (json.result) {
+        onChange({ ...content, text: json.result });
+        if (json.remaining != null) toast.success(`Done! ${json.remaining} free AI uses left.`);
+        else toast.success("Done!");
+      }
+    } catch {
+      toast.error("AI failed. Please try again.");
+    } finally {
+      setTransformLoading(null);
+    }
+  };
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-300">Professional Summary</span>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
         <AIButton onClick={handleGenerate} loading={loading}>
-          Generate Summary
+          Generate
         </AIButton>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleTransform("improve")}
+          disabled={transformLoading !== null || !(content.text ?? "").trim()}
+          className="gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20"
+        >
+          {transformLoading === "improve" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+          Improve
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleTransform("shorten")}
+          disabled={transformLoading !== null || !(content.text ?? "").trim()}
+          className="gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20"
+        >
+          {transformLoading === "shorten" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Minus className="h-3.5 w-3.5" />}
+          Shorten
+        </Button>
       </div>
 
       <AIErrorBanner error={error} onDismiss={clearError} />
 
-      <Textarea
-        value={content.text ?? ""}
-        onChange={(e) => onChange({ ...content, text: e.target.value })}
-        placeholder="A brief summary of your professional background, key achievements, and career goals (at least 20 characters)…"
-        className="min-h-[120px]"
-        variant="dark"
-      />
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-slate-300">
+          Professional Summary <span className="text-amber-400">*</span>
+        </label>
+        <p className="mb-2 text-xs text-slate-500">3–4 lines highlighting your experience, skills, and value. At least 20 characters.</p>
+        <Textarea
+          value={content.text ?? ""}
+          onChange={(e) => onChange({ ...content, text: e.target.value })}
+          placeholder="Results-driven software engineer with 6+ years building scalable web applications. Passionate about clean code and mentoring teams."
+          className="min-h-[140px]"
+          variant="dark"
+        />
+      </div>
     </div>
   );
 }
@@ -405,6 +473,56 @@ function ExperienceEditor({
   };
 
   const [improvingBullet, setImprovingBullet] = useState<string | null>(null);
+  const [addingMetrics, setAddingMetrics] = useState<string | null>(null);
+
+  const duplicateItem = (index: number) => {
+    const item = items[index];
+    if (!item) return;
+    const newItem = { ...item, id: `exp-${uuid().slice(0, 8)}`,
+      bullets: [...(item.bullets ?? [])],
+    };
+    const updated = [...items];
+    updated.splice(index + 1, 0, newItem);
+    onChange({ ...content, items: updated });
+  };
+
+  const handleAddMetrics = async (itemIdx: number, bulletIdx: number) => {
+    const item = items[itemIdx];
+    const bullet = item?.bullets?.[bulletIdx];
+    if (!bullet || bullet.trim().length < 5) {
+      toast.error("Write at least a few words before adding metrics.");
+      return;
+    }
+    const key = `${itemIdx}-${bulletIdx}`;
+    setAddingMetrics(key);
+    try {
+      const res = await fetch("/api/ai/add-metrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bullet,
+          jobTitle: item.title || "",
+          resumeId,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        if (json.limitReached) toast.error("Free limit reached — upgrade to Pro.");
+        else toast.error(json.error || "Failed to add metrics.");
+        return;
+      }
+      if (json.result) {
+        const cleaned = json.result.replace(/^[-•*"]\s*/, "").replace(/["']$/, "").trim();
+        updateBullet(itemIdx, bulletIdx, cleaned);
+        if (json.remaining != null) toast.success(`Done! ${json.remaining} free AI uses left.`);
+        else toast.success("Metrics added!");
+      }
+    } catch {
+      toast.error("AI failed. Please try again.");
+    } finally {
+      setAddingMetrics(null);
+    }
+  };
 
   const handleGenerateBullets = async (idx: number) => {
     const item = items[idx];
@@ -489,10 +607,10 @@ function ExperienceEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4"
+          className="relative space-y-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
               Position {idx + 1}
             </span>
             <div className="flex items-center gap-2">
@@ -502,12 +620,22 @@ function ExperienceEditor({
               >
                 Generate Bullets
               </AIButton>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => duplicateItem(idx)}
+                className="h-7 px-2 text-xs text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                title="Duplicate job"
+              >
+                <Copy className="mr-1 h-3 w-3" />
+                Duplicate
+              </Button>
               {items.length > 1 && (
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => removeItem(idx)}
-                  className="h-6 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+                  className="h-7 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
                 >
                   <Trash2 className="mr-1 h-3 w-3" />
                   Remove
@@ -516,16 +644,16 @@ function ExperienceEditor({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Job Title"
+              label="Job Title *"
               value={item.title ?? ""}
               onChange={(e) => updateItem(idx, "title", e.target.value)}
               placeholder="Software Engineer"
               variant="dark"
             />
             <Input
-              label="Company"
+              label="Company *"
               value={item.company ?? ""}
               onChange={(e) => updateItem(idx, "company", e.target.value)}
               placeholder="Acme Inc."
@@ -538,7 +666,7 @@ function ExperienceEditor({
               placeholder="San Francisco, CA"
               variant="dark"
             />
-            <div className="flex items-end gap-3">
+            <div className="col-span-2 grid grid-cols-2 gap-4">
               <Input
                 label="Start Date"
                 value={item.startDate ?? ""}
@@ -567,20 +695,22 @@ function ExperienceEditor({
             I currently work here
           </label>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <span className="text-sm font-medium text-slate-300">
-              Bullet Points
+              Bullet Points <span className="text-amber-400">*</span>
             </span>
+            <p className="text-xs text-slate-500">Use action verbs and metrics. Start with strong verbs like Led, Achieved, Increased.</p>
             {(item.bullets ?? []).map((bullet: string, bi: number) => {
               const bulletKey = `${idx}-${bi}`;
               const isImproving = improvingBullet === bulletKey;
+              const isAddingMetrics = addingMetrics === bulletKey;
               return (
                 <div key={bi} className="flex items-start gap-2">
                   <span className="mt-2.5 text-slate-400">&bull;</span>
                   <Textarea
                     value={bullet}
                     onChange={(e) => updateBullet(idx, bi, e.target.value)}
-                    placeholder="Describe your accomplishment…"
+                    placeholder="Led migration of monolith to microservices, reducing deploy times by 70%"
                     className="min-h-[60px]"
                     variant="dark"
                   />
@@ -600,6 +730,23 @@ function ExperienceEditor({
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
                       ) : (
                         <Wand2 className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                    <button
+                      onClick={() => handleAddMetrics(idx, bi)}
+                      disabled={isAddingMetrics || !bullet.trim()}
+                      title="Add metrics with AI"
+                      className={cn(
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors",
+                        isAddingMetrics
+                          ? "border-purple-500/40 bg-purple-500/20"
+                          : "border-white/[0.1] text-purple-400 hover:border-purple-500/40 hover:bg-purple-500/10"
+                      )}
+                    >
+                      {isAddingMetrics ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
+                      ) : (
+                        <BarChart2 className="h-3.5 w-3.5" />
                       )}
                     </button>
                     {(item.bullets ?? []).length > 1 && (
@@ -629,9 +776,9 @@ function ExperienceEditor({
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
+      <Button variant="outline" size="sm" onClick={addItem} className="w-full border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
         <Plus className="mr-1.5 h-4 w-4" />
-        Add Position
+        Add Experience
       </Button>
     </div>
   );
@@ -664,6 +811,7 @@ function EducationEditor({
           id: `edu-${uuid().slice(0, 8)}`,
           degree: "",
           school: "",
+          field: "",
           location: "",
           startDate: "",
           endDate: "",
@@ -682,10 +830,10 @@ function EducationEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4"
+          className="relative space-y-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
               Education {idx + 1}
             </span>
             {items.length > 1 && (
@@ -701,19 +849,26 @@ function EducationEditor({
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Degree or Program"
+              label="Degree *"
               value={item.degree ?? ""}
               onChange={(e) => updateItem(idx, "degree", e.target.value)}
               placeholder="B.S. Computer Science"
               variant="dark"
             />
             <Input
-              label="School"
+              label="School *"
               value={item.school ?? ""}
               onChange={(e) => updateItem(idx, "school", e.target.value)}
               placeholder="MIT"
+              variant="dark"
+            />
+            <Input
+              label="Field / Program"
+              value={item.field ?? ""}
+              onChange={(e) => updateItem(idx, "field", e.target.value)}
+              placeholder="Software Engineering"
               variant="dark"
             />
             <Input
@@ -748,7 +903,7 @@ function EducationEditor({
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
+      <Button variant="outline" size="sm" onClick={addItem} className="w-full border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
         <Plus className="mr-1.5 h-4 w-4" />
         Add Education
       </Button>
@@ -757,6 +912,27 @@ function EducationEditor({
 }
 
 /* ─── Skills ───────────────────────────────────────────────────── */
+
+const SKILL_SUGGESTIONS_BY_ROLE: Record<string, string[]> = {
+  default: [
+    "JavaScript", "TypeScript", "React", "Node.js", "Python", "SQL",
+    "Project Management", "Agile", "Communication", "Problem Solving",
+    "AWS", "Docker", "Git", "REST APIs", "GraphQL",
+  ],
+  engineering: [
+    "TypeScript", "React", "Node.js", "Python", "PostgreSQL", "AWS",
+    "Docker", "Kubernetes", "CI/CD", "System Design", "REST APIs",
+    "GraphQL", "Unit Testing", "Code Review", "Agile",
+  ],
+  design: [
+    "Figma", "Adobe XD", "User Research", "Wireframing", "Prototyping",
+    "Design Systems", "Accessibility", "UI/UX", "Responsive Design",
+  ],
+  product: [
+    "Product Strategy", "Roadmap Planning", "Stakeholder Management",
+    "User Research", "Analytics", "A/B Testing", "Agile", "Jira",
+  ],
+};
 
 function SkillsEditor({
   content,
@@ -779,9 +955,22 @@ function SkillsEditor({
 
   const experience = resume.sections.find((s) => s.type === "experience")?.content;
 
+  const isValidSkill = (s: string): boolean => {
+    const t = s.trim();
+    if (t.length < 2 || t.length > 40) return false;
+    if (/^\d+$/.test(t) || /^[^a-zA-Z]+$/.test(t)) return false;
+    const junk = ["skill", "example", "placeholder", "etc", "n/a", "tbd", "todo"];
+    if (junk.some((j) => t.toLowerCase().includes(j))) return false;
+    return true;
+  };
+
   const addSkill = () => {
     const trimmed = inputValue.trim();
     if (!trimmed || skills.includes(trimmed)) return;
+    if (!isValidSkill(trimmed)) {
+      toast.error("Please enter a valid skill (2–40 characters, no placeholders)");
+      return;
+    }
     onChange({ ...content, items: [...skills, trimmed] });
     setInputValue("");
   };
@@ -812,7 +1001,8 @@ function SkillsEditor({
       const newSkills = result
         .split(",")
         .map((s: string) => s.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        .filter(isValidSkill);
 
       if (newSkills.length > 0) {
         const merged = Array.from(new Set([...skills, ...newSkills]));
@@ -821,45 +1011,86 @@ function SkillsEditor({
     }
   };
 
+  const targetRole = (experience?.items?.[0]?.title ?? "").toLowerCase();
+  const suggestionKey = targetRole.includes("engineer") || targetRole.includes("developer") ? "engineering"
+    : targetRole.includes("design") ? "design"
+    : targetRole.includes("product") ? "product"
+    : "default";
+  const suggestions = SKILL_SUGGESTIONS_BY_ROLE[suggestionKey] ?? SKILL_SUGGESTIONS_BY_ROLE.default;
+  const availableSuggestions = suggestions.filter((s) => !skills.includes(s));
+
+  const addSuggestion = (skill: string) => {
+    if (skills.includes(skill)) return;
+    onChange({ ...content, items: [...skills, skill] });
+  };
+
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium text-slate-300">Skills (at least 3 required)</span>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
         <AIButton onClick={handleGenerateSkills} loading={loading}>
-          Generate Skills
+          Suggest Skills
         </AIButton>
       </div>
 
       <AIErrorBanner error={error} onDismiss={clearError} />
 
-      <div className="flex gap-2">
-        <Input
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Type a skill and press Enter…"
-          variant="dark"
-        />
-        <Button variant="outline" size="sm" onClick={addSkill} className="shrink-0 border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
-          <Plus className="mr-1 h-3.5 w-3.5" />
-          Add
-        </Button>
+      <div>
+        <label className="mb-1.5 block text-sm font-medium text-slate-300">
+          Add skills <span className="text-amber-400">*</span>
+        </label>
+        <p className="mb-2 text-xs text-slate-500">At least 3 required. Type and press Enter, or click a suggestion.</p>
+        <div className="flex gap-2">
+          <Input
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="e.g. React, Project Management"
+            variant="dark"
+            className="flex-1"
+          />
+          <Button variant="outline" size="sm" onClick={addSkill} className="shrink-0 border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
+            <Plus className="mr-1 h-3.5 w-3.5" />
+            Add
+          </Button>
+        </div>
       </div>
 
-      {skills.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {skills.map((skill, idx) => (
-            <Badge key={idx} className="gap-1 border-white/[0.12] bg-white/[0.06] pr-1 text-slate-300">
-              {skill}
+      {availableSuggestions.length > 0 && (
+        <div>
+          <p className="mb-2 text-xs font-medium text-slate-500">Suggestions</p>
+          <div className="flex flex-wrap gap-2">
+            {availableSuggestions.slice(0, 12).map((skill) => (
               <button
-                onClick={() => removeSkill(idx)}
-                className="ml-1 rounded-full p-0.5 transition-colors hover:bg-red-500/20 hover:text-red-400"
-                aria-label={`Remove ${skill}`}
+                key={skill}
+                onClick={() => addSuggestion(skill)}
+                className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-brand-500/30 hover:bg-brand-500/10 hover:text-brand-300"
               >
-                <X className="h-3 w-3" />
+                + {skill}
               </button>
-            </Badge>
-          ))}
+            ))}
+          </div>
+        </div>
+      )}
+
+      {skills.length > 0 && (
+        <div>
+          <p className="mb-2 text-xs font-medium text-slate-500">
+            Your skills ({skills.length}/3 min)
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {skills.map((skill, idx) => (
+              <Badge key={idx} className="gap-1 border-white/[0.12] bg-white/[0.08] pr-1.5 py-1.5 text-slate-300">
+                {skill}
+                <button
+                  onClick={() => removeSkill(idx)}
+                  className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                  aria-label={`Remove ${skill}`}
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            ))}
+          </div>
         </div>
       )}
     </div>

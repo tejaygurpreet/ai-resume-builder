@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -123,10 +124,10 @@ export default function InfographicTemplate({ sections, color }: TemplateProps) 
                 letterSpacing: "1px",
               }}
             >
-              {getInitials(personal.content.fullName || "")}
+              {getInitials(getFullName(personal.content))}
             </div>
             <h1 style={{ fontSize: "20px", fontWeight: 700, margin: "0 0 4px", letterSpacing: "0.5px" }}>
-              {personal.content.fullName}
+              {getFullName(personal.content)}
             </h1>
           </div>
         )}

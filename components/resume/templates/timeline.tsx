@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
   sections: Array<{
@@ -106,7 +107,7 @@ export default function TimelineTemplate({ sections, color }: TemplateProps) {
       {personal && hasContent(personal) && (
         <div style={{ marginBottom: "20px", textAlign: "center" }}>
           <h1 style={{ fontSize: "30px", fontWeight: 800, color: "#1a1a1a", margin: 0, letterSpacing: "-0.5px" }}>
-            {personal.content.fullName}
+            {getFullName(personal.content)}
           </h1>
           <div
             style={{
