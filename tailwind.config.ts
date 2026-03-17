@@ -9,6 +9,27 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        dark: {
+          DEFAULT: "#030712",
+          50: "#0a1228",
+          100: "#0f1a35",
+          200: "#162040",
+          300: "#1c2b52",
+          400: "#243564",
+          500: "#2e4175",
+          600: "#384f8a",
+          700: "#4a64a0",
+          800: "#6b84b8",
+          900: "#94a7cc",
+        },
+        accent: {
+          blue: "#3b82f6",
+          cyan: "#06b6d4",
+          violet: "#8b5cf6",
+          indigo: "#6366f1",
+          electric: "#60a5fa",
+          glow: "#818cf8",
+        },
         brand: {
           50: "#eef2ff",
           100: "#e0e7ff",
@@ -51,14 +72,18 @@ const config: Config = {
       boxShadow: {
         soft: "0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)",
         card: "0 2px 8px -2px rgb(0 0 0 / 0.06), 0 4px 16px -4px rgb(0 0 0 / 0.04)",
-        "card-hover":
-          "0 8px 24px -8px rgb(0 0 0 / 0.08), 0 16px 40px -12px rgb(0 0 0 / 0.06)",
-        glow: "0 0 20px -4px rgb(99 102 241 / 0.25)",
-        "glow-lg": "0 0 40px -8px rgb(99 102 241 / 0.3)",
+        "card-hover": "0 8px 24px -8px rgb(0 0 0 / 0.08), 0 16px 40px -12px rgb(0 0 0 / 0.06)",
+        glow: "0 0 20px -4px rgb(99 102 241 / 0.35)",
+        "glow-lg": "0 0 60px -12px rgb(99 102 241 / 0.4)",
+        "glow-cyan": "0 0 40px -8px rgb(6 182 212 / 0.3)",
+        "glow-violet": "0 0 40px -8px rgb(139 92 246 / 0.3)",
+        "glass": "0 8px 32px 0 rgb(0 0 0 / 0.12)",
+        "glass-lg": "0 16px 48px 0 rgb(0 0 0 / 0.16)",
+        "neon": "0 0 5px rgb(99 102 241 / 0.4), 0 0 20px rgb(99 102 241 / 0.2), 0 0 40px rgb(99 102 241 / 0.1)",
       },
       keyframes: {
         "fade-up": {
-          "0%": { opacity: "0", transform: "translateY(16px)" },
+          "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
         "fade-in": {
@@ -66,7 +91,7 @@ const config: Config = {
           "100%": { opacity: "1" },
         },
         "scale-in": {
-          "0%": { opacity: "0", transform: "scale(0.96)" },
+          "0%": { opacity: "0", transform: "scale(0.95)" },
           "100%": { opacity: "1", transform: "scale(1)" },
         },
         shimmer: {
@@ -74,21 +99,52 @@ const config: Config = {
           "100%": { backgroundPosition: "200% 0" },
         },
         float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-8px)" },
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-12px)" },
+        },
+        "float-slow": {
+          "0%, 100%": { transform: "translateY(0px) rotate(0deg)" },
+          "50%": { transform: "translateY(-8px) rotate(1deg)" },
+        },
+        "pulse-glow": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "0.8" },
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
         },
         progress: {
           from: { width: "0%" },
           to: { width: "100%" },
         },
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
       },
       animation: {
-        "fade-up": "fade-up 0.5s ease-out",
+        "fade-up": "fade-up 0.6s ease-out",
         "fade-in": "fade-in 0.4s ease-out",
         "scale-in": "scale-in 0.3s ease-out",
         shimmer: "shimmer 2.5s linear infinite",
         float: "float 6s ease-in-out infinite",
+        "float-slow": "float-slow 8s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 4s ease-in-out infinite",
+        "spin-slow": "spin-slow 20s linear infinite",
         progress: "progress 2.5s linear",
+        "gradient-x": "gradient-x 3s ease infinite",
+      },
+      backgroundImage: {
+        "grid-dark": "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+        "grid-light": "linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)",
+        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
+      },
+      backgroundSize: {
+        "grid": "60px 60px",
+      },
+      height: {
+        "13": "3.25rem",
       },
     },
   },

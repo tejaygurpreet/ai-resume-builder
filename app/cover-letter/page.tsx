@@ -171,7 +171,7 @@ ${coverLetter
   }
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-dark">
       <Navbar />
 
       <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
@@ -180,7 +180,7 @@ ${coverLetter
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl">
+            <h1 className="text-2xl font-bold text-white sm:text-3xl">
               Cover Letter Generator
             </h1>
             <p className="mt-1 text-sm text-slate-500">
@@ -205,7 +205,7 @@ ${coverLetter
         <div className="grid gap-8 lg:grid-cols-2">
           {/* Input Form */}
           <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-slate-900">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
               <FileSignature className="h-5 w-5 text-brand-600" />
               Job Details
             </h2>
@@ -260,7 +260,7 @@ ${coverLetter
 
           {/* Output */}
           <div className="flex flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold text-slate-900">Preview</h2>
+            <h2 className="mb-4 text-lg font-semibold text-white">Preview</h2>
 
             {!coverLetter ? (
               <div className="flex flex-1 flex-col items-center justify-center py-16 text-center">

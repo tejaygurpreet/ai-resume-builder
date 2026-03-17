@@ -10,14 +10,14 @@ export const metadata: Metadata = {
 
 export default function TermsOfServicePage() {
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-dark">
       <Navbar />
 
       <main>
         {/* Page banner */}
-        <section className="border-b border-slate-200 bg-slate-50 px-4 py-16 sm:px-6 lg:px-8">
+        <section className="border-b border-white/[0.04] px-4 py-16 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
               Terms of Service
             </h1>
             <p className="mt-4 text-lg text-slate-600">

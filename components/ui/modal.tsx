@@ -52,31 +52,31 @@ function Modal({ isOpen, onClose, title, children, className, size = "md" }: Mod
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/60 backdrop-blur-md"
             onClick={onClose}
             aria-hidden="true"
           />
 
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            initial={{ opacity: 0, scale: 0.95, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            exit={{ opacity: 0, scale: 0.95, y: 12 }}
             transition={{ duration: 0.25, ease: [0.25, 0.4, 0.25, 1] }}
             role="dialog"
             aria-modal="true"
             aria-label={title}
             className={cn(
-              "relative z-10 w-full rounded-2xl border border-slate-200/80 bg-white p-6 shadow-card-hover",
+              "relative z-10 w-full rounded-2xl border border-white/[0.08] bg-dark-50 p-6 shadow-glass-lg",
               SIZE_CLASSES[size],
               className
             )}
           >
             {title && (
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-slate-900">{title}</h2>
+                <h2 className="text-lg font-semibold text-white">{title}</h2>
                 <button
                   onClick={onClose}
-                  className="rounded-xl p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600"
+                  className="rounded-xl p-1.5 text-slate-500 transition-all hover:bg-white/5 hover:text-white"
                   aria-label="Close"
                 >
                   <X className="h-5 w-5" />
@@ -87,7 +87,7 @@ function Modal({ isOpen, onClose, title, children, className, size = "md" }: Mod
             {!title && (
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600"
+                className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-500 transition-all hover:bg-white/5 hover:text-white"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />

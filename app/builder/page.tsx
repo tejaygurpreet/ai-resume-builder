@@ -84,9 +84,9 @@ export default function BuilderPageWrapper() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen items-center justify-center bg-surface">
+        <div className="flex h-screen items-center justify-center bg-dark">
           <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+            <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
             <p className="text-sm text-slate-500">Loading builder…</p>
           </div>
         </div>
@@ -255,9 +255,9 @@ function BuilderPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-surface">
+      <div className="flex h-screen items-center justify-center bg-dark">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+          <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
           <p className="text-sm text-slate-500">Loading builder…</p>
         </div>
       </div>
@@ -267,12 +267,12 @@ function BuilderPage() {
   if (!session) return null;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-surface">
+    <div className="flex h-screen flex-col overflow-hidden bg-dark">
       {/* ── Toolbar ─────────────────────────────────────────────── */}
-      <header className="z-30 flex shrink-0 items-center gap-2 border-b border-slate-200/60 bg-white/90 backdrop-blur-sm px-4 py-2.5 shadow-soft">
+      <header className="z-30 flex shrink-0 items-center gap-2 border-b border-white/[0.06] bg-dark/90 backdrop-blur-xl px-4 py-2.5">
         <Link
           href="/dashboard"
-          className="mr-1 rounded-xl p-2 text-slate-500 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700"
+          className="mr-1 rounded-xl p-2 text-slate-500 transition-all duration-200 hover:bg-white/[0.05] hover:text-white"
           aria-label="Back to dashboard"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -283,11 +283,11 @@ function BuilderPage() {
           type="text"
           value={resume.title}
           onChange={(e) => updateTitle(e.target.value)}
-          className="min-w-0 max-w-[200px] rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-semibold text-slate-900 transition-all duration-200 hover:border-slate-200 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          className="min-w-0 max-w-[200px] rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-semibold text-white transition-all duration-200 hover:border-white/[0.1] focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
           aria-label="Resume title"
         />
 
-        <div className="mx-1 h-5 w-px bg-slate-200" />
+        <div className="mx-1 h-5 w-px bg-white/[0.08]" />
 
         {/* Template selector */}
         <Button
@@ -298,7 +298,7 @@ function BuilderPage() {
             setColorOpen(false);
             setAiToolsOpen(false);
           }}
-          className="gap-1.5 text-slate-600"
+          className="gap-1.5 text-slate-400"
         >
           <LayoutTemplate className="h-4 w-4" />
           <span className="hidden sm:inline">
@@ -316,21 +316,19 @@ function BuilderPage() {
               setColorOpen((o) => !o);
               setAiToolsOpen(false);
             }}
-            className="gap-1.5 text-slate-600"
-          >
+          className="gap-1.5 text-slate-400"
+        >
             <Palette className="h-4 w-4" />
             <span
-              className="h-4 w-4 rounded-full border border-slate-200"
+              className="h-4 w-4 rounded-full border border-white/[0.15]"
               style={{ backgroundColor: resume.color }}
             />
             <ChevronDown className="h-3 w-3" />
           </Button>
 
           {colorOpen && (
-            <div className="absolute left-0 top-full z-40 mt-1.5 w-56 rounded-xl border border-slate-200/80 bg-white p-3 shadow-card-hover">
-              <p className="mb-2 text-xs font-medium text-slate-500">
-                Accent Color
-              </p>
+            <div className="absolute left-0 top-full z-40 mt-1.5 w-56 rounded-xl border border-white/[0.08] bg-dark-100 p-3 shadow-glass-lg">
+              <p className="mb-2 text-xs font-medium text-slate-500">Accent Color</p>
               <div className="mb-3 grid grid-cols-8 gap-1.5">
                 {PRESET_COLORS.map((color) => (
                   <button
@@ -338,9 +336,7 @@ function BuilderPage() {
                     onClick={() => updateColor(color)}
                     className={cn(
                       "h-7 w-7 rounded-full border-2 transition-all duration-200 hover:scale-110",
-                      resume.color === color
-                        ? "border-slate-900 ring-2 ring-slate-900/20"
-                        : "border-transparent"
+                      resume.color === color ? "border-white ring-2 ring-white/20" : "border-transparent"
                     )}
                     style={{ backgroundColor: color }}
                     aria-label={`Color ${color}`}
@@ -349,19 +345,14 @@ function BuilderPage() {
               </div>
               <div className="flex items-center gap-2">
                 <label className="text-xs text-slate-500">Custom:</label>
-                <input
-                  type="color"
-                  value={resume.color}
-                  onChange={(e) => updateColor(e.target.value)}
-                  className="h-7 w-10 cursor-pointer rounded-lg border border-slate-200"
-                />
-                <span className="text-xs text-slate-400">{resume.color}</span>
+                <input type="color" value={resume.color} onChange={(e) => updateColor(e.target.value)} className="h-7 w-10 cursor-pointer rounded-lg border border-white/[0.1] bg-transparent" />
+                <span className="text-xs text-slate-500">{resume.color}</span>
               </div>
             </div>
           )}
         </div>
 
-        <div className="mx-1 h-5 w-px bg-slate-200" />
+        <div className="mx-1 h-5 w-px bg-white/[0.08]" />
 
         {/* Save indicator */}
         <div className="flex items-center gap-1.5 text-xs">
@@ -402,13 +393,13 @@ function BuilderPage() {
           </Button>
 
           {aiToolsOpen && (
-            <div className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-xl border border-slate-200/80 bg-white py-1 shadow-card-hover">
+            <div className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-xl border border-white/[0.08] bg-dark-100 py-1 shadow-glass-lg">
               <button
                 onClick={() => {
                   setActiveModal("bullets");
                   setAiToolsOpen(false);
                 }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
               >
                 <List className="h-4 w-4 text-violet-500" />
                 Generate Bullets
@@ -418,7 +409,7 @@ function BuilderPage() {
                   setActiveModal("score");
                   setAiToolsOpen(false);
                 }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
               >
                 <Target className="h-4 w-4 text-violet-500" />
                 Score Resume
@@ -428,7 +419,7 @@ function BuilderPage() {
                   setActiveModal("coverLetter");
                   setAiToolsOpen(false);
                 }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
               >
                 <FileSignature className="h-4 w-4 text-violet-500" />
                 Generate Cover Letter
@@ -438,7 +429,7 @@ function BuilderPage() {
                   setActiveModal("keywords");
                   setAiToolsOpen(false);
                 }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
               >
                 <Search className="h-4 w-4 text-violet-500" />
                 Keyword Match
@@ -449,7 +440,7 @@ function BuilderPage() {
                   setTailorOpen(true);
                   setAiToolsOpen(false);
                 }}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-700 transition-colors hover:bg-slate-50"
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
               >
                 <FileSearch className="h-4 w-4 text-violet-500" />
                 Tailor for Job
@@ -473,7 +464,7 @@ function BuilderPage() {
       {/* ── Main Content ────────────────────────────────────────── */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Editor Panel */}
-        <div className="flex w-[55%] flex-col overflow-y-auto border-r border-slate-200/60 bg-surface scrollbar-thin">
+        <div className="flex w-[55%] flex-col overflow-y-auto border-r border-white/[0.06] bg-dark-50 scrollbar-thin">
           <div className="flex-1 space-y-3 p-4">
             <DndContext
               sensors={sensors}
@@ -508,7 +499,7 @@ function BuilderPage() {
         </div>
 
         {/* Right: Live Preview + Panels */}
-        <div className="flex w-[45%] flex-col overflow-y-auto bg-slate-100/80 p-6 scrollbar-thin">
+        <div className="flex w-[45%] flex-col overflow-y-auto bg-dark p-6 scrollbar-thin">
           <div className="mx-auto w-full max-w-[600px] space-y-4">
             <ResumePreview
               ref={previewRef}

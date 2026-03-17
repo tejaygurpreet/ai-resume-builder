@@ -22,25 +22,29 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-surface">
+    <div className="min-h-screen bg-dark">
       <Navbar />
 
-      <main className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto mb-12 max-w-2xl text-center">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200/60 bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+      <main className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="orb orb-blue absolute -top-20 left-1/4 h-[400px] w-[400px] animate-pulse-glow" />
+
+        <div className="relative mx-auto mb-14 max-w-2xl text-center">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-300">
             <Sparkles className="h-3.5 w-3.5" />
             {templateRegistry.length} Templates
           </span>
-          <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+          <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Resume Templates
           </h1>
-          <p className="mt-3 text-lg text-slate-600">
+          <p className="mt-3 text-lg text-slate-400">
             Choose from {templateRegistry.length} professionally designed,
             ATS-friendly templates. Click any template to start building.
           </p>
         </div>
 
-        <TemplateGallery onSelect={handleSelect} columns={4} />
+        <div className="relative">
+          <TemplateGallery onSelect={handleSelect} columns={4} />
+        </div>
       </main>
 
       <Footer />
