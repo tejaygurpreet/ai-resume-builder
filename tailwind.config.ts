@@ -10,8 +10,8 @@ const config: Config = {
     extend: {
       colors: {
         dark: {
-          DEFAULT: "#030712",
-          50: "#0a1228",
+          DEFAULT: "#010409",
+          50: "#0a0f1a",
           100: "#0f1a35",
           200: "#162040",
           300: "#1c2b52",
@@ -70,16 +70,17 @@ const config: Config = {
         "4xl": "1.5rem",
       },
       boxShadow: {
-        soft: "0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04)",
-        card: "0 2px 8px -2px rgb(0 0 0 / 0.06), 0 4px 16px -4px rgb(0 0 0 / 0.04)",
-        "card-hover": "0 8px 24px -8px rgb(0 0 0 / 0.08), 0 16px 40px -12px rgb(0 0 0 / 0.06)",
-        glow: "0 0 20px -4px rgb(99 102 241 / 0.35)",
-        "glow-lg": "0 0 60px -12px rgb(99 102 241 / 0.4)",
-        "glow-cyan": "0 0 40px -8px rgb(6 182 212 / 0.3)",
-        "glow-violet": "0 0 40px -8px rgb(139 92 246 / 0.3)",
-        "glass": "0 8px 32px 0 rgb(0 0 0 / 0.12)",
-        "glass-lg": "0 16px 48px 0 rgb(0 0 0 / 0.16)",
-        "neon": "0 0 5px rgb(99 102 241 / 0.4), 0 0 20px rgb(99 102 241 / 0.2), 0 0 40px rgb(99 102 241 / 0.1)",
+        soft: "0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06)",
+        card: "0 4px 24px -4px rgb(0 0 0 / 0.15), 0 0 0 1px rgb(0 0 0 / 0.03)",
+        "card-hover": "0 24px 48px -12px rgb(0 0 0 / 0.2), 0 0 0 1px rgb(99 102 241 / 0.1)",
+        glow: "0 0 30px -6px rgb(99 102 241 / 0.5), 0 0 60px -12px rgb(99 102 241 / 0.25)",
+        "glow-lg": "0 0 80px -16px rgb(99 102 241 / 0.5), 0 0 120px -24px rgb(139 92 246 / 0.2)",
+        "glow-cyan": "0 0 50px -10px rgb(34 211 238 / 0.4)",
+        "glow-violet": "0 0 50px -10px rgb(139 92 246 / 0.4)",
+        "glass": "0 12px 40px 0 rgb(0 0 0 / 0.25), 0 0 0 1px rgba(255,255,255,0.03)",
+        "glass-lg": "0 24px 64px 0 rgb(0 0 0 / 0.35), 0 0 0 1px rgba(255,255,255,0.04)",
+        neon: "0 0 8px rgb(99 102 241 / 0.5), 0 0 30px rgb(99 102 241 / 0.3), 0 0 60px rgb(99 102 241 / 0.15)",
+        "neon-hover": "0 0 12px rgb(99 102 241 / 0.6), 0 0 40px rgb(99 102 241 / 0.35), 0 0 80px rgb(99 102 241 / 0.2)",
       },
       keyframes: {
         "fade-up": {
@@ -107,8 +108,12 @@ const config: Config = {
           "50%": { transform: "translateY(-8px) rotate(1deg)" },
         },
         "pulse-glow": {
-          "0%, 100%": { opacity: "0.4" },
-          "50%": { opacity: "0.8" },
+          "0%, 100%": { opacity: "0.5" },
+          "50%": { opacity: "1" },
+        },
+        "float-strong": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-16px)" },
         },
         "spin-slow": {
           from: { transform: "rotate(0deg)" },
@@ -130,13 +135,14 @@ const config: Config = {
         shimmer: "shimmer 2.5s linear infinite",
         float: "float 6s ease-in-out infinite",
         "float-slow": "float-slow 8s ease-in-out infinite",
-        "pulse-glow": "pulse-glow 4s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
+        "float-strong": "float-strong 5s ease-in-out infinite",
         "spin-slow": "spin-slow 20s linear infinite",
         progress: "progress 2.5s linear",
         "gradient-x": "gradient-x 3s ease infinite",
       },
       backgroundImage: {
-        "grid-dark": "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+        "grid-dark": "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
         "grid-light": "linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px)",
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
       },

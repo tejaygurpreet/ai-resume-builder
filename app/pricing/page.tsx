@@ -82,7 +82,7 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-dark">
+    <div className="min-h-screen bg-[#010409]">
       <Navbar />
 
       <main className="relative overflow-hidden">

@@ -22,7 +22,7 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-dark">
+    <div className="min-h-screen bg-[#010409]">
       <Navbar />
 
       <main className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">

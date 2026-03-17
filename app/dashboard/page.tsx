@@ -95,7 +95,7 @@ export default function DashboardPage() {
     return (
       <>
         <Navbar />
-        <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-dark">
+        <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#010409]">
           <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
         </main>
       </>
@@ -118,7 +118,7 @@ export default function DashboardPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto min-h-[calc(100vh-4rem)] max-w-7xl bg-dark px-4 py-10 sm:px-6 lg:px-8">
+      <main className="mx-auto min-h-[calc(100vh-4rem)] max-w-7xl bg-[#010409] px-4 py-10 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
