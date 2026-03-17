@@ -14,13 +14,23 @@ import { cn } from "@/lib/utils";
 import { Check, Search } from "lucide-react";
 import { TemplatePreviewModal } from "@/components/landing/template-preview-modal";
 
+/** "direct" = click applies immediately (editor). "preview" = click opens preview modal first (templates page). */
+export type TemplateSelectionMode = "direct" | "preview";
+
 interface TemplateGalleryProps {
   selected?: TemplateName;
   onSelect: (template: TemplateName) => void;
   columns?: 2 | 3 | 4;
+  /** When "direct", clicking a card applies the template immediately. When "preview", opens modal first. */
+  selectionMode?: TemplateSelectionMode;
 }
 
-export function TemplateGallery({ selected, onSelect, columns = 3 }: TemplateGalleryProps) {
+export function TemplateGallery({
+  selected,
+  onSelect,
+  columns = 3,
+  selectionMode = "preview",
+}: TemplateGalleryProps) {
   const [category, setCategory] = useState<TemplateCategory | "all">("all");
   const [search, setSearch] = useState("");
   const [previewId, setPreviewId] = useState<string | null>(null);
@@ -37,6 +47,19 @@ export function TemplateGallery({ selected, onSelect, columns = 3 }: TemplateGal
   }, [category, search]);
 
   const gridClass = columns === 2 ? "grid-cols-1 sm:grid-cols-2" : columns === 4 ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+
+  const handleCardClick = (info: TemplateInfo) => {
+    if (selectionMode === "direct") {
+      onSelect(info.id as TemplateName);
+    } else {
+      setPreviewId(info.id);
+    }
+  };
+
+  const handleUseTemplate = (id: string) => {
+    onSelect(id as TemplateName);
+    setPreviewId(null);
+  };
 
   return (
     <div>
@@ -81,42 +104,53 @@ export function TemplateGallery({ selected, onSelect, columns = 3 }: TemplateGal
               key={info.id}
               info={info}
               isSelected={selected === info.id}
+              selectionMode={selectionMode}
+              isPreviewOpen={!!previewId}
               onSelect={() => onSelect(info.id as TemplateName)}
+              onClick={() => handleCardClick(info)}
               onPreview={() => setPreviewId(info.id)}
             />
           ))}
         </div>
       )}
 
-      <TemplatePreviewModal
-        templateId={previewId}
-        onClose={() => setPreviewId(null)}
-        onUseTemplate={(id) => {
-          onSelect(id as TemplateName);
-          setPreviewId(null);
-        }}
-      />
+      {selectionMode === "preview" && (
+        <TemplatePreviewModal
+          templateId={previewId}
+          onClose={() => setPreviewId(null)}
+          onUseTemplate={handleUseTemplate}
+        />
+      )}
     </div>
   );
 }
 
-function TemplateCard({ info, isSelected, onSelect, onPreview }: { info: TemplateInfo; isSelected: boolean; onSelect: () => void; onPreview: () => void }) {
+interface TemplateCardProps {
+  info: TemplateInfo;
+  isSelected: boolean;
+  selectionMode: TemplateSelectionMode;
+  isPreviewOpen: boolean;
+  onSelect: () => void;
+  onClick: () => void;
+  onPreview: () => void;
+}
+
+function TemplateCard({ info, isSelected, selectionMode, isPreviewOpen, onClick }: TemplateCardProps) {
   const TemplateComponent = templates[info.id];
   const previewScale = 0.22;
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
-      onClick={onPreview}
-      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPreview(); } }}
+    <button
+      type="button"
+      onClick={onClick}
       className={cn(
-        "group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl text-left",
+        "group relative flex w-full cursor-pointer flex-col overflow-hidden rounded-2xl text-left",
         "transition-all duration-300 ease-out",
-        "hover:-translate-y-3 hover:scale-[1.02] hover:shadow-glass-lg",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/50",
         isSelected
-          ? "border border-brand-500/60 ring-2 ring-brand-500/20 shadow-glow bg-white/[0.04]"
-          : "border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]"
+          ? "border-2 border-brand-500 ring-2 ring-brand-500/30 shadow-glow bg-white/[0.04]"
+          : "border border-white/[0.06] bg-white/[0.02]",
+        !isPreviewOpen && "hover:-translate-y-2 hover:shadow-glass-lg hover:border-white/[0.12] hover:bg-white/[0.04]"
       )}
     >
       {isSelected && (
@@ -125,27 +159,34 @@ function TemplateCard({ info, isSelected, onSelect, onPreview }: { info: Templat
         </div>
       )}
 
-      <div className="relative overflow-hidden bg-dark-100" style={{ height: 260 }}>
-        <div
-          style={{
-            width: 794, height: 1123,
-            transform: `scale(${previewScale})`,
-            transformOrigin: "top left",
-            position: "absolute", top: 0, left: "50%",
-            marginLeft: -(794 * previewScale) / 2,
-          }}
-        >
-          <TemplateComponent sections={sampleSections} color={info.accent} />
+      <div className="relative flex items-center justify-center overflow-hidden bg-dark-100" style={{ height: 260 }}>
+        <div style={{ transform: `scale(${previewScale})`, transformOrigin: "center center" }}>
+          <div
+            className={cn(
+              "transition-transform duration-300 ease-out",
+              !isPreviewOpen && "group-hover:scale-[1.04]"
+            )}
+          >
+            <TemplateComponent sections={sampleSections} color={info.accent} />
+          </div>
         </div>
 
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/50 group-hover:backdrop-blur-[1px]">
-          <span className={cn(
-            "flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-lg",
-            "translate-y-3 opacity-0 transition-all duration-300",
-            "group-hover:translate-y-0 group-hover:opacity-100",
-            isSelected ? "bg-brand-500 text-white" : "bg-white text-dark"
-          )}>
-            {isSelected ? (<><Check className="h-4 w-4" /> Selected</>) : "Use Template"}
+          <span
+            className={cn(
+              "flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-lg",
+              "translate-y-3 opacity-0 transition-all duration-300",
+              "group-hover:translate-y-0 group-hover:opacity-100",
+              isSelected ? "bg-brand-500 text-white" : "bg-white text-dark"
+            )}
+          >
+            {isSelected ? (
+              <>
+                <Check className="h-4 w-4" /> Selected
+              </>
+            ) : (
+              selectionMode === "direct" ? "Select Template" : "Use Template"
+            )}
           </span>
         </div>
       </div>
@@ -153,10 +194,12 @@ function TemplateCard({ info, isSelected, onSelect, onPreview }: { info: Templat
       <div className="border-t border-white/[0.06] px-4 py-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-white">{info.name}</h3>
-          <span className="rounded-full bg-white/[0.05] px-2.5 py-0.5 text-[10px] font-medium capitalize text-slate-500">{info.category}</span>
+          <span className="rounded-full bg-white/[0.05] px-2.5 py-0.5 text-[10px] font-medium capitalize text-slate-500">
+            {info.category}
+          </span>
         </div>
         <p className="mt-0.5 text-xs leading-tight text-slate-500">{info.description}</p>
       </div>
-    </div>
+    </button>
   );
 }

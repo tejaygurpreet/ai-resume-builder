@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { sampleSections } from "@/lib/sample-resume";
 import { templates, type TemplateName } from "@/components/resume/templates";
@@ -22,9 +21,8 @@ export function TemplatePreviewCard({ templateId, onPreview }: TemplatePreviewCa
   const previewScale = 0.22;
 
   return (
-    <motion.div
-      whileHover={{ scale: 1.03, y: -8 }}
-      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] transition-all duration-300 hover:border-white/[0.15] hover:shadow-[0_0_40px_-12px_rgba(99,102,241,0.25)]"
+    <div
+      className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02] transition-all duration-300 ease-out hover:-translate-y-2 hover:border-white/[0.15] hover:shadow-[0_0_40px_-12px_rgba(99,102,241,0.3)]"
     >
       <div
         role="button"
@@ -38,24 +36,21 @@ export function TemplatePreviewCard({ templateId, onPreview }: TemplatePreviewCa
         }}
         className="relative flex h-[240px] cursor-pointer items-center justify-center overflow-hidden bg-dark-100"
       >
-        <div
-          className="transition-transform duration-500 group-hover:scale-105"
-          style={{
-            width: 794,
-            height: 1123,
-            transform: `scale(${previewScale})`,
-            transformOrigin: "top left",
-            position: "absolute",
-            top: 0,
-            left: "50%",
-            marginLeft: -(794 * previewScale) / 2,
-          }}
-        >
-          <TemplateComponent sections={sampleSections} color={info.accent} />
+        <div className="flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-[1.04]">
+          <div
+            style={{
+              width: 794,
+              height: 1123,
+              transform: `scale(${previewScale})`,
+              transformOrigin: "center center",
+            }}
+          >
+            <TemplateComponent sections={sampleSections} color={info.accent} />
+          </div>
         </div>
 
         <div className="absolute inset-0 flex items-center justify-center bg-black/0 transition-all duration-300 group-hover:bg-black/50 group-hover:backdrop-blur-[1px]">
-          <span className="flex translate-y-3 items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-900 opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+          <span className="flex translate-y-3 items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-900 opacity-0 shadow-lg transition-all duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100">
             Use Template <ArrowRight className="h-4 w-4" />
           </span>
         </div>
@@ -79,6 +74,6 @@ export function TemplatePreviewCard({ templateId, onPreview }: TemplatePreviewCa
           Use <ArrowRight className="h-3.5 w-3.5" />
         </AuthCTA>
       </div>
-    </motion.div>
+    </div>
   );
 }

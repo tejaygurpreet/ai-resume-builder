@@ -584,6 +584,7 @@ function BuilderPage() {
               setTemplateGalleryOpen(false);
             }}
             columns={3}
+            selectionMode="direct"
           />
         </div>
       </Modal>

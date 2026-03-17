@@ -30,7 +30,6 @@ import { AnimatedStat } from "@/components/landing/animated-counter";
 import { TemplatePreviewCard } from "@/components/landing/template-preview-card";
 import { TemplatePreviewModal } from "@/components/landing/template-preview-modal";
 import { templateRegistry } from "@/components/resume/templates";
-import { TEMPLATE_CATEGORIES, type TemplateCategory } from "@/lib/template-config";
 import { cn } from "@/lib/utils";
 
 const features = [
@@ -56,6 +55,9 @@ const faqItems = [
   { question: "Can I cancel anytime?", answer: "Yes. Cancel your Pro subscription at any time. Keep access until the end of your billing period." },
 ];
 
+/** 6 featured templates for homepage - one per major category */
+const FEATURED_TEMPLATE_IDS = ["modern", "professional", "minimal", "tech", "creative", "executive"] as const;
+
 const freePlanFeatures = ["AI resume builder", "3 AI generations per resume", "5 basic templates", "3 exports per month", "ATS scoring"];
 const proPlanFeatures = ["Unlimited AI generations", "All 50+ premium templates", "Unlimited exports — no ads", "Job description tailoring", "Cover letter generator", "ATS score analysis", "Priority support"];
 
@@ -79,13 +81,11 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function Home() {
-  const [templateFilter, setTemplateFilter] = useState<TemplateCategory | "all">("all");
   const [previewTemplateId, setPreviewTemplateId] = useState<string | null>(null);
 
-  const filteredTemplates = useMemo(() => {
-    if (templateFilter === "all") return templateRegistry;
-    return templateRegistry.filter((t) => t.category === templateFilter);
-  }, [templateFilter]);
+  const featuredTemplates = useMemo(() => {
+    return FEATURED_TEMPLATE_IDS.map((id) => templateRegistry.find((t) => t.id === id)).filter(Boolean);
+  }, []);
 
   return (
     <div className="min-h-screen">
@@ -232,7 +232,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ═══ TEMPLATES — Real previews, 50 templates, filter ═══ */}
+      {/* ═══ TEMPLATES — 6 featured, curated section ═══ */}
       <section id="templates" className="relative section-darker py-36">
         <div className="divider-wave divider-wave-dark-top" />
         <div className="orb orb-blue absolute -left-40 top-1/3 h-[600px] w-[600px] animate-pulse-glow" />
@@ -247,39 +247,23 @@ export default function Home() {
             <p className="mt-5 text-xl text-slate-400">Recruiter-approved designs built for ATS compatibility.</p>
           </FadeUp>
 
-          <FadeUp className="mt-12 flex flex-wrap justify-center gap-2">
-            {TEMPLATE_CATEGORIES.map(({ key, label }) => (
-              <button
-                key={key}
-                onClick={() => setTemplateFilter(key)}
-                className={cn(
-                  "rounded-full px-4 py-2 text-xs font-semibold transition-all duration-200",
-                  templateFilter === key
-                    ? "bg-brand-500 text-white shadow-glow"
-                    : "border border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/[0.15] hover:bg-white/[0.06] hover:text-white"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </FadeUp>
-
-          <Stagger className="mt-12 grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {filteredTemplates.map((t) => (
-              <StaggerChild key={t.id}>
-                <TemplatePreviewCard templateId={t.id} onPreview={setPreviewTemplateId} />
-              </StaggerChild>
+          <Stagger className="mt-12 grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {featuredTemplates.map((t) => (
+              t && (
+                <StaggerChild key={t.id}>
+                  <TemplatePreviewCard templateId={t.id} onPreview={setPreviewTemplateId} />
+                </StaggerChild>
+              )
             ))}
           </Stagger>
 
           <FadeUp className="mt-16 text-center">
-            <AuthCTA
-              guestHref="/templates"
-              authHref="/templates"
+            <Link
+              href="/templates"
               className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-white/[0.12] bg-white/[0.04] px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:bg-white/[0.1] hover:border-white/[0.25] hover:-translate-y-[2px]"
             >
-              Browse All 50 Templates <ArrowRight className="h-5 w-5" />
-            </AuthCTA>
+              Explore All 50+ Templates <ArrowRight className="h-5 w-5" />
+            </Link>
           </FadeUp>
         </div>
       </section>
