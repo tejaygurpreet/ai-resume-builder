@@ -116,6 +116,13 @@ export const TEMPLATE_CONFIGS: TemplateConfig[] = [
   { id: "twocolumn", name: "Two Column", category: "modern", description: "Equal split with clean divider", baseTemplate: "twocolumn", accent: "#2563eb" },
 ];
 
+/** First 10 templates available to Free users. All others require Pro. */
+export const FREE_TEMPLATE_IDS: string[] = TEMPLATE_CONFIGS.slice(0, 10).map((c) => c.id);
+
+export function isFreeTemplate(templateId: string): boolean {
+  return FREE_TEMPLATE_IDS.includes(templateId);
+}
+
 export const TEMPLATE_CATEGORIES: { key: TemplateCategory | "all"; label: string }[] = [
   { key: "all", label: "All" },
   { key: "modern", label: "Modern" },

@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Plus, Pencil, Trash2, Download, FileText, Loader2, Sparkles, LayoutTemplate, Copy,
+  Plus, Pencil, Trash2, Download, FileText, Loader2, Sparkles, LayoutTemplate, Copy, Crown,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
 import { formatDate } from "@/lib/utils";
 import { templateRegistry } from "@/components/resume/templates";
+import { PLANS } from "@/lib/stripe";
 
 const TEMPLATE_LABELS: Record<string, string> = {};
 templateRegistry.forEach((t) => { TEMPLATE_LABELS[t.id] = t.name; });
@@ -97,17 +98,39 @@ export default function DashboardPage() {
   }
 
   const isPro = subscription?.plan === "pro";
+  const hasOneTimeExport = !!subscription?.oneTimeExport;
+  const exportsUsed = subscription?.exportsUsed ?? 0;
+  const maxExports = PLANS.free.maxExportsPerMonth;
 
   return (
     <>
       <Navbar />
       <main className="mx-auto min-h-[calc(100vh-4rem)] max-w-7xl bg-[#010409] px-4 py-10 sm:px-6 lg:px-8">
+        {!isPro && !hasOneTimeExport && (
+          <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-slate-400">
+                Free plan: {exportsUsed}/{maxExports} exports used this month
+              </span>
+              <Link href="/pricing">
+                <Badge className="cursor-pointer bg-purple-500/20 text-purple-300 hover:bg-purple-500/30">
+                  <Crown className="mr-1 h-3 w-3" /> Upgrade to Pro
+                </Badge>
+              </Link>
+            </div>
+            <Link href="/pricing">
+              <Button size="sm" variant="outline" className="border-white/[0.12] text-slate-300">
+                Upgrade
+              </Button>
+            </Link>
+          </div>
+        )}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">My Resumes</h1>
               <Badge variant={isPro ? "success" : "default"}>
-                {isPro ? "Pro — $7/mo" : "Free Plan"}
+                {isPro ? "Pro — $7/mo" : "Free — 10 exports/mo"}
               </Badge>
             </div>
             <p className="mt-1 text-sm text-slate-500">

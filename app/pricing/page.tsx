@@ -11,36 +11,35 @@ import { Check, X, ChevronDown, Sparkles, Zap, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const freeFeatures = [
-  "AI resume builder",
-  "3 AI generations per resume",
+  "10 exports/month",
   "10 basic templates",
-  "10 exports per month",
-  "No ads on export",
+  "3 AI generations per resume",
+  "No ads",
   "PDF, DOCX, TXT, JSON, Markdown export",
 ];
 
 const proFeatures = [
   "Unlimited AI generations",
-  "All 50+ premium templates",
-  "Unlimited exports",
-  "Job description resume tailoring",
+  "All 20+ premium templates",
+  "Job tailoring",
   "Cover letter generator",
   "ATS score analysis",
-  "PDF, DOCX, TXT, JSON, Markdown export",
+  "Unlimited clean exports",
   "Priority support",
 ];
 
 const oneTimeFeatures = [
   "Unlimited exports forever",
-  "No ads on export",
-  "All export formats",
+  "No ads",
+  "All formats (PDF, DOCX, TXT, JSON, MD)",
+  "No Pro AI features",
 ];
 
 type ProInterval = "monthly" | "annual" | "lifetime";
 
 const proOptions: { id: ProInterval; label: string; price: string; badge?: string }[] = [
-  { id: "monthly", label: "Monthly", price: "$7" },
-  { id: "annual", label: "Annual", price: "$59/year", badge: "Best value — save 30%" },
+  { id: "monthly", label: "Monthly", price: "$7/month" },
+  { id: "annual", label: "Annual", price: "$59/year", badge: "Best value" },
   { id: "lifetime", label: "Lifetime", price: "$99 one-time" },
 ];
 
@@ -52,11 +51,11 @@ const comparisonCompetitors = [
 ];
 
 const faqItems = [
-  { question: "How does billing work?", answer: "The Free plan is always free with no credit card required. Pro is $7/month, $59/year (save 30%), or $99 lifetime. The One-Time Export is $19 for unlimited exports forever. Upgrade or downgrade anytime from your dashboard." },
+  { question: "How does billing work?", answer: "Free: $0/month – 10 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7/month or $59/year (best value) or $99 lifetime – unlimited AI, all 20+ premium templates, unlimited exports. One-Time Export: $19 one-time – unlimited exports forever, no ads, all formats (no Pro AI features)." },
   { question: "Can I cancel my Pro subscription anytime?", answer: "Yes, you can cancel your Pro subscription at any time with no questions asked. You'll continue to have access to Pro features until the end of your current billing period." },
-  { question: "What is the one-time export option?", answer: "Pay $19 once to unlock unlimited exports permanently. This gives you all export features without a subscription. Pro AI features (tailoring, cover letters, ATS) are not included." },
+  { question: "What is the one-time export option?", answer: "Pay $19 once to unlock unlimited exports permanently. This gives you all export formats (PDF, DOCX, TXT, JSON, Markdown) without a subscription. Pro AI features (tailoring, cover letters, ATS score) are not included." },
   { question: "What payment methods do you accept?", answer: "We accept all major credit cards (Visa, Mastercard, American Express) and debit cards through our secure payment processor, Stripe." },
-  { question: "Is there a free trial for Pro?", answer: "You can try our Free plan with no time limit — it includes AI features and 10 exports per month. Upgrade to Pro for $7/month for unlimited access. Cancel anytime." },
+  { question: "Is there a free trial for Pro?", answer: "You can try our Free plan with no time limit — it includes 10 exports/month, 10 basic templates, and 3 AI generations per resume. Upgrade to Pro for $7/month for unlimited access. Cancel anytime." },
 ];
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -218,7 +217,7 @@ export default function PricingPage() {
                 <Zap className="h-5 w-5 text-amber-400" />
                 <h3 className="text-xl font-semibold text-white">One-Time Export</h3>
               </div>
-              <p className="mt-1 text-sm text-slate-500">Pay once, export forever</p>
+              <p className="mt-1 text-sm text-slate-500">$19 one-time – unlimited exports forever, no ads, all formats</p>
               <p className="mt-6">
                 <span className="text-4xl font-extrabold text-white">$19</span>
                 <span className="ml-1 text-slate-500">one-time</span>
@@ -232,7 +231,7 @@ export default function PricingPage() {
                 ))}
                 <li className="flex items-center gap-3 text-sm text-slate-500">
                   <X className="h-5 w-5 flex-shrink-0 text-red-500" />
-                  Pro AI features not included
+                  No Pro AI features (tailoring, cover letter, ATS)
                 </li>
               </ul>
               <Button

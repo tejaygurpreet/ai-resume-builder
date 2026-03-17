@@ -7,12 +7,13 @@ import {
   type TemplateName,
   type TemplateInfo,
 } from "./templates";
-import { TEMPLATE_CATEGORIES } from "@/lib/template-config";
+import { TEMPLATE_CATEGORIES, isFreeTemplate } from "@/lib/template-config";
 import type { TemplateCategory } from "@/lib/template-config";
 import { sampleSections } from "@/lib/sample-resume";
 import { cn } from "@/lib/utils";
-import { Check, Search } from "lucide-react";
+import { Check, Search, Lock } from "lucide-react";
 import { TemplatePreviewModal } from "@/components/landing/template-preview-modal";
+import { UpgradeModal } from "@/components/ui/UpgradeModal";
 
 /** "direct" = click applies immediately (editor). "preview" = click opens preview modal first (templates page). */
 export type TemplateSelectionMode = "direct" | "preview";
@@ -23,6 +24,8 @@ interface TemplateGalleryProps {
   columns?: 2 | 3 | 4;
   /** When "direct", clicking a card applies the template immediately. When "preview", opens modal first. */
   selectionMode?: TemplateSelectionMode;
+  /** Free users see locked premium templates. Pro users see all. */
+  isPro?: boolean;
 }
 
 export function TemplateGallery({
@@ -30,10 +33,13 @@ export function TemplateGallery({
   onSelect,
   columns = 3,
   selectionMode = "preview",
+  isPro = false,
 }: TemplateGalleryProps) {
   const [category, setCategory] = useState<TemplateCategory | "all">("all");
   const [search, setSearch] = useState("");
   const [previewId, setPreviewId] = useState<string | null>(null);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [lockedTemplateName, setLockedTemplateName] = useState<string>("");
 
   const filtered = useMemo(() => {
     return templateRegistry.filter((t) => {
@@ -49,6 +55,11 @@ export function TemplateGallery({
   const gridClass = columns === 2 ? "grid-cols-1 sm:grid-cols-2" : columns === 4 ? "grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
 
   const handleCardClick = (info: TemplateInfo) => {
+    if (!isPro && !isFreeTemplate(info.id)) {
+      setLockedTemplateName(info.name);
+      setUpgradeOpen(true);
+      return;
+    }
     if (selectionMode === "direct") {
       onSelect(info.id as TemplateName);
     } else {
@@ -57,6 +68,13 @@ export function TemplateGallery({
   };
 
   const handleUseTemplate = (id: string) => {
+    const info = templateRegistry.find((t) => t.id === id);
+    if (!isPro && info && !isFreeTemplate(id)) {
+      setLockedTemplateName(info.name);
+      setUpgradeOpen(true);
+      setPreviewId(null);
+      return;
+    }
     onSelect(id as TemplateName);
     setPreviewId(null);
   };
@@ -106,6 +124,7 @@ export function TemplateGallery({
               isSelected={selected === info.id}
               selectionMode={selectionMode}
               isPreviewOpen={!!previewId}
+              isLocked={!isPro && !isFreeTemplate(info.id)}
               onSelect={() => onSelect(info.id as TemplateName)}
               onClick={() => handleCardClick(info)}
               onPreview={() => setPreviewId(info.id)}
@@ -113,6 +132,13 @@ export function TemplateGallery({
           ))}
         </div>
       )}
+
+      <UpgradeModal
+        isOpen={upgradeOpen}
+        onClose={() => setUpgradeOpen(false)}
+        reason="template_lock"
+        templateName={lockedTemplateName}
+      />
 
       {selectionMode === "preview" && (
         <TemplatePreviewModal
@@ -130,12 +156,13 @@ interface TemplateCardProps {
   isSelected: boolean;
   selectionMode: TemplateSelectionMode;
   isPreviewOpen: boolean;
+  isLocked?: boolean;
   onSelect: () => void;
   onClick: () => void;
   onPreview: () => void;
 }
 
-function TemplateCard({ info, isSelected, selectionMode, isPreviewOpen, onClick }: TemplateCardProps) {
+function TemplateCard({ info, isSelected, selectionMode, isPreviewOpen, isLocked, onClick }: TemplateCardProps) {
   const TemplateComponent = templates[info.id];
   const previewScale = 0.22;
 
@@ -158,6 +185,11 @@ function TemplateCard({ info, isSelected, selectionMode, isPreviewOpen, onClick 
           <Check className="h-4 w-4 text-white" />
         </div>
       )}
+      {isLocked && (
+        <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1 rounded-lg bg-slate-900/90 px-2 py-1 text-[10px] font-semibold text-amber-400">
+          <Lock className="h-3 w-3" /> Pro
+        </div>
+      )}
 
       <div className="relative flex items-center justify-center overflow-hidden bg-dark-100" style={{ height: 260 }}>
         <div style={{ transform: `scale(${previewScale})`, transformOrigin: "center center" }}>
@@ -177,12 +209,16 @@ function TemplateCard({ info, isSelected, selectionMode, isPreviewOpen, onClick 
               "flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-lg",
               "translate-y-3 opacity-0 transition-all duration-300",
               "group-hover:translate-y-0 group-hover:opacity-100",
-              isSelected ? "bg-brand-500 text-white" : "bg-white text-dark"
+              isSelected ? "bg-brand-500 text-white" : isLocked ? "bg-amber-500 text-white" : "bg-white text-dark"
             )}
           >
             {isSelected ? (
               <>
                 <Check className="h-4 w-4" /> Selected
+              </>
+            ) : isLocked ? (
+              <>
+                <Lock className="h-4 w-4" /> Unlock with Pro
               </>
             ) : (
               selectionMode === "direct" ? "Select Template" : "Use Template"

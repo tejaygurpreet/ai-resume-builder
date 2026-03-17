@@ -207,28 +207,27 @@ export function ExportModal({
           {!canExport && (
             <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
               <Crown className="h-3.5 w-3.5 flex-shrink-0" />
-              Monthly export limit reached ({exportsUsed}/{maxExports}).{" "}
-              <a href="/pricing" className="underline">Upgrade to Pro</a> or buy one-time export ($19).
+              You&apos;ve reached your 10 free exports this month. Upgrade to Pro for unlimited exports or One-Time Export ($19).
             </div>
           )}
 
           {isPro && (
             <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
               <Crown className="h-3.5 w-3.5 flex-shrink-0" />
-              Pro plan: Unlimited exports
+              Pro: Unlimited exports
             </div>
           )}
 
           {!isPro && hasOneTimeExport && (
             <div className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
               <Crown className="h-3.5 w-3.5 flex-shrink-0" />
-              One-time export: Unlimited exports
+              One-Time Export: Unlimited exports forever
             </div>
           )}
 
           {!isPro && !hasOneTimeExport && canExport && (
             <div className="flex items-center gap-2 rounded-lg border border-slate-500/30 bg-white/[0.03] px-3 py-2 text-xs text-slate-400">
-              Free plan: {exportsUsed}/{maxExports} exports used this month
+              Free: {exportsUsed}/{maxExports} exports used this month
             </div>
           )}
         </div>

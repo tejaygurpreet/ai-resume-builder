@@ -17,9 +17,10 @@ interface SectionEditorProps {
   content: any;
   resumeId?: string;
   isPro?: boolean;
+  onLimitReached?: () => void;
 }
 
-export function SectionEditor({ sectionId, type, content, resumeId, isPro }: SectionEditorProps) {
+export function SectionEditor({ sectionId, type, content, resumeId, isPro, onLimitReached }: SectionEditorProps) {
   const updateSection = useResumeStore((s) => s.updateSection);
 
   const update = useCallback(
@@ -31,13 +32,13 @@ export function SectionEditor({ sectionId, type, content, resumeId, isPro }: Sec
     case "personal":
       return <PersonalEditor content={content} onChange={update} />;
     case "summary":
-      return <SummaryEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} />;
+      return <SummaryEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} />;
     case "experience":
-      return <ExperienceEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} />;
+      return <ExperienceEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} />;
     case "education":
       return <EducationEditor content={content} onChange={update} />;
     case "skills":
-      return <SkillsEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} />;
+      return <SkillsEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} />;
     case "projects":
       return <ProjectsEditor content={content} onChange={update} />;
     case "certifications":
@@ -281,11 +282,13 @@ function SummaryEditor({
   onChange,
   resumeId,
   isPro,
+  onLimitReached,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
+  onLimitReached?: () => void;
 }) {
   const { generate, loading, error, clearError } = useAIGenerate();
   const resume = useResumeStore((s) => s.resume);
@@ -300,13 +303,17 @@ function SummaryEditor({
       ? `${experience.items.length} position(s)`
       : "Not specified";
 
-    const { result } = await generate("summary", {
+    const { result, limitReached } = await generate("summary", {
       name: personal?.fullName || [personal?.firstName, personal?.lastName].filter(Boolean).join(" ") || "",
       target_role: experience?.items?.[0]?.title || "",
       years_experience: yearsExp,
       skills: (skills?.items ?? []).filter(Boolean).join(", "),
     }, resumeId);
 
+    if (limitReached) {
+      onLimitReached?.();
+      return;
+    }
     if (result) {
       onChange({ ...content, text: result });
     }
@@ -331,8 +338,11 @@ function SummaryEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        if (json.limitReached) toast.error("Free limit reached — upgrade to Pro.");
-        else toast.error(json.error || "Failed to transform.");
+        if (json.limitReached) {
+          onLimitReached?.();
+          return;
+        }
+        toast.error(json.error || "Failed to transform.");
         return;
       }
       if (json.result) {
@@ -401,11 +411,13 @@ function ExperienceEditor({
   onChange,
   resumeId,
   isPro,
+  onLimitReached,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
+  onLimitReached?: () => void;
 }) {
   const { generate, loading, error, clearError } = useAIGenerate();
   const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
@@ -507,8 +519,11 @@ function ExperienceEditor({
       });
       const json = await res.json();
       if (!res.ok) {
-        if (json.limitReached) toast.error("Free limit reached — upgrade to Pro.");
-        else toast.error(json.error || "Failed to add metrics.");
+        if (json.limitReached) {
+          onLimitReached?.();
+          return;
+        }
+        toast.error(json.error || "Failed to add metrics.");
         return;
       }
       if (json.result) {
@@ -529,12 +544,16 @@ function ExperienceEditor({
     if (!item) return;
     setGeneratingIdx(idx);
 
-    const { result } = await generate("experience", {
+    const { result, limitReached } = await generate("experience", {
       job_title: item.title || "",
       company: item.company || "",
       responsibilities: (item.bullets ?? []).filter(Boolean).join("; ") || "General duties",
     }, resumeId);
 
+    if (limitReached) {
+      onLimitReached?.();
+      return;
+    }
     if (result) {
       const bullets = result
         .split("\n")
@@ -577,10 +596,10 @@ function ExperienceEditor({
 
       if (!res.ok) {
         if (json.limitReached) {
-          toast.error("Free limit reached — upgrade to Pro for unlimited AI.");
-        } else {
-          toast.error(json.error || "Failed to improve bullet.");
+          onLimitReached?.();
+          return;
         }
+        toast.error(json.error || "Failed to improve bullet.");
         return;
       }
 
@@ -939,11 +958,13 @@ function SkillsEditor({
   onChange,
   resumeId,
   isPro,
+  onLimitReached,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
+  onLimitReached?: () => void;
 }) {
   const { generate, loading, error, clearError } = useAIGenerate();
   const resume = useResumeStore((s) => s.resume);
@@ -992,11 +1013,15 @@ function SkillsEditor({
   const handleGenerateSkills = async () => {
     const targetRole = experience?.items?.[0]?.title || "";
 
-    const { result } = await generate("skills", {
+    const { result, limitReached } = await generate("skills", {
       target_role: targetRole,
       industry: "Technology",
     }, resumeId);
 
+    if (limitReached) {
+      onLimitReached?.();
+      return;
+    }
     if (result) {
       const newSkills = result
         .split(",")

@@ -91,7 +91,7 @@ export function TailorResumeModal({
 
       if (!res.ok) {
         if (json.proRequired) {
-          setError("Job tailoring is a Pro feature. Upgrade to unlock.");
+          setError("Job tailoring is a Pro feature. Upgrade for $7/month to unlock.");
         } else {
           setError(json.error || "Tailoring failed.");
         }
@@ -116,9 +116,9 @@ export function TailorResumeModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Tailor Resume for Job" size="lg">
       {!isPro && (
-        <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+        <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
           <Crown className="h-3.5 w-3.5 flex-shrink-0" />
-          This is a Pro feature. Upgrade to use job tailoring.
+          Job tailoring is a Pro feature. Upgrade for $7/month – unlimited AI, all templates, cover letter, ATS score.
         </div>
       )}
 

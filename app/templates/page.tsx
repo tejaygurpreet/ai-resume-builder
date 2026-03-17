@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/navbar";
@@ -12,6 +13,15 @@ import { Sparkles } from "lucide-react";
 export default function TemplatesPage() {
   const router = useRouter();
   const { status } = useSession();
+  const [isPro, setIsPro] = useState(false);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    fetch("/api/resumes")
+      .then((r) => r.json())
+      .then((d) => setIsPro(d.subscription?.plan === "pro"))
+      .catch(() => {});
+  }, [status]);
 
   function handleSelect(template: TemplateName) {
     if (status === "authenticated") {
@@ -38,12 +48,12 @@ export default function TemplatesPage() {
           </h1>
           <p className="mt-3 text-lg text-slate-400">
             Choose from {templateRegistry.length} professionally designed,
-            ATS-friendly templates. Click any template to start building.
+            ATS-friendly templates. Free: 10 basic templates. Pro: all 20+.
           </p>
         </div>
 
         <div className="relative">
-          <TemplateGallery onSelect={handleSelect} columns={4} />
+          <TemplateGallery onSelect={handleSelect} columns={4} isPro={isPro} />
         </div>
       </main>
 

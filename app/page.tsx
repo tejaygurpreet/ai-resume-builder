@@ -49,7 +49,7 @@ const testimonials = [
 
 const faqItems = [
   { question: "What is ResumeAI?", answer: "ResumeAI is an AI-powered resume builder that helps you create professional, ATS-optimized resumes in minutes using advanced language models." },
-  { question: "Is it free to use?", answer: "Yes! Our free plan includes AI-powered writing, 10 templates, and 10 exports per month with no ads. Upgrade to Pro for $7/month for unlimited access." },
+  { question: "Is it free to use?", answer: "Yes! Free: $0/month – 10 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7/month or $59/year or $99 lifetime – unlimited AI, all 20+ templates, job tailoring, cover letter, ATS score, unlimited exports." },
   { question: "Are the resumes ATS-compatible?", answer: "Absolutely. Every template uses clean formatting, standard section headings, and proper document structure to pass ATS systems." },
   { question: "How do you handle my data?", answer: "Your privacy is our top priority. All data is encrypted. We never sell your information. Delete your account and data at any time." },
   { question: "Can I cancel anytime?", answer: "Yes. Cancel your Pro subscription at any time. Keep access until the end of your billing period." },
@@ -58,13 +58,13 @@ const faqItems = [
 /** 6 featured templates for homepage - one per major category */
 const FEATURED_TEMPLATE_IDS = ["modern", "professional", "minimal", "tech", "creative", "executive"] as const;
 
-const freePlanFeatures = ["AI resume builder", "AI generations", "10 basic templates", "10 exports per month", "No ads", "ATS scoring"];
-const proPlanFeatures = ["Unlimited AI generations", "All 50+ premium templates", "Unlimited exports", "Job description tailoring", "Cover letter generator", "ATS score analysis", "Priority support"];
+const freePlanFeatures = ["$0/month", "10 exports/month", "10 basic templates", "3 AI generations per resume", "No ads", "All export formats"];
+const proPlanFeatures = ["Unlimited AI generations", "All 20+ premium templates", "Job tailoring", "Cover letter generator", "ATS score analysis", "Unlimited clean exports", "Priority support"];
 
 const stats = [
   { value: 50, suffix: "K+", label: "Resumes Created", icon: FileText },
   { value: 89, suffix: "%", label: "Interview Rate", icon: TrendingUp },
-  { value: 50, suffix: "+", label: "ATS Templates", icon: LayoutTemplate },
+  { value: 20, suffix: "+", label: "ATS Templates", icon: LayoutTemplate },
   { value: 4.9, suffix: "★", label: "User Rating", icon: Star },
 ];
 
@@ -262,7 +262,7 @@ export default function Home() {
               href="/templates"
               className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-white/[0.12] bg-white/[0.04] px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:bg-white/[0.1] hover:border-white/[0.25] hover:-translate-y-[2px]"
             >
-              Explore All 50+ Templates <ArrowRight className="h-5 w-5" />
+              Explore All 20+ Templates <ArrowRight className="h-5 w-5" />
             </Link>
           </FadeUp>
         </div>

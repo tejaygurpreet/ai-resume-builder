@@ -57,6 +57,7 @@ import { Button } from "@/components/ui/button";
 import { LivePreview } from "@/components/editor/live-preview";
 import { templateRegistry, type TemplateName } from "@/components/resume/templates";
 import { templates } from "@/components/resume/templates";
+import { isFreeTemplate } from "@/lib/template-config";
 import { TemplateGallery } from "@/components/resume/template-gallery";
 import { Modal } from "@/components/ui/modal";
 import { useResumeStore, formatTimeAgo, type ResumeSection } from "@/hooks/use-resume-store";
@@ -81,6 +82,7 @@ import {
 } from "@/components/editor/pdf-export";
 import { ExportModal } from "@/components/editor/export-modal";
 import { ResumeCompletionModal } from "@/components/editor/resume-completion-modal";
+import { UpgradeModal } from "@/components/ui/UpgradeModal";
 import { validateResumeCompletion } from "@/lib/resume-validation";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -106,11 +108,13 @@ function SortableSectionCard({
   resumeId,
   isPro,
   onTailor,
+  onLimitReached,
 }: {
   section: ResumeSection;
   resumeId?: string;
   isPro?: boolean;
   onTailor: () => void;
+  onLimitReached?: () => void;
 }) {
   const {
     attributes,
@@ -171,6 +175,7 @@ function SortableSectionCard({
           content={section.content}
           resumeId={resumeId}
           isPro={isPro}
+          onLimitReached={onLimitReached}
         />
       </div>
     </div>
@@ -240,6 +245,8 @@ function BuilderPage() {
   const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
   const [exportsUsed, setExportsUsed] = useState(0);
   const [hasOneTimeExport, setHasOneTimeExport] = useState(false);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeModalReason, setUpgradeModalReason] = useState<"ai_limit" | "export_limit">("export_limit");
 
   const validation = validateResumeCompletion(sections);
 
@@ -253,14 +260,12 @@ function BuilderPage() {
     const init = async () => {
       setLoading(true);
       try {
-        fetch("/api/resumes")
-          .then((r) => r.json())
-          .then((d) => {
-            if (d.subscription?.plan === "pro") setUserPlan("pro");
-            if (d.subscription?.exportsUsed) setExportsUsed(d.subscription.exportsUsed);
-            if (d.subscription?.oneTimeExport) setHasOneTimeExport(true);
-          })
-          .catch(() => {});
+        const subRes = await fetch("/api/resumes");
+        const subData = await subRes.json().catch(() => ({}));
+        if (subData.subscription?.plan === "pro") setUserPlan("pro");
+        if (subData.subscription?.exportsUsed != null) setExportsUsed(subData.subscription.exportsUsed);
+        if (subData.subscription?.oneTimeExport) setHasOneTimeExport(true);
+        const isPro = subData.subscription?.plan === "pro";
 
         if (resumeId) {
           const res = await fetch(`/api/resumes/${resumeId}`);
@@ -285,7 +290,7 @@ function BuilderPage() {
             return s;
           });
           setResume({ ...loaded, sections: secs });
-          if (templateParam && templateParam in templates) {
+          if (templateParam && templateParam in templates && (isPro || isFreeTemplate(templateParam))) {
             updateTemplate(templateParam as TemplateName);
           }
           if (exportParam === "1") {
@@ -306,7 +311,7 @@ function BuilderPage() {
           const data = await res.json();
           const created = data.resume ?? data;
           setResume({ ...created, sections: created.sections ?? [] });
-          if (templateParam && templateParam in templates) {
+          if (templateParam && templateParam in templates && (isPro || isFreeTemplate(templateParam))) {
             updateTemplate(templateParam as TemplateName);
           }
           router.replace(`/builder?id=${created.id}`);
@@ -367,9 +372,19 @@ function BuilderPage() {
     [resume.title, resume.template, resume.color, sections]
   );
 
+  const canExport = userPlan === "pro" || hasOneTimeExport || exportsUsed < 10;
+
   const handleExportClick = () => {
-    if (validation.isComplete) setExportOpen(true);
-    else setCompletionModalOpen(true);
+    if (!validation.isComplete) {
+      setCompletionModalOpen(true);
+      return;
+    }
+    if (!canExport) {
+      setUpgradeModalReason("export_limit");
+      setUpgradeModalOpen(true);
+      return;
+    }
+    setExportOpen(true);
   };
 
   if (status === "loading" || loading) {
@@ -492,6 +507,10 @@ function BuilderPage() {
                     resumeId={resume.id}
                     isPro={userPlan === "pro"}
                     onTailor={() => setTailorOpen(true)}
+                    onLimitReached={() => {
+                      setUpgradeModalReason("ai_limit");
+                      setUpgradeModalOpen(true);
+                    }}
                   />
                 ))}
               </div>
@@ -614,6 +633,7 @@ function BuilderPage() {
             }}
             columns={3}
             selectionMode="direct"
+            isPro={userPlan === "pro"}
           />
         </div>
       </Modal>
@@ -648,6 +668,12 @@ function BuilderPage() {
         sections={sections}
         isPro={userPlan === "pro"}
       />
+
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        reason={upgradeModalReason}
+      />
     </div>
   );
 }
@@ -660,4 +686,11 @@ function BuilderPage() {
  * 3. updateTemplate() in store updates resume.template + resume.color (from
  *    template accent). TemplateGallery/Modal/Templates page all call this.
  * 4. Export remains via top Export button only; no export UI in preview.
+ *
+ * === ALL PRICING BANNERS UPDATED + TEMPLATE LOCKS + LIMIT POPUPS + CONSISTENT LOGIC ===
+ * - 2026 plans: Free ($0, 10 exports/mo, 10 templates, 3 AI), Pro ($7/$59/$99), One-Time $19
+ * - Template locking: Free users get 10 basic templates; premium locked with upgrade popup
+ * - AI limit (3/resume): UpgradeModal when hit
+ * - Export limit (10/mo): UpgradeModal when hit
+ * - usePlan, UpgradeModal, useMembershipLimit centralize logic
  */
