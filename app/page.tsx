@@ -20,7 +20,12 @@ import {
   Zap,
   Shield,
   Users,
+  FileText,
+  TrendingUp,
+  LayoutTemplate,
 } from "lucide-react";
+import { HeroProductPreview } from "@/components/landing/hero-product-preview";
+import { AnimatedStat } from "@/components/landing/animated-counter";
 
 const features = [
   { Icon: Sparkles, title: "AI-Powered Writing", description: "AI crafts compelling bullet points and summaries tailored to your experience and target role.", color: "from-blue-500 to-cyan-400" },
@@ -60,10 +65,10 @@ const freePlanFeatures = ["AI resume builder", "3 AI generations per resume", "5
 const proPlanFeatures = ["Unlimited AI generations", "All 20+ premium templates", "Unlimited exports — no ads", "Job description tailoring", "Cover letter generator", "ATS score analysis", "Priority support"];
 
 const stats = [
-  { value: "50K+", label: "Resumes Created" },
-  { value: "89%", label: "Interview Rate" },
-  { value: "20+", label: "ATS Templates" },
-  { value: "4.9★", label: "User Rating" },
+  { value: 50, suffix: "K+", label: "Resumes Created", icon: FileText },
+  { value: 89, suffix: "%", label: "Interview Rate", icon: TrendingUp },
+  { value: 20, suffix: "+", label: "ATS Templates", icon: LayoutTemplate },
+  { value: 4.9, suffix: "★", label: "User Rating", icon: Star },
 ];
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -83,16 +88,17 @@ export default function Home() {
     <div className="min-h-screen">
       <Navbar />
 
-      {/* ═══ HERO — Aggressive layout, rich gradients ═══ */}
+      {/* ═══ HERO — Premium layered background, real product preview ═══ */}
       <section className="relative min-h-[90vh] overflow-hidden section-dark-rich">
-        <div className="absolute inset-0 bg-grid-dark bg-grid opacity-80" />
+        <div className="hero-gradient-overlay" aria-hidden />
+        <div className="absolute inset-0 bg-grid-dark bg-grid opacity-60" />
         <div className="orb orb-blue absolute -top-60 -left-20 h-[700px] w-[700px] animate-pulse-glow" />
         <div className="orb orb-violet absolute -top-40 -right-20 h-[600px] w-[600px] animate-pulse-glow [animation-delay:1.5s]" />
         <div className="orb orb-cyan absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] animate-pulse-glow [animation-delay:3s]" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark/30 to-dark" />
 
         <div className="relative mx-auto flex min-h-[90vh] max-w-7xl flex-col items-center gap-12 px-4 py-20 sm:px-6 lg:flex-row lg:gap-20 lg:px-8 lg:py-28">
-          {/* Left: Copy — bolder, larger */}
+          {/* Left: Copy */}
           <div className="flex-1 text-center lg:text-left">
             <FadeUp>
               <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/15 px-5 py-2 text-xs font-bold uppercase tracking-wider text-brand-300 backdrop-blur-md">
@@ -116,7 +122,7 @@ export default function Home() {
                 <AuthCTA
                   guestHref="/signup"
                   authHref="/templates"
-                  className="btn-premium inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-brand-600 via-brand-500 to-brand-600 px-8 text-base font-bold text-white shadow-neon transition-all duration-300 hover:shadow-neon-hover hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]"
+                  className="btn-premium inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#6366F1] bg-[length:200%_100%] px-8 text-base font-bold text-white shadow-[0_0_30px_-6px_rgba(99,102,241,0.6)] transition-all duration-300 hover:shadow-[0_0_50px_-8px_rgba(139,92,246,0.6)] hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]"
                 >
                   Start Building Free
                   <ArrowRight className="h-5 w-5" />
@@ -140,80 +146,51 @@ export default function Home() {
             </FadeUp>
           </div>
 
-          {/* Right: Premium mockup — larger, floating */}
+          {/* Right: Real resume preview with ATS badge & AI suggestions */}
           <FadeUp delay={0.25} className="relative flex-1 lg:flex-[1.1]">
-            <div aria-hidden="true" className="mx-auto w-full max-w-md lg:max-w-lg">
-              <motion.div
-                animate={{ y: [0, -14, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="relative rounded-3xl border border-white/[0.08] glass p-10 shadow-glass-lg"
-              >
-                <div className="absolute -inset-px rounded-3xl bg-gradient-to-br from-brand-500/10 via-transparent to-accent-cyan/10 opacity-60" />
-                <div className="relative">
-                  <div className="mb-8 flex items-center gap-5">
-                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-violet shadow-glow" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-5 w-4/5 rounded-lg bg-white/25" />
-                      <div className="h-3.5 w-1/2 rounded-lg bg-white/12" />
-                    </div>
-                  </div>
-                  <div className="mb-6 space-y-2.5">
-                    <div className="h-3.5 w-1/3 rounded-lg bg-brand-500/60" />
-                    <div className="h-3 w-full rounded bg-white/[0.06]" />
-                    <div className="h-3 w-5/6 rounded bg-white/[0.06]" />
-                    <div className="h-3 w-4/6 rounded bg-white/[0.06]" />
-                  </div>
-                  <div className="mb-6 space-y-2.5">
-                    <div className="h-3.5 w-1/4 rounded-lg bg-brand-500/60" />
-                    <div className="h-3 w-full rounded bg-white/[0.06]" />
-                    <div className="h-3 w-5/6 rounded bg-white/[0.06]" />
-                  </div>
-                  <div className="space-y-2.5">
-                    <div className="h-3.5 w-2/5 rounded-lg bg-brand-500/60" />
-                    <div className="flex gap-2.5">
-                      <div className="h-7 w-20 rounded-full bg-brand-500/20 border border-brand-500/30" />
-                      <div className="h-7 w-24 rounded-full bg-accent-cyan/20 border border-accent-cyan/30" />
-                      <div className="h-7 w-16 rounded-full bg-accent-violet/20 border border-accent-violet/30" />
-                    </div>
-                  </div>
-                </div>
-
-                <motion.div
-                  initial={{ scale: 0, rotate: -12 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.9, type: "spring", stiffness: 180 }}
-                  className="absolute -right-6 -top-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.12] bg-dark-50 shadow-glow"
-                >
-                  <Sparkles className="h-6 w-6 text-brand-400" />
-                </motion.div>
-
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ delay: 1.3, type: "spring", stiffness: 160 }}
-                  className="absolute -left-5 bottom-16 flex items-center gap-2.5 rounded-2xl border border-white/[0.08] glass px-4 py-2.5"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/25">
-                    <Check className="h-4 w-4 text-emerald-400" />
-                  </div>
-                  <span className="text-sm font-semibold text-emerald-400">ATS Score: 94</span>
-                </motion.div>
-              </motion.div>
-            </div>
+            <HeroProductPreview />
           </FadeUp>
         </div>
       </section>
 
-      {/* ═══ STATS — Elevated glass bar ═══ */}
-      <section className="relative -mt-16 z-10 px-4 sm:px-6 lg:px-8">
+      {/* ═══ TRUST SIGNALS — Below hero ═══ */}
+      <section className="relative z-10 px-4 py-8 sm:px-6 lg:px-8">
         <FadeUp>
-          <div className="mx-auto max-w-4xl rounded-3xl glass p-8 shadow-glass-lg">
-            <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-              {stats.map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <p className="text-3xl font-black text-white sm:text-4xl">{stat.value}</p>
-                  <p className="mt-1.5 text-xs font-semibold uppercase tracking-wider text-slate-500">{stat.label}</p>
+          <div className="mx-auto max-w-4xl rounded-2xl border border-white/[0.06] bg-white/[0.02] px-8 py-6 backdrop-blur-xl">
+            <p className="mb-6 text-center text-sm font-semibold uppercase tracking-wider text-slate-500">
+              Trusted by job seekers worldwide
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
+              {testimonials.slice(0, 3).map(({ name, title }) => (
+                <div key={name} className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500/30 to-accent-violet/30 text-sm font-bold text-white ring-2 ring-white/10">
+                    {name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{name}</p>
+                    <p className="text-xs text-slate-500">{title}</p>
+                  </div>
                 </div>
+              ))}
+            </div>
+          </div>
+        </FadeUp>
+      </section>
+
+      {/* ═══ STATS — Animated counters, glowing icons ═══ */}
+      <section className="relative -mt-12 z-10 px-4 sm:px-6 lg:px-8">
+        <FadeUp>
+          <div className="mx-auto max-w-5xl rounded-3xl glass p-10 shadow-glass-lg">
+            <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
+              {stats.map((stat, i) => (
+                <AnimatedStat
+                  key={stat.label}
+                  value={stat.value}
+                  suffix={stat.suffix}
+                  label={stat.label}
+                  icon={<stat.icon className="h-5 w-5" />}
+                  delay={i * 0.1}
+                />
               ))}
             </div>
           </div>
@@ -268,8 +245,20 @@ export default function Home() {
           <Stagger className="mt-20 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {landingTemplates.map(({ name, from, to }) => (
               <StaggerChild key={name}>
-                <div className="group overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02] transition-all duration-400 hover:border-white/[0.18] hover:bg-white/[0.06] hover:-translate-y-4 hover:shadow-glass-lg">
-                  <div className={`flex h-60 items-end bg-gradient-to-br ${from} ${to} p-5`}>
+                <motion.div
+                  whileHover={{ scale: 1.03, y: -8 }}
+                  className="group relative overflow-hidden rounded-3xl border border-white/[0.06] bg-white/[0.02] transition-all duration-400 hover:border-white/[0.2] hover:shadow-[0_0_40px_-12px_rgba(99,102,241,0.3)]"
+                >
+                  <div className={`relative flex h-60 items-end bg-gradient-to-br ${from} ${to} p-5`}>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                      <AuthCTA
+                        guestHref="/signup"
+                        authHref="/templates"
+                        className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 text-sm font-bold text-slate-900 shadow-lg transition-all hover:bg-slate-100 hover:scale-105"
+                      >
+                        Use Template <ArrowRight className="h-4 w-4" />
+                      </AuthCTA>
+                    </div>
                     <div className="w-full rounded-t-2xl bg-white/95 px-5 pb-0 pt-5 shadow-2xl backdrop-blur">
                       <div className="mb-4 flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-slate-200" />
@@ -294,7 +283,7 @@ export default function Home() {
                       Use <ArrowRight className="h-4 w-4" />
                     </AuthCTA>
                   </div>
-                </div>
+                </motion.div>
               </StaggerChild>
             ))}
           </Stagger>
