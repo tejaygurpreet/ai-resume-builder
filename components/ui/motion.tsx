@@ -4,8 +4,8 @@ import { motion, type MotionProps, type Variants } from "framer-motion";
 import React from "react";
 
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.4, 0.25, 1] } },
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.4, 0.25, 1] } },
 };
 
 export const fadeIn: Variants = {
@@ -29,8 +29,8 @@ export const staggerContainer: Variants = {
 };
 
 export const staggerItem: Variants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.25, 0.4, 0.25, 1] } },
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.4, 0.25, 1] } },
 };
 
 type FadeUpProps = MotionProps & {
@@ -54,11 +54,11 @@ export function FadeUp({
       whileInView="visible"
       viewport={{ once: true, margin: "-60px" }}
       variants={{
-        hidden: { opacity: 0, y: 24 },
+        hidden: { opacity: 0, y: 20 },
         visible: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.5, delay, ease: [0.25, 0.4, 0.25, 1] },
+          transition: { duration: 0.6, delay, ease: [0.25, 0.4, 0.25, 1] },
         },
       }}
       className={className}

@@ -71,17 +71,25 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "group relative rounded-lg px-4 py-2.5 text-[14px] font-medium transition-all duration-200",
-                  active
-                    ? "text-white"
-                    : "text-slate-400 hover:text-white"
+                  "group relative rounded-lg px-4 py-2.5 text-[14px] font-medium transition-all duration-[200ms] ease-out",
+                  active ? "text-white" : "text-slate-400"
                 )}
               >
-                {link.label}
+                <span className="relative inline-block">
+                  <span>{link.label}</span>
+                  <span
+                    className={cn(
+                      "absolute inset-0 bg-gradient-to-r from-brand-400 to-accent-violet bg-clip-text text-transparent transition-opacity duration-[200ms]",
+                      active ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    )}
+                  >
+                    {link.label}
+                  </span>
+                </span>
                 <span
                   className={cn(
-                    "absolute bottom-1 left-1/2 h-0.5 -translate-x-1/2 rounded-full bg-brand-400 transition-all duration-200",
-                    active ? "w-4/5" : "w-0 group-hover:w-4/5"
+                    "absolute bottom-1 left-0 h-0.5 origin-left rounded-full bg-gradient-to-r from-brand-400 to-accent-violet transition-transform duration-[200ms] ease-out",
+                    active ? "w-full scale-x-100" : "w-full scale-x-0 group-hover:scale-x-100"
                   )}
                 />
               </Link>

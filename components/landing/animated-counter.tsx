@@ -23,7 +23,9 @@ export function AnimatedCounter({
   className = "",
 }: AnimatedCounterProps) {
   const [displayValue, setDisplayValue] = useState(from);
-  const spring = useSpring(from, { stiffness: 60, damping: 30 });
+  const stiffness = duration <= 1 ? 120 : 60;
+  const damping = duration <= 1 ? 25 : 30;
+  const spring = useSpring(from, { stiffness, damping });
 
   useEffect(() => {
     spring.set(value);

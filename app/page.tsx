@@ -92,6 +92,8 @@ export default function Home() {
       <section className="relative min-h-[90vh] overflow-hidden section-dark-rich">
         <div className="hero-gradient-overlay" aria-hidden />
         <div className="absolute inset-0 bg-grid-dark bg-grid opacity-60" />
+        <div className="orb orb-blob-1 absolute -top-40 -left-32 h-[600px] w-[600px]" />
+        <div className="orb orb-blob-2 absolute top-1/3 -right-32 h-[550px] w-[550px]" />
         <div className="orb orb-blue absolute -top-60 -left-20 h-[700px] w-[700px] animate-pulse-glow" />
         <div className="orb orb-violet absolute -top-40 -right-20 h-[600px] w-[600px] animate-pulse-glow [animation-delay:1.5s]" />
         <div className="orb orb-cyan absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[500px] animate-pulse-glow [animation-delay:3s]" />
@@ -122,7 +124,7 @@ export default function Home() {
                 <AuthCTA
                   guestHref="/signup"
                   authHref="/templates"
-                  className="btn-premium inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#6366F1] bg-[length:200%_100%] px-8 text-base font-bold text-white shadow-[0_0_30px_-6px_rgba(99,102,241,0.6)] transition-all duration-300 hover:shadow-[0_0_50px_-8px_rgba(139,92,246,0.6)] hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]"
+                  className="btn-premium relative inline-flex h-14 items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#6366F1] bg-[length:200%_100%] bg-[position:0%_50%] px-8 text-base font-bold text-white shadow-[0_0_24px_-8px_rgba(99,102,241,0.5)] ring-1 ring-white/20 transition-all duration-300 hover:scale-[1.03] hover:bg-[position:100%_50%] hover:shadow-[0_0_40px_-6px_rgba(99,102,241,0.6),0_0_0_1px_rgba(139,92,246,0.4)] hover:ring-white/30 active:scale-[0.99]"
                 >
                   Start Building Free
                   <ArrowRight className="h-5 w-5" />
@@ -156,7 +158,7 @@ export default function Home() {
       {/* ═══ TRUST SIGNALS — Below hero ═══ */}
       <section className="relative z-10 px-4 py-8 sm:px-6 lg:px-8">
         <FadeUp>
-          <div className="mx-auto max-w-4xl rounded-2xl border border-white/[0.06] bg-white/[0.02] px-8 py-6 backdrop-blur-xl">
+          <div className="mx-auto max-w-4xl rounded-2xl border border-white/[0.06] bg-white/[0.02] px-8 py-6 shadow-[0_2px_16px_-8px_rgba(0,0,0,0.4)] backdrop-blur-xl">
             <p className="mb-6 text-center text-sm font-semibold uppercase tracking-wider text-slate-500">
               Trusted by job seekers worldwide
             </p>
@@ -180,7 +182,7 @@ export default function Home() {
       {/* ═══ STATS — Animated counters, glowing icons ═══ */}
       <section className="relative -mt-12 z-10 px-4 sm:px-6 lg:px-8">
         <FadeUp>
-          <div className="mx-auto max-w-5xl rounded-3xl glass p-10 shadow-glass-lg">
+          <div className="mx-auto max-w-5xl rounded-3xl glass p-10 shadow-[0_2px_24px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)_inset]">
             <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
               {stats.map((stat, i) => (
                 <AnimatedStat
