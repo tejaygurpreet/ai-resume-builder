@@ -1,22 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateParam = searchParams.get("template");
   const { status } = useSession();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (status === "authenticated") router.replace("/dashboard"); }, [status, router]);
+  useEffect(() => {
+    if (status === "authenticated") {
+      const dest = templateParam ? `/builder?template=${templateParam}` : "/dashboard";
+      router.replace(dest);
+    }
+  }, [status, router, templateParam]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -25,7 +32,7 @@ export default function LoginPage() {
       const result = await signIn("credentials", { email, password, redirect: false });
       if (result?.error) { toast.error(result.error); setLoading(false); return; }
       toast.success("Welcome back!");
-      router.push("/dashboard");
+      router.push(templateParam ? `/builder?template=${templateParam}` : "/dashboard");
       router.refresh();
     } catch { toast.error("Something went wrong. Please try again."); setLoading(false); }
   }
@@ -56,10 +63,23 @@ export default function LoginPage() {
 
           <p className="mt-6 text-center text-sm text-slate-500">
             Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-medium text-brand-400 transition-colors hover:text-brand-300">Sign up</Link>
+            <Link
+              href={templateParam ? `/signup?template=${templateParam}` : "/signup"}
+              className="font-medium text-brand-400 transition-colors hover:text-brand-300"
+            >
+              Sign up
+            </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-dark"><div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" /></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

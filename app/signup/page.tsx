@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 
-export default function SignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const templateParam = searchParams.get("template");
   const { status } = useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,7 +20,12 @@ export default function SignupPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => { if (status === "authenticated") router.replace("/dashboard"); }, [status, router]);
+  useEffect(() => {
+    if (status === "authenticated") {
+      const dest = templateParam ? `/builder?template=${templateParam}` : "/dashboard";
+      router.replace(dest);
+    }
+  }, [status, router, templateParam]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,9 +36,15 @@ export default function SignupPage() {
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Registration failed"); setLoading(false); return; }
       const signInResult = await signIn("credentials", { email, password, redirect: false });
-      if (signInResult?.error) { toast.success("Account created! Please sign in."); router.push("/login"); router.refresh(); setLoading(false); return; }
+      if (signInResult?.error) {
+        toast.success("Account created! Please sign in.");
+        router.push(templateParam ? `/login?template=${templateParam}` : "/login");
+        router.refresh();
+        setLoading(false);
+        return;
+      }
       toast.success("Account created successfully!");
-      router.push("/dashboard");
+      router.push(templateParam ? `/builder?template=${templateParam}` : "/dashboard");
       router.refresh();
     } catch { toast.error("Something went wrong. Please try again."); setLoading(false); }
   }
@@ -64,10 +77,23 @@ export default function SignupPage() {
 
           <p className="mt-6 text-center text-sm text-slate-500">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-brand-400 transition-colors hover:text-brand-300">Sign in</Link>
+            <Link
+              href={templateParam ? `/login?template=${templateParam}` : "/login"}
+              className="font-medium text-brand-400 transition-colors hover:text-brand-300"
+            >
+              Sign in
+            </Link>
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-dark"><div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-500 border-t-transparent" /></div>}>
+      <SignupForm />
+    </Suspense>
   );
 }
