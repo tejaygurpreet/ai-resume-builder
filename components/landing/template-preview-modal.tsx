@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, ArrowRight } from "lucide-react";
@@ -9,6 +9,9 @@ import { useSession } from "next-auth/react";
 import { sampleSections } from "@/lib/sample-resume";
 import { templates, templateRegistry, type TemplateName } from "@/components/resume/templates";
 import { cn } from "@/lib/utils";
+
+const DOC_WIDTH = 794;
+const DOC_HEIGHT = 1123;
 
 interface TemplatePreviewModalProps {
   templateId: string | null;
@@ -19,6 +22,8 @@ interface TemplatePreviewModalProps {
 export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: TemplatePreviewModalProps) {
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(0.7);
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -47,6 +52,27 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
       };
     }
   }, [templateId, handleEscape]);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !templateId) return;
+
+    const updateScale = () => {
+      const { clientWidth, clientHeight } = el;
+      const maxW = clientWidth - 32;
+      const maxH = Math.min(clientHeight - 32, window.innerHeight * 0.65);
+      const scaleByWidth = maxW / DOC_WIDTH;
+      const scaleByHeight = maxH / DOC_HEIGHT;
+      const s = Math.min(0.95, scaleByWidth, scaleByHeight);
+      setScale(Math.max(0.4, s));
+    };
+
+    updateScale();
+    const ro = new ResizeObserver(updateScale);
+    ro.observe(el);
+
+    return () => ro.disconnect();
+  }, [templateId]);
 
   const info = templateId ? templateRegistry.find((t) => t.id === templateId) : null;
   const TemplateComponent = templateId ? templates[templateId as TemplateName] : null;
@@ -79,33 +105,40 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-dark-100 shadow-2xl"
+            className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-dark-100 shadow-2xl"
           >
-            <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-6 py-4">
+            <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-6 py-3">
               <div>
-                <h3 className="text-xl font-bold text-white">{info.name}</h3>
+                <h3 className="text-lg font-bold text-white">{info.name}</h3>
                 <span className="text-xs font-medium capitalize text-slate-500">{info.category}</span>
               </div>
               <button
                 onClick={onClose}
-                className="flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
+                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <p className="shrink-0 px-6 py-3 text-sm text-slate-400">{info.description}</p>
-
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6">
-              <div className="rounded-xl border border-white/[0.06] bg-[#fafaf9] p-4 shadow-inner">
+            <div
+              ref={containerRef}
+              className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-auto p-6"
+            >
+              <div
+                className="flex shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-[#f8f7f5] p-4 shadow-inner"
+                style={{
+                  boxShadow: "0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.9)",
+                }}
+              >
                 <div
-                  className="mx-auto"
                   style={{
-                    width: 794,
-                    transform: "scale(0.45)",
-                    transformOrigin: "top center",
+                    width: DOC_WIDTH,
+                    height: DOC_HEIGHT,
+                    transform: `scale(${scale})`,
+                    transformOrigin: "center top",
                   }}
+                  className="resume-preview-document"
                 >
                   <TemplateComponent sections={sampleSections} color={info.accent} />
                 </div>

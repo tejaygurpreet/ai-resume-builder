@@ -33,12 +33,12 @@ export default function ProfessionalTemplate({ sections, color }: TemplateProps)
   const personal = getSectionByType(sections, "personal");
 
   const sectionHeaderStyle: React.CSSProperties = {
-    fontSize: "11px",
+    fontSize: "11.5px",
     fontWeight: 700,
     textTransform: "uppercase",
     letterSpacing: "2.5px",
     color: "#1a1a1a",
-    margin: "0 0 10px 0",
+    margin: "0 0 12px 0",
     paddingBottom: "6px",
     borderBottom: `2px solid ${color}`,
   };
@@ -53,16 +53,17 @@ export default function ProfessionalTemplate({ sections, color }: TemplateProps)
       style={{
         width: "794px",
         height: "1123px",
-        padding: "44px 52px",
+        padding: "48px 56px",
         boxSizing: "border-box",
         overflow: "hidden",
         fontFamily: "'Georgia', 'Times New Roman', serif",
+        WebkitFontSmoothing: "antialiased",
       }}
     >
       {/* Header - Centered */}
       {personal && hasContent(personal) && (
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
-          <h1 style={{ fontSize: "28px", fontWeight: 700, color: "#1a1a1a", margin: 0, letterSpacing: "1.5px", textTransform: "uppercase", lineHeight: 1.2 }}>
+          <h1 style={{ fontSize: "30px", fontWeight: 700, color: "#1a1a1a", margin: 0, letterSpacing: "1.5px", textTransform: "uppercase", lineHeight: 1.2 }}>
             {getFullName(personal.content)}
           </h1>
           {contactItems.length > 0 && (
@@ -73,7 +74,7 @@ export default function ProfessionalTemplate({ sections, color }: TemplateProps)
                 flexWrap: "wrap",
                 gap: "8px 12px",
                 marginTop: "10px",
-                fontSize: "10.5px",
+                fontSize: "11px",
                 color: "#555",
                 lineHeight: 1.5,
               }}
@@ -95,11 +96,11 @@ export default function ProfessionalTemplate({ sections, color }: TemplateProps)
         if (section.type === "personal" || !hasContent(section)) return null;
 
         return (
-          <div key={section.id} style={{ marginBottom: "22px" }}>
+          <div key={section.id} style={{ marginBottom: "24px" }}>
             <h2 style={sectionHeaderStyle}>{section.type}</h2>
 
             {section.type === "summary" && (
-              <p style={{ fontSize: "11px", lineHeight: 1.75, color: "#333", margin: 0, textAlign: "justify" }}>
+              <p style={{ fontSize: "11.5px", lineHeight: 1.7, color: "#333", margin: 0, textAlign: "justify" }}>
                 {section.content.text}
               </p>
             )}
@@ -109,18 +110,18 @@ export default function ProfessionalTemplate({ sections, color }: TemplateProps)
                 {section.content.items.map((item: any, idx: number) => (
                   <div key={item.id} style={{ marginBottom: idx < section.content.items.length - 1 ? "18px" : "0" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "4px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#1a1a1a" }}>{item.title}</span>
-                      <span style={{ fontSize: "10px", color: "#666", fontStyle: "italic" }}>
+                      <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#1a1a1a" }}>{item.title}</span>
+                      <span style={{ fontSize: "10.5px", color: "#666", fontStyle: "italic" }}>
                         {item.startDate}{item.endDate || item.current ? ` – ${item.current ? "Present" : item.endDate}` : ""}
                       </span>
                     </div>
-                    <div style={{ fontSize: "11px", color: "#444", fontStyle: "italic", marginTop: "2px" }}>
+                    <div style={{ fontSize: "11.5px", color: "#444", fontStyle: "italic", marginTop: "3px" }}>
                       {item.company}{item.location ? `, ${item.location}` : ""}
                     </div>
                     {item.bullets && item.bullets.filter((b: string) => (b ?? "").trim()).length > 0 && (
-                      <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px", listStyleType: "disc" }}>
+                      <ul style={{ margin: "10px 0 0 0", paddingLeft: "20px", listStyleType: "disc" }}>
                         {item.bullets.filter((b: string) => (b ?? "").trim()).map((b: string, i: number) => (
-                          <li key={i} style={{ fontSize: "10.5px", lineHeight: 1.65, color: "#333", marginBottom: "4px" }}>{b}</li>
+                          <li key={i} style={{ fontSize: "11px", lineHeight: 1.65, color: "#333", marginBottom: "5px" }}>{b}</li>
                         ))}
                       </ul>
                     )}
@@ -134,16 +135,16 @@ export default function ProfessionalTemplate({ sections, color }: TemplateProps)
                 {section.content.items.map((item: any, idx: number) => (
                   <div key={item.id} style={{ marginBottom: idx < section.content.items.length - 1 ? "14px" : "0" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: "4px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: 700, color: "#1a1a1a" }}>{item.degree}{item.field ? ` in ${item.field}` : ""}</span>
-                      <span style={{ fontSize: "10px", color: "#666", fontStyle: "italic" }}>
+                      <span style={{ fontSize: "12.5px", fontWeight: 700, color: "#1a1a1a" }}>{item.degree}{item.field ? ` in ${item.field}` : ""}</span>
+                      <span style={{ fontSize: "10.5px", color: "#666", fontStyle: "italic" }}>
                         {item.startDate}{item.endDate ? ` – ${item.endDate}` : ""}
                       </span>
                     </div>
-                    <div style={{ fontSize: "11px", color: "#444", fontStyle: "italic", marginTop: "2px" }}>
+                    <div style={{ fontSize: "11.5px", color: "#444", fontStyle: "italic", marginTop: "3px" }}>
                       {item.school}{item.location ? `, ${item.location}` : ""}
                     </div>
                     {item.gpa && (
-                      <div style={{ fontSize: "10.5px", color: "#555", marginTop: "2px" }}>GPA: {item.gpa}</div>
+                      <div style={{ fontSize: "11px", color: "#555", marginTop: "3px" }}>GPA: {item.gpa}</div>
                     )}
                   </div>
                 ))}
@@ -151,9 +152,9 @@ export default function ProfessionalTemplate({ sections, color }: TemplateProps)
             )}
 
             {section.type === "skills" && (
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 10px" }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 12px" }}>
                 {filterValidSkills(section.content.items).map((skill: string, i: number) => (
-                  <span key={i} style={{ fontSize: "10.5px", color: "#333", fontWeight: 500 }}>
+                  <span key={i} style={{ fontSize: "11px", color: "#333", fontWeight: 500 }}>
                     {skill}{i < filterValidSkills(section.content.items).length - 1 ? "," : ""}
                   </span>
                 ))}

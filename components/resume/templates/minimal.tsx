@@ -33,14 +33,14 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
   const personal = getSectionByType(sections, "personal");
 
   const sectionHeaderStyle: React.CSSProperties = {
-    fontSize: "10px",
+    fontSize: "11px",
     fontWeight: 600,
     textTransform: "uppercase",
-    letterSpacing: "3px",
-    color: "#999",
-    margin: "0 0 10px 0",
+    letterSpacing: "2.5px",
+    color: "#666",
+    margin: "0 0 12px 0",
     paddingBottom: "6px",
-    borderBottom: "0.5px solid #e0e0e0",
+    borderBottom: "1px solid #e5e5e5",
   };
 
   return (
@@ -49,11 +49,12 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
       style={{
         width: "794px",
         height: "1123px",
-        padding: "56px 64px",
+        padding: "48px 56px",
         boxSizing: "border-box",
         overflow: "hidden",
         fontFamily: "'Helvetica Neue', Helvetica, Arial, sans-serif",
         color: "#333",
+        WebkitFontSmoothing: "antialiased",
       }}
     >
       {/* Header */}
@@ -68,8 +69,8 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
               flexWrap: "wrap",
               gap: "16px",
               marginTop: "10px",
-              fontSize: "10px",
-              color: "#888",
+              fontSize: "11px",
+              color: "#666",
               letterSpacing: "0.5px",
             }}
           >
@@ -93,7 +94,7 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
             <h2 style={sectionHeaderStyle}>{section.type}</h2>
 
             {section.type === "summary" && (
-              <p style={{ fontSize: "10.5px", lineHeight: 1.8, color: "#555", margin: 0, fontWeight: 300 }}>
+              <p style={{ fontSize: "11.5px", lineHeight: 1.7, color: "#333", margin: 0, fontWeight: 400 }}>
                 {section.content.text}
               </p>
             )}

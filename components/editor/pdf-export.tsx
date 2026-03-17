@@ -20,10 +20,13 @@ export async function exportToPdf(
 
   try {
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: 3,
       useCORS: true,
       logging: false,
       backgroundColor: "#ffffff",
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+      allowTaint: true,
     });
 
     const imgWidth = 210;
