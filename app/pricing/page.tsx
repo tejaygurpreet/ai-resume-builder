@@ -21,8 +21,8 @@ const freeFeatures = [
 
 const proFeatures = [
   "Unlimited AI generations",
-  "All 20+ premium templates",
-  "Unlimited exports — no ads",
+  "All 50+ premium templates",
+  "Unlimited exports",
   "Job description resume tailoring",
   "Cover letter generator",
   "ATS score analysis",

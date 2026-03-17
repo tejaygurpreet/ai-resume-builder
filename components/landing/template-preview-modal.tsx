@@ -23,7 +23,7 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
   const { status } = useSession();
   const isAuthenticated = status === "authenticated";
   const containerRef = useRef<HTMLDivElement>(null);
-  const [scale, setScale] = useState(0.7);
+  const [scale, setScale] = useState(0.5);
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -59,12 +59,13 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
 
     const updateScale = () => {
       const { clientWidth, clientHeight } = el;
-      const maxW = clientWidth - 32;
-      const maxH = Math.min(clientHeight - 32, window.innerHeight * 0.65);
+      const padding = 48;
+      const maxW = Math.max(200, clientWidth - padding);
+      const maxH = Math.max(300, clientHeight - padding);
       const scaleByWidth = maxW / DOC_WIDTH;
       const scaleByHeight = maxH / DOC_HEIGHT;
-      const s = Math.min(0.95, scaleByWidth, scaleByHeight);
-      setScale(Math.max(0.4, s));
+      const s = Math.min(0.9, scaleByWidth, scaleByHeight);
+      setScale(Math.max(0.35, s));
     };
 
     updateScale();
@@ -105,7 +106,7 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.2, ease: [0.25, 0.4, 0.25, 1] }}
             onClick={(e) => e.stopPropagation()}
-            className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-dark-100 shadow-2xl"
+            className="relative z-10 flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-dark-100 shadow-2xl"
           >
             <div className="flex shrink-0 items-center justify-between border-b border-white/[0.06] px-6 py-3">
               <div>
@@ -123,7 +124,8 @@ export function TemplatePreviewModal({ templateId, onClose, onUseTemplate }: Tem
 
             <div
               ref={containerRef}
-              className="flex min-h-0 flex-1 flex-col items-center justify-center overflow-auto p-6"
+              className="flex min-h-0 flex-1 flex-col items-center justify-start overflow-auto p-6"
+              style={{ maxHeight: "calc(90vh - 140px)" }}
             >
               <div
                 className="flex shrink-0 items-center justify-center rounded-lg border border-white/[0.06] bg-[#f8f7f5] p-4 shadow-inner"

@@ -51,10 +51,9 @@ export function canUseFeature(
   return false;
 }
 
+/** @deprecated No ads — always returns false */
 export function requiresAdsForExport(
-  subscription: Awaited<ReturnType<typeof getUserSubscription>>
+  _subscription: Awaited<ReturnType<typeof getUserSubscription>>
 ) {
-  if (subscription.plan === "pro") return false;
-  if (subscription.oneTimeExport) return false;
-  return true;
+  return false;
 }

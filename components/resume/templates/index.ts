@@ -78,3 +78,8 @@ export const templateRegistry: TemplateInfo[] = TEMPLATE_CONFIGS.map((c) => ({
   description: c.description,
   accent: c.accent,
 }));
+
+export function getAccentForTemplate(templateId: string): string {
+  const info = templateRegistry.find((t) => t.id === templateId);
+  return info?.accent ?? "#2563eb";
+}

@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { getAccentForTemplate } from "@/components/resume/templates";
 
 export interface ResumeSection {
   id: string;
@@ -172,7 +173,11 @@ export const useResumeStore = create<ResumeStore>((set) => ({
     })),
   updateTemplate: (template) =>
     set((state) => ({
-      resume: { ...state.resume, template },
+      resume: {
+        ...state.resume,
+        template,
+        color: getAccentForTemplate(template),
+      },
       isDirty: true,
     })),
   updateColor: (color) =>

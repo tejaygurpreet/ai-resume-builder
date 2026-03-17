@@ -34,7 +34,7 @@ A production-ready SaaS web application for building professional, ATS-friendly 
 - **Keyword Matcher** - Match resume against job descriptions
 
 ### Subscription Plans
-- **Free:** AI features, 2 templates, export after watching 3 ads
+- **Free:** AI features, 10 templates, 10 exports/month, no ads
 - **Pro ($2.99/month):** AI features, all 8 templates, unlimited ad-free exports, priority support
 
 ## Getting Started

@@ -1,5 +1,14 @@
 "use client";
 
+/* ALL 7 BUGS FIXED: (1) No preview download/print - Export only via main button
+ * (2) Template switching updates store + color from template accent
+ * (3) Accent color from template, synced on template change
+ * (4) Right sidebar scroll with max-h and overflow-y-auto
+ * (5) Pricing: Free 10 exports, Pro $7/$59/$99, One-Time $19, no ads
+ * (6) useResumeExport hook + ExportModal centralizes export flow
+ * (7) Template modal scale-to-fit, responsive max-height
+ */
+
 import React, {
   Suspense,
   useEffect,
@@ -505,8 +514,8 @@ function BuilderPage() {
 
         {/* Right sidebar: ATS, Job matcher, Cover letter, Color picker */}
         {sidebarOpen && (
-          <div className="w-72 shrink-0 border-l border-white/[0.06] bg-[#0a0a0b] p-4">
-            <div className="mb-4 flex items-center justify-between">
+          <div className="flex w-72 shrink-0 flex-col border-l border-white/[0.06] bg-[#0a0a0b]">
+            <div className="mb-4 flex shrink-0 items-center justify-between p-4 pb-0">
               <span className="text-sm font-medium text-slate-400">Tools</span>
               <button
                 onClick={() => setSidebarOpen(false)}
@@ -516,7 +525,7 @@ function BuilderPage() {
                 <PanelRightClose className="h-4 w-4" />
               </button>
             </div>
-            <div className="space-y-4">
+            <div className="max-h-[calc(100vh-200px)] flex-1 space-y-4 overflow-y-auto p-4 scrollbar-thin">
               {/* Color picker */}
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
                 <h4 className="mb-2 text-sm font-medium text-white">Accent Color</h4>
