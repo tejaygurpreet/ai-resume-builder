@@ -36,7 +36,7 @@ const FORMAT_OPTIONS: {
   {
     format: "docx",
     label: "DOCX",
-    ext: ".doc",
+    ext: ".docx",
     description: "Editable in Microsoft Word",
     icon: File,
   },
@@ -91,7 +91,7 @@ interface ExportModalProps {
   hasOneTimeExport?: boolean;
   exportsUsed?: number;
   maxExports?: number;
-  onExport: (format: ExportFormat, filename: string) => void;
+  onExport: (format: ExportFormat, filename: string) => void | Promise<void>;
   resumeTitle?: string;
   templateName?: string;
 }
@@ -180,9 +180,9 @@ export function ExportModal({
           <div className="mb-5">
             <label
               htmlFor="export-filename"
-              className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-700"
+              className="mb-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-300"
             >
-              <Pencil className="h-3.5 w-3.5 text-slate-400" />
+              <Pencil className="h-3.5 w-3.5 text-slate-500" />
               File Name
             </label>
             <div className="flex items-stretch">
@@ -192,16 +192,16 @@ export function ExportModal({
                 value={filename}
                 onChange={(e) => setFilename(e.target.value)}
                 placeholder="resume"
-                className="min-w-0 flex-1 rounded-l-lg border border-r-0 border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                className="min-w-0 flex-1 rounded-l-lg border border-r-0 border-white/[0.12] bg-white/[0.05] px-3 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
               />
-              <span className="flex items-center rounded-r-lg border border-slate-200 bg-slate-50 px-3 text-sm font-medium text-slate-500">
+              <span className="flex items-center rounded-r-lg border border-white/[0.12] border-l-0 bg-white/[0.03] px-3 text-sm font-medium text-slate-500">
                 {currentExt}
               </span>
             </div>
           </div>
 
           {/* Format selector */}
-          <p className="mb-3 text-sm font-medium text-slate-700">Format</p>
+          <p className="mb-3 text-sm font-medium text-slate-300">Format</p>
           <div className="grid grid-cols-2 gap-3">
             {FORMAT_OPTIONS.map(
               ({ format, label, description, icon: Icon }) => (
@@ -209,31 +209,31 @@ export function ExportModal({
                   key={format}
                   onClick={() => setSelectedFormat(format)}
                   className={cn(
-                    "flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all duration-200 hover:border-brand-200 hover:bg-brand-50/50",
+                    "flex flex-col items-center gap-2 rounded-xl border-2 p-4 text-center transition-all duration-200 hover:border-white/[0.2] hover:bg-white/[0.05]",
                     selectedFormat === format
-                      ? "border-brand-500 bg-brand-50 ring-1 ring-brand-500/20"
-                      : "border-slate-200 bg-white"
+                      ? "border-brand-500 bg-brand-500/10 ring-1 ring-brand-500/30"
+                      : "border-white/[0.1] bg-white/[0.02]"
                   )}
                 >
                   <Icon
                     className={cn(
                       "h-6 w-6",
                       selectedFormat === format
-                        ? "text-brand-600"
-                        : "text-slate-400"
+                        ? "text-brand-400"
+                        : "text-slate-500"
                     )}
                   />
                   <span
                     className={cn(
                       "text-sm font-semibold",
                       selectedFormat === format
-                        ? "text-brand-700"
-                        : "text-slate-700"
+                        ? "text-brand-300"
+                        : "text-slate-300"
                     )}
                   >
                     {label}
                   </span>
-                  <span className="text-[11px] leading-tight text-slate-400">
+                  <span className="text-[11px] leading-tight text-slate-500">
                     {description}
                   </span>
                 </button>
@@ -242,38 +242,38 @@ export function ExportModal({
           </div>
 
           {!isPro && !hasOneTimeExport && !adUnlocked && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
               <Tv className="h-3.5 w-3.5 flex-shrink-0" />
               Free plan: Watch 3 short ads to unlock this export ({exportsUsed}/{maxExports} monthly exports used)
             </div>
           )}
 
           {!isPro && !hasOneTimeExport && !canExportFree && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
               <Crown className="h-3.5 w-3.5 flex-shrink-0" />
               Monthly export limit reached. <a href="/pricing" className="underline">Upgrade to Pro</a> or buy one-time export access.
             </div>
           )}
 
           {isPro && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
               <Crown className="h-3.5 w-3.5 flex-shrink-0" />
               Pro plan: Unlimited exports with no ads
             </div>
           )}
 
           {!isPro && adUnlocked && (
-            <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-300">
               <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0" />
               Ads completed — ready to export!
             </div>
           )}
 
           <div className="mt-5 flex justify-end gap-3">
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06]">
               Cancel
             </Button>
-            <Button onClick={handleExportClick} className="gap-1.5">
+            <Button onClick={handleExportClick} className="gap-1.5 bg-brand-600 hover:bg-brand-500">
               <Download className="h-4 w-4" />
               {adUnlocked ? "Export" : "Continue"}
             </Button>
@@ -309,20 +309,20 @@ function AdGateView({
 
   return (
     <div className="flex flex-col items-center py-2">
-      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand-50">
+      <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-brand-500/20">
         {allDone ? (
           <CheckCircle2 className="h-8 w-8 text-emerald-500" />
         ) : (
-          <Tv className="h-8 w-8 text-brand-500" />
+          <Tv className="h-8 w-8 text-brand-400" />
         )}
       </div>
 
-      <h3 className="text-lg font-semibold text-slate-900">
+      <h3 className="text-lg font-semibold text-white">
         {allDone
           ? "Export Unlocked!"
           : "Watch 3 Short Ads to Unlock Export"}
       </h3>
-      <p className="mt-1 text-center text-sm text-slate-500">
+      <p className="mt-1 text-center text-sm text-slate-400">
         {allDone
           ? "You can now export your resume. Go back to choose your format and filename."
           : "Support ResumeAI by watching a few brief ads to enable your free export."}
@@ -331,14 +331,14 @@ function AdGateView({
       {/* Progress bar */}
       <div className="mt-6 w-full max-w-xs">
         <div className="mb-2 flex justify-between text-xs font-medium">
-          <span className="text-slate-500">Progress</span>
+          <span className="text-slate-400">Progress</span>
           <span
-            className={cn(allDone ? "text-emerald-600" : "text-brand-600")}
+            className={cn(allDone ? "text-emerald-400" : "text-brand-400")}
           >
             {adsWatched}/{adsRequired}
           </span>
         </div>
-        <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">
+        <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className={cn(
               "h-full rounded-full transition-all duration-500",
@@ -359,10 +359,10 @@ function AdGateView({
             className={cn(
               "flex h-9 w-9 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
               i < adsWatched
-                ? "border-emerald-500 bg-emerald-50 text-emerald-600"
+                ? "border-emerald-500 bg-emerald-500/20 text-emerald-400"
                 : i === adsWatched && adPlaying
-                  ? "border-brand-500 bg-brand-50 text-brand-600 animate-pulse"
-                  : "border-slate-200 bg-slate-50 text-slate-400"
+                  ? "border-brand-500 bg-brand-500/20 text-brand-400 animate-pulse"
+                  : "border-white/20 bg-white/5 text-slate-500"
             )}
           >
             {i < adsWatched ? (
@@ -378,12 +378,12 @@ function AdGateView({
       {!allDone && (
         <div className="mt-6 w-full max-w-xs">
           {adPlaying ? (
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6">
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-white/20 bg-white/5 px-4 py-6">
               <Loader2 className="h-6 w-6 animate-spin text-brand-500" />
-              <span className="text-sm font-medium text-slate-600">
+              <span className="text-sm font-medium text-slate-400">
                 Ad playing…
               </span>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                 <div className="h-full animate-[progress_2.5s_linear] rounded-full bg-brand-500" />
               </div>
             </div>

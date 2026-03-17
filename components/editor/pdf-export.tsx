@@ -1,13 +1,42 @@
 "use client";
 
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 import toast from "react-hot-toast";
 import type { ResumeSection } from "@/hooks/use-resume-store";
 
 export type ExportFormat = "pdf" | "docx" | "txt" | "json" | "md";
 
 export async function exportToPdf(
+  sections: ResumeSection[],
+  title: string = "Resume",
+  color: string = "#2563eb"
+) {
+  const toastId = toast.loading("Generating PDF…");
+
+  try {
+    const { pdf } = await import("@react-pdf/renderer");
+    const { ResumePDFDocument } = await import("@/components/resume/resume-pdf-document");
+
+    const blob = await pdf(
+      <ResumePDFDocument sections={sections} color={color} />
+    ).toBlob();
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "Resume";
+    a.download = `${safeName}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast.success("PDF downloaded!", { id: toastId });
+  } catch (err) {
+    console.error("PDF export error:", err);
+    toast.error("Failed to export PDF", { id: toastId });
+  }
+}
+
+/** @deprecated Use exportToPdf(sections, title, color) instead */
+export async function exportToPdfFromElement(
   element: HTMLElement | null,
   title: string = "Resume"
 ) {
@@ -15,30 +44,23 @@ export async function exportToPdf(
     toast.error("Nothing to export");
     return;
   }
+  const { default: html2canvas } = await import("html2canvas");
+  const { default: jsPDF } = await import("jspdf");
 
   const toastId = toast.loading("Generating PDF…");
-
   try {
     const canvas = await html2canvas(element, {
       scale: 3,
       useCORS: true,
       logging: false,
       backgroundColor: "#ffffff",
-      windowWidth: element.scrollWidth,
-      windowHeight: element.scrollHeight,
-      allowTaint: true,
     });
-
     const imgWidth = 210;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     const pdf = new jsPDF("p", "mm", "a4");
-    const imgData = canvas.toDataURL("image/png");
-
-    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgWidth, imgHeight);
     const safeName = title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "Resume";
     pdf.save(`${safeName}.pdf`);
-
     toast.success("PDF downloaded!", { id: toastId });
   } catch {
     toast.error("Failed to export PDF", { id: toastId });
@@ -292,36 +314,350 @@ export function exportToMarkdown(
   toast.success("Markdown downloaded!");
 }
 
-export function exportToDocx(
+export async function exportToDocx(
   sections: ResumeSection[],
   title: string = "Resume"
 ) {
-  const text = sectionsToPlainText(sections, title);
+  const toastId = toast.loading("Generating DOCX…");
 
-  const docContent = `
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<?mso-application progid="Word.Document"?>
-<w:wordDocument xmlns:w="http://schemas.microsoft.com/office/word/2003/wordml">
-<w:body>
-${text
-  .split("\n")
-  .map(
-    (line) =>
-      `<w:p><w:r><w:t>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</w:t></w:r></w:p>`
-  )
-  .join("\n")}
-</w:body>
-</w:wordDocument>`.trim();
+  try {
+    const {
+      Document,
+      Packer,
+      Paragraph,
+      TextRun,
+      AlignmentType,
+      convertInchesToTwip,
+    } = await import("docx");
 
-  const blob = new Blob([docContent], {
-    type: "application/vnd.ms-word;charset=utf-8",
-  });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  const safeName = title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "Resume";
-  a.download = `${safeName}.doc`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast.success("DOCX downloaded!");
+    const sorted = [...sections].sort((a, b) => a.order - b.order);
+    const children: InstanceType<typeof Paragraph>[] = [];
+
+    for (const section of sorted) {
+      const c = section.content;
+      if (!c) continue;
+
+      const heading =
+        section.type.charAt(0).toUpperCase() + section.type.slice(1);
+
+      switch (section.type) {
+        case "personal": {
+          const name =
+            c.fullName ||
+            [c.firstName, c.lastName].filter(Boolean).join(" ").trim();
+          if (name) {
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: name,
+                    bold: true,
+                    size: 44,
+                  }),
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 120 },
+              })
+            );
+          }
+          const contactParts: string[] = [];
+          if (c.email) contactParts.push(c.email);
+          if (c.phone) contactParts.push(c.phone);
+          if (c.location) contactParts.push(c.location);
+          if (c.linkedin) contactParts.push(c.linkedin);
+          if (c.github) contactParts.push(c.github);
+          if (c.portfolio) contactParts.push(c.portfolio);
+          if (contactParts.length) {
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: contactParts.join(" · "),
+                    size: 20,
+                  }),
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 240 },
+              })
+            );
+          }
+          break;
+        }
+        case "summary":
+          if (c.text) {
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: heading,
+                    bold: true,
+                    size: 22,
+                  }),
+                ],
+                spacing: { before: 200, after: 80 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: c.text,
+                    size: 22,
+                  }),
+                ],
+                spacing: { after: 200 },
+              })
+            );
+          }
+          break;
+        case "experience":
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: heading,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { before: 200, after: 80 },
+            })
+          );
+          for (const item of c.items ?? []) {
+            const dateRange = item.current
+              ? `${item.startDate} - Present`
+              : `${item.startDate} - ${item.endDate}`;
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: item.title,
+                    bold: true,
+                    size: 22,
+                  }),
+                ],
+                spacing: { before: 120 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${item.company}${item.location ? `, ${item.location}` : ""} | ${dateRange}`,
+                    italics: true,
+                    size: 20,
+                  }),
+                ],
+                spacing: { after: 80 },
+              })
+            );
+            for (const bullet of item.bullets ?? []) {
+              if (bullet) {
+                children.push(
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: `• ${bullet}`,
+                        size: 22,
+                      }),
+                    ],
+                    indent: { left: convertInchesToTwip(0.25) },
+                    spacing: { after: 60 },
+                  })
+                );
+              }
+            }
+          }
+          break;
+        case "education":
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: heading,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { before: 200, after: 80 },
+            })
+          );
+          for (const item of c.items ?? []) {
+            const meta: string[] = [];
+            if (item.startDate || item.endDate)
+              meta.push(`${item.startDate} - ${item.endDate}`);
+            if (item.location) meta.push(item.location);
+            if (item.gpa) meta.push(`GPA: ${item.gpa}`);
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${item.degree}${item.field ? ` in ${item.field}` : ""}`,
+                    bold: true,
+                    size: 22,
+                  }),
+                ],
+                spacing: { before: 120 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${item.school}${meta.length ? ` | ${meta.join(" | ")}` : ""}`,
+                    italics: true,
+                    size: 20,
+                  }),
+                ],
+                spacing: { after: 120 },
+              })
+            );
+          }
+          break;
+        case "skills":
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: heading,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { before: 200, after: 80 },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: (c.items ?? []).filter(Boolean).join(", "),
+                  size: 22,
+                }),
+              ],
+              spacing: { after: 200 },
+            })
+          );
+          break;
+        case "projects":
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: heading,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { before: 200, after: 80 },
+            })
+          );
+          for (const item of c.items ?? []) {
+            if (item.name || item.description) {
+              children.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: item.name || "Project",
+                      bold: true,
+                      size: 22,
+                    }),
+                  ],
+                  spacing: { before: 120 },
+                }),
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: [item.description, item.technologies, item.link]
+                        .filter(Boolean)
+                        .join(" | "),
+                      size: 20,
+                    }),
+                  ],
+                  spacing: { after: 120 },
+                })
+              );
+            }
+          }
+          break;
+        case "certifications":
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: heading,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { before: 200, after: 80 },
+            })
+          );
+          for (const item of c.items ?? []) {
+            if (item.name) {
+              children.push(
+                new Paragraph({
+                  children: [
+                    new TextRun({
+                      text: `${item.name}${item.issuer ? ` — ${item.issuer}` : ""}${item.date ? ` (${item.date})` : ""}`,
+                      size: 22,
+                    }),
+                  ],
+                  spacing: { after: 80 },
+                })
+              );
+            }
+          }
+          break;
+        case "languages":
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: heading,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { before: 200, after: 80 },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: (c.items ?? [])
+                    .map(
+                      (i: any) =>
+                        `${i.language}${i.proficiency ? ` (${i.proficiency})` : ""}`
+                    )
+                    .filter(Boolean)
+                    .join(", "),
+                  size: 22,
+                }),
+              ],
+              spacing: { after: 200 },
+            })
+          );
+          break;
+      }
+    }
+
+    const doc = new Document({
+      sections: [
+        {
+          properties: {},
+          children: children.length ? children : [
+            new Paragraph({
+              children: [new TextRun({ text: "Empty resume" })],
+            }),
+          ],
+        },
+      ],
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    const safeName = title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "Resume";
+    a.download = `${safeName}.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    toast.success("DOCX downloaded!", { id: toastId });
+  } catch (err) {
+    console.error("DOCX export error:", err);
+    toast.error("Failed to export DOCX", { id: toastId });
+  }
 }

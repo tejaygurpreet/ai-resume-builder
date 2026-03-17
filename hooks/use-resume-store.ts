@@ -21,6 +21,7 @@ interface ResumeStore {
   resume: ResumeData;
   isDirty: boolean;
   isSaving: boolean;
+  lastSavedAt: Date | null;
   setResume: (resume: ResumeData) => void;
   updateTitle: (title: string) => void;
   updateTemplate: (template: string) => void;
@@ -31,6 +32,14 @@ interface ResumeStore {
   reorderSections: (sections: ResumeSection[]) => void;
   setIsSaving: (saving: boolean) => void;
   markClean: () => void;
+}
+
+export function formatTimeAgo(date: Date): string {
+  const sec = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (sec < 60) return "just now";
+  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+  if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+  return date.toLocaleDateString();
 }
 
 const defaultResume: ResumeData = {
@@ -150,6 +159,7 @@ export const useResumeStore = create<ResumeStore>((set) => ({
   resume: defaultResume,
   isDirty: false,
   isSaving: false,
+  lastSavedAt: null,
   setResume: (resume) =>
     set({
       resume: { ...resume, sections: resume?.sections ?? [] },
@@ -202,5 +212,5 @@ export const useResumeStore = create<ResumeStore>((set) => ({
       isDirty: true,
     })),
   setIsSaving: (isSaving) => set({ isSaving }),
-  markClean: () => set({ isDirty: false }),
+  markClean: () => set({ isDirty: false, lastSavedAt: new Date() }),
 }));

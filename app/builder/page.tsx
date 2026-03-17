@@ -1,39 +1,58 @@
 "use client";
 
-import React, { Suspense, useEffect, useRef, useState, useCallback } from "react";
+import React, {
+  Suspense,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   ArrowLeft,
   ChevronDown,
-  ChevronRight,
-  ChevronLeft,
   Download,
-  Sparkles,
-  Palette,
   LayoutTemplate,
   Loader2,
   CloudOff,
   Cloud,
-  List,
-  FileText,
+  Undo2,
+  Redo2,
+  PanelRightOpen,
+  PanelRightClose,
   Target,
   FileSignature,
-  Search,
   FileSearch,
-  User,
-  Briefcase,
-  GraduationCap,
-  CheckCircle2,
+  GripVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ResumePreview from "@/components/resume/resume-preview";
-import { templates, templateRegistry, type TemplateName } from "@/components/resume/templates";
+import { PDFPreview } from "@/components/editor/pdf-preview";
+import { templateRegistry, type TemplateName } from "@/components/resume/templates";
+import { templates } from "@/components/resume/templates";
 import { TemplateGallery } from "@/components/resume/template-gallery";
 import { Modal } from "@/components/ui/modal";
-import { useResumeStore, type ResumeSection } from "@/hooks/use-resume-store";
+import { useResumeStore, formatTimeAgo, type ResumeSection } from "@/hooks/use-resume-store";
 import { useAutosave } from "@/hooks/use-autosave";
+import { useUndoRedo } from "@/hooks/use-undo-redo";
 import { SectionEditor } from "@/components/editor/section-editor";
 import {
   BulletGeneratorModal,
@@ -42,7 +61,6 @@ import {
   KeywordMatchModal,
 } from "@/components/editor/ai-tools-modal";
 import { ATSScorePanel } from "@/components/editor/ats-score-panel";
-import { ResumeAnalyticsPanel } from "@/components/editor/resume-analytics-panel";
 import { TailorResumeModal } from "@/components/editor/tailor-resume-modal";
 import {
   exportToPdf,
@@ -55,38 +73,106 @@ import {
 import { ExportModal } from "@/components/editor/export-modal";
 import { ResumeCompletionModal } from "@/components/editor/resume-completion-modal";
 import { validateResumeCompletion } from "@/lib/resume-validation";
-import { BUILDER_STEPS, type BuilderStepId } from "@/lib/builder-steps";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
 
-const PRESET_COLORS = [
-  "#2563eb",
-  "#7c3aed",
-  "#db2777",
-  "#dc2626",
-  "#ea580c",
-  "#16a34a",
-  "#0891b2",
-  "#475569",
-];
-
 const TEMPLATE_LABEL_MAP: Record<string, string> = {};
-templateRegistry.forEach((t) => { TEMPLATE_LABEL_MAP[t.id] = t.name; });
+templateRegistry.forEach((t) => {
+  TEMPLATE_LABEL_MAP[t.id] = t.name;
+});
 
-const STEP_ICONS: Record<string, React.ElementType> = {
-  user: User,
-  "file-text": FileText,
-  briefcase: Briefcase,
-  "graduation-cap": GraduationCap,
-  sparkles: Sparkles,
-  "check-circle": CheckCircle2,
+const SECTION_LABELS: Record<string, string> = {
+  personal: "Personal Info",
+  summary: "Professional Summary",
+  experience: "Work Experience",
+  education: "Education",
+  skills: "Skills",
+  projects: "Projects",
+  certifications: "Certifications",
+  languages: "Languages",
 };
+
+function SortableSectionCard({
+  section,
+  resumeId,
+  isPro,
+  onTailor,
+}: {
+  section: ResumeSection;
+  resumeId?: string;
+  isPro?: boolean;
+  onTailor: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  const showTailor =
+    section.type === "experience" ||
+    section.type === "summary" ||
+    section.type === "skills";
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "group rounded-xl border border-white/[0.08] bg-white/[0.03] shadow-sm transition-all hover:border-white/[0.12] hover:bg-white/[0.05]",
+        isDragging && "opacity-50 shadow-lg"
+      )}
+    >
+      <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
+        <button
+          {...attributes}
+          {...listeners}
+          className="cursor-grab touch-none rounded p-1.5 text-slate-500 hover:bg-white/[0.06] hover:text-white active:cursor-grabbing"
+          aria-label="Drag to reorder"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+        <span className="flex-1 text-sm font-semibold text-white">
+          {SECTION_LABELS[section.type] ?? section.type}
+        </span>
+        {showTailor && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onTailor}
+            className="h-7 gap-1.5 text-xs text-purple-400 hover:bg-purple-500/10 hover:text-purple-300"
+          >
+            <FileSearch className="h-3.5 w-3.5" />
+            Tailor to Job
+          </Button>
+        )}
+      </div>
+      <div className="p-4">
+        <SectionEditor
+          sectionId={section.id}
+          type={section.type}
+          content={section.content}
+          resumeId={resumeId}
+          isPro={isPro}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function BuilderPageWrapper() {
   return (
     <Suspense
       fallback={
-        <div className="flex h-screen items-center justify-center bg-dark">
+        <div className="flex h-screen items-center justify-center bg-[#0a0a0b]">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
             <p className="text-sm text-slate-500">Loading builder…</p>
@@ -111,41 +197,47 @@ function BuilderPage() {
     resume,
     isDirty,
     isSaving,
+    lastSavedAt,
     setResume,
     updateTitle,
     updateTemplate,
     updateColor,
-    removeSection,
+    reorderSections,
   } = useResumeStore();
+
+  const prevResumeRef = useRef<string>("");
+  const { push, undo, redo, canUndo, canRedo } = useUndoRedo(resume, setResume);
+
+  useEffect(() => {
+    if (isDirty && prevResumeRef.current) {
+      try {
+        const prev = JSON.parse(prevResumeRef.current) as typeof resume;
+        push(prev);
+      } catch {}
+    }
+    prevResumeRef.current = JSON.stringify(resume);
+  }, [isDirty, resume, push]);
 
   useAutosave();
 
   const sections = resume?.sections ?? [];
-
-  const previewRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [templateGalleryOpen, setTemplateGalleryOpen] = useState(false);
-  const [colorOpen, setColorOpen] = useState(false);
-  const [aiToolsOpen, setAiToolsOpen] = useState(false);
-  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [templateOpen, setTemplateOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [completionModalOpen, setCompletionModalOpen] = useState(false);
   const [tailorOpen, setTailorOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [activeModal, setActiveModal] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
   const [exportsUsed, setExportsUsed] = useState(0);
   const [hasOneTimeExport, setHasOneTimeExport] = useState(false);
 
   const validation = validateResumeCompletion(sections);
 
-  // Auth guard
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
+    if (status === "unauthenticated") router.push("/login");
   }, [status, router]);
 
-  // Load or create resume
   useEffect(() => {
     if (status !== "authenticated") return;
 
@@ -163,10 +255,10 @@ function BuilderPage() {
 
         if (resumeId) {
           const res = await fetch(`/api/resumes/${resumeId}`);
-          if (!res.ok) throw new Error("Failed to load resume");
+          if (!res.ok) throw new Error("Failed to load");
           const data = await res.json();
           const loaded = data.resume ?? data;
-          const sections = (loaded.sections ?? []).map((s: any) => {
+          const secs = (loaded.sections ?? []).map((s: any) => {
             if (s.type === "personal" && s.content) {
               const c = s.content;
               if ((!c.firstName || !c.lastName) && c.fullName) {
@@ -183,7 +275,7 @@ function BuilderPage() {
             }
             return s;
           });
-          setResume({ ...loaded, sections });
+          setResume({ ...loaded, sections: secs });
           if (templateParam && templateParam in templates) {
             updateTemplate(templateParam as TemplateName);
           }
@@ -201,7 +293,7 @@ function BuilderPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body),
           });
-          if (!res.ok) throw new Error("Failed to create resume");
+          if (!res.ok) throw new Error("Failed to create");
           const data = await res.json();
           const created = data.resume ?? data;
           setResume({ ...created, sections: created.sections ?? [] });
@@ -219,26 +311,35 @@ function BuilderPage() {
     };
 
     init();
-  }, [resumeId, templateParam, exportParam, status, setResume, router]);
+  }, [resumeId, templateParam, exportParam, status, setResume, updateTemplate, router]);
 
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest("[data-dropdown]")) {
-        setColorOpen(false);
-        setAiToolsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
+      const oldIndex = sections.findIndex((s) => s.id === active.id);
+      const newIndex = sections.findIndex((s) => s.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+      const reordered = arrayMove(sections, oldIndex, newIndex).map((s, i) => ({
+        ...s,
+        order: i,
+      }));
+      reorderSections(reordered);
+    },
+    [sections, reorderSections]
+  );
 
   const handleExport = useCallback(
-    (format: ExportFormat, filename: string) => {
+    async (format: ExportFormat, filename: string) => {
       const name = filename || resume.title;
       switch (format) {
         case "pdf":
-          exportToPdf(previewRef.current, name);
+          await exportToPdf(sections, name, resume.color);
           break;
         case "txt":
           exportToTxt(sections, name);
@@ -247,7 +348,7 @@ function BuilderPage() {
           exportToJson(sections, name, resume.template, resume.color);
           break;
         case "docx":
-          exportToDocx(sections, name);
+          await exportToDocx(sections, name);
           break;
         case "md":
           exportToMarkdown(sections, name);
@@ -257,48 +358,29 @@ function BuilderPage() {
     [resume.title, resume.template, resume.color, sections]
   );
 
-  const getSection = (type: string) => sections.find((s) => s.type === type);
-
-  const handleNext = () => {
-    if (currentStep < BUILDER_STEPS.length - 1) setCurrentStep((s) => s + 1);
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) setCurrentStep((s) => s - 1);
-  };
-
   const handleExportClick = () => {
-    if (validation.isComplete) {
-      setExportOpen(true);
-    } else {
-      setCompletionModalOpen(true);
-    }
+    if (validation.isComplete) setExportOpen(true);
+    else setCompletionModalOpen(true);
   };
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-dark">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
-          <p className="text-sm text-slate-500">Loading builder…</p>
-        </div>
+      <div className="flex h-screen items-center justify-center bg-[#0a0a0b]">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
       </div>
     );
   }
 
   if (!session) return null;
 
-  const step = BUILDER_STEPS[currentStep];
-  const isReviewStep = step.id === "review";
-
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-dark">
-      {/* Top bar */}
-      <header className="z-30 flex shrink-0 items-center gap-2 border-b border-white/[0.06] bg-dark/95 backdrop-blur-xl px-4 py-2.5">
+    <div className="flex h-screen flex-col overflow-hidden bg-[#0a0a0b]">
+      {/* Top nav */}
+      <header className="z-30 flex shrink-0 items-center gap-3 border-b border-white/[0.06] bg-[#0a0a0b]/95 px-4 py-3 backdrop-blur-xl">
         <Link
           href="/dashboard"
-          className="mr-1 rounded-xl p-2 text-slate-500 transition-all duration-200 hover:bg-white/[0.05] hover:text-white"
-          aria-label="Back to dashboard"
+          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-white/[0.06] hover:text-white"
+          aria-label="Back"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
@@ -307,228 +389,216 @@ function BuilderPage() {
           type="text"
           value={resume.title}
           onChange={(e) => updateTitle(e.target.value)}
-          className="min-w-0 max-w-[180px] rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm font-semibold text-white transition-all duration-200 hover:border-white/[0.1] focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-          aria-label="Resume title"
+          className="max-w-[200px] rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold text-white placeholder:text-slate-500 focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          placeholder="Resume name"
         />
 
-        <div className="mx-1 h-5 w-px bg-white/[0.08]" />
+        <div className="h-5 w-px bg-white/[0.08]" />
 
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setTemplateGalleryOpen(true)}
-          className="gap-1.5 text-slate-400"
+          onClick={() => setTemplateOpen(true)}
+          className="gap-2 text-slate-400 hover:bg-white/[0.06] hover:text-white"
         >
           <LayoutTemplate className="h-4 w-4" />
-          <span className="hidden sm:inline">{TEMPLATE_LABEL_MAP[resume.template] ?? "Template"}</span>
+          <span className="hidden sm:inline">Switch Template</span>
           <ChevronDown className="h-3 w-3" />
         </Button>
 
-        <div className="relative" data-dropdown>
+        <div className="h-5 w-px bg-white/[0.08]" />
+
+        <div className="flex items-center gap-1">
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setColorOpen((o) => !o)}
-            className="gap-1.5 text-slate-400"
+            onClick={undo}
+            disabled={!canUndo}
+            className="h-8 w-8 p-0 text-slate-500 hover:text-white disabled:opacity-40"
+            aria-label="Undo"
           >
-            <Palette className="h-4 w-4" />
-            <span className="h-4 w-4 rounded-full border border-white/[0.15]" style={{ backgroundColor: resume.color }} />
-            <ChevronDown className="h-3 w-3" />
+            <Undo2 className="h-4 w-4" />
           </Button>
-          {colorOpen && (
-            <div className="absolute left-0 top-full z-40 mt-1.5 w-56 rounded-xl border border-white/[0.08] bg-dark-100 p-3 shadow-glass-lg">
-              <p className="mb-2 text-xs font-medium text-slate-500">Accent Color</p>
-              <div className="mb-3 grid grid-cols-8 gap-1.5">
-                {PRESET_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => updateColor(color)}
-                    className={cn(
-                      "h-7 w-7 rounded-full border-2 transition-all duration-200 hover:scale-110",
-                      resume.color === color ? "border-white ring-2 ring-white/20" : "border-transparent"
-                    )}
-                    style={{ backgroundColor: color }}
-                    aria-label={`Color ${color}`}
-                  />
-                ))}
-              </div>
-              <div className="flex items-center gap-2">
-                <label className="text-xs text-slate-500">Custom:</label>
-                <input type="color" value={resume.color} onChange={(e) => updateColor(e.target.value)} className="h-7 w-10 cursor-pointer rounded-lg border border-white/[0.1] bg-transparent" />
-              </div>
-            </div>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={redo}
+            disabled={!canRedo}
+            className="h-8 w-8 p-0 text-slate-500 hover:text-white disabled:opacity-40"
+            aria-label="Redo"
+          >
+            <Redo2 className="h-4 w-4" />
+          </Button>
         </div>
 
-        <div className="mx-1 h-5 w-px bg-white/[0.08]" />
-
-        <div
-          className={cn(
-            "flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium",
-            validation.isComplete ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/15 text-amber-400"
-          )}
-        >
-          {validation.percentage}% Complete
-        </div>
-
-        <div className="flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs text-slate-500">
           {isSaving ? (
-            <><Loader2 className="h-3.5 w-3.5 animate-spin text-brand-500" /><span className="text-brand-400">Saving…</span></>
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-brand-500" />
+              <span>Saving…</span>
+            </>
           ) : isDirty ? (
-            <><CloudOff className="h-3.5 w-3.5 text-amber-500" /><span className="text-amber-400">Unsaved</span></>
+            <>
+              <CloudOff className="h-3.5 w-3.5 text-amber-500" />
+              <span>Unsaved</span>
+            </>
           ) : (
-            <><Cloud className="h-3.5 w-3.5 text-emerald-500" /><span className="text-emerald-400">Saved</span></>
+            <>
+              <Cloud className="h-3.5 w-3.5 text-emerald-500" />
+              <span>Saved{lastSavedAt ? ` ${formatTimeAgo(lastSavedAt)}` : ""}</span>
+            </>
           )}
         </div>
 
         <div className="flex-1" />
 
-        <div className="relative" data-dropdown>
-          <Button variant="ghost" size="sm" onClick={() => setAiToolsOpen((o) => !o)} className="gap-1.5 text-purple-400 hover:bg-purple-500/10 hover:text-purple-300">
-            <Sparkles className="h-4 w-4" />
-            <span className="hidden sm:inline">AI Tools</span>
-            <ChevronDown className="h-3 w-3" />
-          </Button>
-          {aiToolsOpen && (
-            <div className="absolute right-0 top-full z-40 mt-1.5 w-56 rounded-xl border border-white/[0.08] bg-dark-100 py-1 shadow-glass-lg">
-              <button onClick={() => { setActiveModal("bullets"); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
-                <List className="h-4 w-4 text-violet-500" /> Generate Bullets
-              </button>
-              <button onClick={() => { setActiveModal("score"); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
-                <Target className="h-4 w-4 text-violet-500" /> Score Resume
-              </button>
-              <button onClick={() => { setActiveModal("coverLetter"); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
-                <FileSignature className="h-4 w-4 text-violet-500" /> Generate Cover Letter
-              </button>
-              <button onClick={() => { setActiveModal("keywords"); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
-                <Search className="h-4 w-4 text-violet-500" /> Keyword Match
-              </button>
-              <div className="mx-2 my-1 border-t border-white/[0.06]" />
-              <button onClick={() => { setTailorOpen(true); setAiToolsOpen(false); }} className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white">
-                <FileSearch className="h-4 w-4 text-violet-500" /> Tailor for Job
-                {userPlan !== "pro" && <span className="ml-auto rounded-md bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">PRO</span>}
-              </button>
-            </div>
-          )}
-        </div>
-
-        <Button size="sm" onClick={handleExportClick} className="gap-1.5">
+        <Button
+          size="sm"
+          onClick={handleExportClick}
+          className="gap-2 bg-brand-600 px-5 font-semibold hover:bg-brand-500"
+        >
           <Download className="h-4 w-4" />
-          <span className="hidden sm:inline">Export</span>
+          Export
         </Button>
       </header>
 
-      {/* Step progress */}
-      <div className="shrink-0 border-b border-white/[0.06] bg-dark-50/50 px-4 py-2">
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-thin">
-          {BUILDER_STEPS.map((s, i) => {
-            const Icon = STEP_ICONS[s.icon] ?? FileText;
-            const isActive = i === currentStep;
-            const isPast = i < currentStep;
-            return (
-              <button
-                key={s.id}
-                onClick={() => setCurrentStep(i)}
-                className={cn(
-                  "flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                  isActive && "bg-brand-500/20 text-brand-300 ring-1 ring-brand-500/30",
-                  isPast && !isActive && "text-slate-400 hover:bg-white/[0.05] hover:text-white",
-                  !isActive && !isPast && "text-slate-500 hover:bg-white/[0.05] hover:text-slate-400"
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{s.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main content */}
+      {/* Main: split screen — 35% left, 45–50% center, right sidebar */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left: Guided editing panel */}
-        <div className="flex w-[50%] flex-col overflow-y-auto border-r border-white/[0.06] bg-dark scrollbar-thin">
-          <div className="flex-1 p-6">
-            {isReviewStep ? (
-              <ReviewStep
-                sections={sections}
-                validation={validation}
-                onExportClick={handleExportClick}
-                onGoToStep={(stepIndex) => setCurrentStep(stepIndex)}
-              />
-            ) : (
-              <div className="mx-auto max-w-xl">
-                <h2 className="mb-2 text-lg font-semibold text-white">{step.label}</h2>
-                <p className="mb-6 text-sm text-slate-400">
-                  {step.id === "personal" && "Enter your contact information. First name, last name, and email are required."}
-                  {step.id === "summary" && "Write a brief professional summary. Use AI to generate or improve it."}
-                  {step.id === "experience" && "Add your work history. Include job title, company, dates, and achievement bullets."}
-                  {step.id === "education" && "Add your education. School, degree, and dates are required."}
-                  {step.id === "skills" && "Add at least 3 professional skills. Use AI to suggest relevant skills."}
-                </p>
-                {getSection(step.id) && (
-                  <SectionEditor
-                    sectionId={getSection(step.id)!.id}
-                    type={step.id}
-                    content={getSection(step.id)!.content}
+        {/* Left: sections (~35%) */}
+        <div className="flex w-[35%] min-w-[280px] max-w-[420px] shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] bg-[#0a0a0b] p-5 scrollbar-thin">
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={sections.map((s) => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="mx-auto w-full space-y-5">
+                {sections.map((section) => (
+                  <SortableSectionCard
+                    key={section.id}
+                    section={section}
                     resumeId={resume.id}
                     isPro={userPlan === "pro"}
+                    onTailor={() => setTailorOpen(true)}
                   />
-                )}
+                ))}
               </div>
-            )}
-          </div>
-
-          {/* Step navigation */}
-          {!isReviewStep && (
-            <div className="flex shrink-0 items-center justify-between border-t border-white/[0.06] px-6 py-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleBack}
-                disabled={currentStep === 0}
-                className="gap-1.5 border-white/[0.12] text-slate-400 hover:bg-white/[0.06] disabled:opacity-40"
-              >
-                <ChevronLeft className="h-4 w-4" /> Back
-              </Button>
-              <Button
-                size="sm"
-                onClick={handleNext}
-                disabled={currentStep >= BUILDER_STEPS.length - 1}
-                className="gap-1.5"
-              >
-                {currentStep === BUILDER_STEPS.length - 2 ? "Review" : "Next"}
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+            </SortableContext>
+          </DndContext>
         </div>
 
-        {/* Right: Live preview */}
-        <div className="flex w-[50%] flex-col overflow-y-auto bg-dark p-6 scrollbar-thin">
-          <div className="mx-auto w-full max-w-[600px] space-y-5">
-            <div className="rounded-2xl border border-white/[0.08] bg-dark-50/50 p-6 shadow-glass">
-              <div className="rounded-xl border border-white/[0.06] bg-[#fafaf9] p-4 shadow-inner" style={{ boxShadow: "inset 0 1px 2px rgba(0,0,0,0.04)" }}>
-                <ResumePreview
-                  ref={previewRef}
-                  template={resume.template as TemplateName}
-                  sections={sections}
-                  color={resume.color}
-                  scale={0.55}
-                />
-              </div>
+        {/* Center: live preview (~45–50%) — matches final PDF exactly */}
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-slate-100">
+          <div className="flex-1 overflow-auto p-8">
+            <div className="mx-auto max-w-[210mm] rounded-lg border border-slate-200 bg-white shadow-2xl">
+              <PDFPreview
+                sections={sections}
+                color={resume.color}
+                className="min-h-[297mm]"
+              />
             </div>
-            <ResumeAnalyticsPanel sections={sections} />
-            <ATSScorePanel sections={sections} />
           </div>
         </div>
+
+        {/* Right sidebar: ATS, Job matcher, Cover letter, Color picker */}
+        {sidebarOpen && (
+          <div className="w-72 shrink-0 border-l border-white/[0.06] bg-[#0a0a0b] p-4">
+            <div className="mb-4 flex items-center justify-between">
+              <span className="text-sm font-medium text-slate-400">Tools</span>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="rounded p-1 text-slate-500 hover:bg-white/[0.06] hover:text-white"
+                aria-label="Close sidebar"
+              >
+                <PanelRightClose className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              {/* Color picker */}
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+                <h4 className="mb-2 text-sm font-medium text-white">Accent Color</h4>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="color"
+                    value={resume.color}
+                    onChange={(e) => updateColor(e.target.value)}
+                    className="h-10 w-14 cursor-pointer rounded-lg border-0 bg-transparent p-0"
+                  />
+                  <span className="text-xs text-slate-500">{resume.color}</span>
+                </div>
+              </div>
+              <ATSScorePanel sections={sections} />
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+                <h4 className="mb-2 text-sm font-medium text-white">Job Matcher</h4>
+                <p className="mb-3 text-xs text-slate-500">
+                  Tailor your resume to a job description for better match rate.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTailorOpen(true)}
+                  className="w-full gap-2 border-white/[0.12] text-slate-300"
+                >
+                  <FileSearch className="h-4 w-4" />
+                  Tailor to Job
+                </Button>
+              </div>
+              <button
+                onClick={() => setActiveModal("score")}
+                className="flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.05]"
+              >
+                <Target className="h-5 w-5 text-purple-400" />
+                <div>
+                  <p className="text-sm font-medium text-white">Score Resume</p>
+                  <p className="text-xs text-slate-500">Get AI feedback</p>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveModal("coverLetter")}
+                className="flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.05]"
+              >
+                <FileSignature className="h-5 w-5 text-purple-400" />
+                <div>
+                  <p className="text-sm font-medium text-white">Cover Letter</p>
+                  <p className="text-xs text-slate-500">Generate a cover letter</p>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveModal("keywords")}
+                className="flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.05]"
+              >
+                <FileSearch className="h-5 w-5 text-purple-400" />
+                <div>
+                  <p className="text-sm font-medium text-white">Keyword Match</p>
+                  <p className="text-xs text-slate-500">Match job description</p>
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!sidebarOpen && (
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="fixed right-4 top-24 z-20 flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#0a0a0b] px-3 py-2 text-sm text-slate-400 shadow-lg hover:bg-white/[0.06] hover:text-white"
+          >
+            <PanelRightOpen className="h-4 w-4" />
+            Tools
+          </button>
+        )}
       </div>
 
-      <Modal isOpen={templateGalleryOpen} onClose={() => setTemplateGalleryOpen(false)} title="Choose a Template" size="xl">
+      <Modal isOpen={templateOpen} onClose={() => setTemplateOpen(false)} title="Switch Template" size="xl">
         <div className="max-h-[70vh] overflow-y-auto -mx-2 px-2">
           <TemplateGallery
             selected={resume.template as TemplateName}
-            onSelect={(t) => { updateTemplate(t); setTemplateGalleryOpen(false); }}
+            onSelect={(t) => {
+              updateTemplate(t);
+              setTemplateOpen(false);
+            }}
             columns={3}
             selectionMode="direct"
           />
@@ -539,8 +609,8 @@ function BuilderPage() {
         isOpen={completionModalOpen}
         onClose={() => setCompletionModalOpen(false)}
         validation={validation}
-        onGoToStep={(idx) => { setCurrentStep(idx); setCompletionModalOpen(false); }}
-        getStepForMissing={getStepForMissing}
+        onGoToStep={() => setCompletionModalOpen(false)}
+        getStepForMissing={() => null}
       />
 
       <ExportModal
@@ -549,7 +619,7 @@ function BuilderPage() {
         isPro={userPlan === "pro"}
         hasOneTimeExport={hasOneTimeExport}
         exportsUsed={exportsUsed}
-        maxExports={3}
+        maxExports={10}
         onExport={handleExport}
         resumeTitle={resume.title}
         templateName={TEMPLATE_LABEL_MAP[resume.template] ?? resume.template}
@@ -559,94 +629,12 @@ function BuilderPage() {
       <ScoreModal isOpen={activeModal === "score"} onClose={() => setActiveModal(null)} />
       <CoverLetterModal isOpen={activeModal === "coverLetter"} onClose={() => setActiveModal(null)} />
       <KeywordMatchModal isOpen={activeModal === "keywords"} onClose={() => setActiveModal(null)} />
-      <TailorResumeModal isOpen={tailorOpen} onClose={() => setTailorOpen(false)} sections={sections} isPro={userPlan === "pro"} />
-    </div>
-  );
-}
-
-function getStepForMissing(item: string): number | null {
-  if (item.includes("name") || item.includes("Email")) return 0;
-  if (item.includes("summary")) return 1;
-  if (item.includes("experience")) return 2;
-  if (item.includes("education")) return 3;
-  if (item.includes("skill")) return 4;
-  return null;
-}
-
-function ReviewStep({
-  sections,
-  validation,
-  onExportClick,
-  onGoToStep,
-}: {
-  sections: ResumeSection[];
-  validation: ReturnType<typeof validateResumeCompletion>;
-  onExportClick: () => void;
-  onGoToStep: (stepIndex: number) => void;
-}) {
-  return (
-    <div className="mx-auto max-w-xl space-y-8">
-      <h2 className="text-xl font-semibold text-white">Review & Export</h2>
-
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6">
-        <div className="mb-6 flex items-center justify-between">
-          <span className="text-sm font-medium text-slate-400">Resume Score</span>
-          <div className="flex items-center gap-2">
-            <div className="h-2 w-28 overflow-hidden rounded-full bg-white/10">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all",
-                  validation.percentage >= 100 ? "bg-emerald-500" : "bg-amber-500"
-                )}
-                style={{ width: `${validation.percentage}%` }}
-              />
-            </div>
-            <span className="text-sm font-bold text-white">{validation.percentage}%</span>
-          </div>
-        </div>
-
-        {validation.isComplete ? (
-          <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-            <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-400" />
-            <div>
-              <p className="font-medium text-emerald-300">Your resume is ready to export</p>
-              <p className="text-sm text-slate-400">Download as PDF, DOCX, or other formats.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-amber-400">Complete these to export:</p>
-            <ul className="space-y-2">
-              {validation.missingItems.map((item) => {
-                const stepIdx = getStepForMissing(item);
-                return (
-                  <li key={item} className="flex items-center justify-between gap-2 text-sm text-slate-400">
-                    <span className="flex items-center gap-2">
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-amber-400" />
-                      {item}
-                    </span>
-                    {stepIdx !== null && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onGoToStep(stepIdx)}
-                        className="h-7 shrink-0 text-xs text-brand-400 hover:bg-brand-500/10 hover:text-brand-300"
-                      >
-                        Go to step
-                      </Button>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-      </div>
-
-      <Button size="lg" onClick={onExportClick} className="w-full gap-2" disabled={!validation.isComplete}>
-        <Download className="h-5 w-5" />
-        {validation.isComplete ? "Export Resume" : "Complete Required Fields to Export"}
-      </Button>
+      <TailorResumeModal
+        isOpen={tailorOpen}
+        onClose={() => setTailorOpen(false)}
+        sections={sections}
+        isPro={userPlan === "pro"}
+      />
     </div>
   );
 }

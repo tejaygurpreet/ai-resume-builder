@@ -156,7 +156,7 @@ function AIButton({
       {loading ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
       ) : (
-        <Sparkles className="h-3.5 w-3.5" />
+        <span className="text-purple-400">✦</span>
       )}
       {loading ? "Generating…" : children}
     </Button>
@@ -351,7 +351,7 @@ function SummaryEditor({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <AIButton onClick={handleGenerate} loading={loading}>
-          Generate
+          Generate Summary
         </AIButton>
         <Button
           variant="outline"
@@ -360,8 +360,8 @@ function SummaryEditor({
           disabled={transformLoading !== null || !(content.text ?? "").trim()}
           className="gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20"
         >
-          {transformLoading === "improve" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
-          Improve
+          {transformLoading === "improve" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <span className="text-purple-400">✦</span>}
+          Improve with AI
         </Button>
         <Button
           variant="outline"
@@ -618,7 +618,7 @@ function ExperienceEditor({
                 onClick={() => handleGenerateBullets(idx)}
                 loading={loading && generatingIdx === idx}
               >
-                Generate Bullets
+                ✦ Generate Bullets
               </AIButton>
               <Button
                 variant="ghost"
@@ -1028,7 +1028,7 @@ function SkillsEditor({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <AIButton onClick={handleGenerateSkills} loading={loading}>
-          Suggest Skills
+          ✦ Improve with AI
         </AIButton>
       </div>
 

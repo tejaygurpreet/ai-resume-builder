@@ -19,11 +19,11 @@ export const PLANS = {
   free: {
     name: "Free",
     price: 0,
-    templates: 5,
-    maxExportsPerMonth: 3,
+    templates: 10,
+    maxExportsPerMonth: 10,
     aiGenerationsPerResume: 3,
     aiFeatures: true,
-    adsBeforeExport: 3,
+    adsBeforeExport: 0,
     stripePriceId: null,
   },
   pro: {
@@ -35,10 +35,12 @@ export const PLANS = {
     aiFeatures: true,
     adsBeforeExport: 0,
     stripePriceId: process.env.STRIPE_PRO_PRICE_ID || "price_pro_monthly",
+    stripeAnnualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID || null,
+    stripeLifetimePriceId: process.env.STRIPE_PRO_LIFETIME_PRICE_ID || null,
   },
   oneTimeExport: {
     name: "One-Time Export",
-    price: 9,
+    price: 19,
     stripePriceId: process.env.STRIPE_ONE_TIME_PRICE_ID || "price_one_time_export",
   },
 } as const;

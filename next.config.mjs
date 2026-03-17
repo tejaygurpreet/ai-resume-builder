@@ -4,7 +4,7 @@ const nextConfig = {
     domains: [],
   },
   experimental: {
-    serverComponentsExternalPackages: ["bcryptjs"],
+    serverComponentsExternalPackages: ["bcryptjs", "@react-pdf/renderer"],
   },
 };
 

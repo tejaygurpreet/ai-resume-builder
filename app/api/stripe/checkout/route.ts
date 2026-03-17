@@ -13,7 +13,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { plan } = await req.json();
+    const { plan, interval = "monthly" } = await req.json();
     if (plan !== "pro") {
       return NextResponse.json(
         { error: "Invalid plan" },
@@ -21,7 +21,12 @@ export async function POST(req: Request) {
       );
     }
 
-    const priceId = PLANS.pro.stripePriceId;
+    const priceId =
+      interval === "annual" && PLANS.pro.stripeAnnualPriceId
+        ? PLANS.pro.stripeAnnualPriceId
+        : interval === "lifetime" && PLANS.pro.stripeLifetimePriceId
+          ? PLANS.pro.stripeLifetimePriceId
+          : PLANS.pro.stripePriceId;
     if (!priceId) {
       return NextResponse.json(
         { error: "Pro plan is not configured" },
@@ -34,14 +39,10 @@ export async function POST(req: Request) {
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
       "http://localhost:3000";
 
+    const isLifetime = interval === "lifetime";
     const checkoutSession = await getStripe().checkout.sessions.create({
-      mode: "subscription",
-      line_items: [
-        {
-          price: priceId as string,
-          quantity: 1,
-        },
-      ],
+      mode: isLifetime ? "payment" : "subscription",
+      line_items: [{ price: priceId as string, quantity: 1 }],
       success_url: `${baseUrl}/dashboard?upgraded=true`,
       cancel_url: `${baseUrl}/pricing`,
       customer_email: session.user.email,
