@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getStripe, PLANS } from "@/lib/stripe";
+import { getStripeOrNull, PLANS } from "@/lib/stripe";
 
 export async function POST() {
   try {
+    const stripe = getStripeOrNull();
+    if (!stripe) {
+      return NextResponse.json(
+        { error: "Payment system is not configured. Please contact support." },
+        { status: 503 }
+      );
+    }
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -26,15 +33,16 @@ export async function POST() {
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
       "http://localhost:3000";
 
-    const checkoutSession = await getStripe().checkout.sessions.create({
+    const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: priceId as string, quantity: 1 }],
       success_url: `${baseUrl}/dashboard?exportUnlocked=true`,
       cancel_url: `${baseUrl}/pricing`,
       customer_email: session.user.email,
       metadata: {
-        userId: (session.user as any).id || "",
-        type: "one_time_export",
+        userId: (session.user as { id?: string }).id || "",
+        purchaseType: "one_time_export",
+        planType: "one_time_export",
       },
     });
 

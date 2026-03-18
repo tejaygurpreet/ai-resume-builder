@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getStripe, PLANS } from "@/lib/stripe";
+import { getStripeOrNull, PLANS } from "@/lib/stripe";
 
 export async function POST(req: Request) {
   try {
+    const stripe = getStripeOrNull();
+    if (!stripe) {
+      return NextResponse.json(
+        { error: "Payment system is not configured. Please contact support." },
+        { status: 503 }
+      );
+    }
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -40,14 +47,22 @@ export async function POST(req: Request) {
       "http://localhost:3000";
 
     const isLifetime = interval === "lifetime";
-    const checkoutSession = await getStripe().checkout.sessions.create({
+    const purchaseType =
+      interval === "monthly"
+        ? "pro_monthly"
+        : interval === "annual"
+          ? "pro_annual"
+          : "pro_lifetime";
+    const checkoutSession = await stripe.checkout.sessions.create({
       mode: isLifetime ? "payment" : "subscription",
       line_items: [{ price: priceId as string, quantity: 1 }],
       success_url: `${baseUrl}/dashboard?upgraded=true`,
       cancel_url: `${baseUrl}/pricing`,
       customer_email: session.user.email,
       metadata: {
-        userId: (session.user as any).id || "",
+        userId: (session.user as { id?: string }).id || "",
+        purchaseType,
+        planType: "pro",
       },
     });
 

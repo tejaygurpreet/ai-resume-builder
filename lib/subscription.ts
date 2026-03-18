@@ -16,10 +16,14 @@ export async function getUserSubscription(userId: string) {
     };
   }
 
+  // Lifetime Pro has no stripeSubscriptionId — always active
+  const isLifetimePro =
+    subscription.plan === "pro" && !subscription.stripeSubscriptionId;
   const isActive =
     subscription.status === "active" &&
-    subscription.currentPeriodEnd &&
-    subscription.currentPeriodEnd > new Date();
+    (isLifetimePro ||
+      (!!subscription.currentPeriodEnd &&
+        subscription.currentPeriodEnd > new Date()));
 
   const planConfig = subscription.plan === "pro" ? PLANS.pro : PLANS.free;
 

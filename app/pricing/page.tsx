@@ -38,8 +38,8 @@ type ProInterval = "monthly" | "annual" | "lifetime";
 
 const proOptions: { id: ProInterval; label: string; price: string; badge?: string }[] = [
   { id: "monthly", label: "Monthly", price: "$7.99/month" },
-  { id: "annual", label: "Annual", price: "$59/year", badge: "Best value" },
-  { id: "lifetime", label: "Lifetime", price: "$99 one-time" },
+  { id: "annual", label: "Annual", price: "$69.99/year", badge: "Best value" },
+  { id: "lifetime", label: "Lifetime", price: "$129.99 one-time" },
 ];
 
 const comparisonCompetitors = [
@@ -50,7 +50,7 @@ const comparisonCompetitors = [
 ];
 
 const faqItems = [
-  { question: "How does billing work?", answer: "Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $59/year (best value) or $99 lifetime – unlimited AI, all 50+ premium templates, unlimited exports. One-Time Export: $19.99 one-time – unlimited exports forever, no ads, all formats (no Pro AI features)." },
+  { question: "How does billing work?", answer: "Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $69.99/year (best value) or $129.99 lifetime – unlimited AI, all 50+ premium templates, unlimited exports. One-Time Export: $19.99 one-time – unlimited exports forever, no ads, all formats (no Pro AI features)." },
   { question: "Can I cancel my Pro subscription anytime?", answer: "Yes, you can cancel your Pro subscription at any time with no questions asked. You'll continue to have access to Pro features until the end of your current billing period." },
   { question: "What is the one-time export option?", answer: "Pay $19.99 once to unlock unlimited exports permanently. This gives you all export formats (PDF, DOCX, TXT, JSON, Markdown) without a subscription. Pro AI features (tailoring, cover letters, ATS score) are not included." },
   { question: "What payment methods do you accept?", answer: "We accept all major credit cards (Visa, Mastercard, American Express) and debit cards through our secure payment processor, Stripe." },

@@ -4,7 +4,7 @@
  * (2) Template switching updates store + color from template accent
  * (3) Accent color from template, synced on template change
  * (4) Right sidebar scroll with max-h and overflow-y-auto
- * (5) Pricing: Free 5 exports, Pro $7.99/$59/$99, One-Time $19.99, no ads
+ * (5) Pricing: Free 5 exports, Pro $7.99/$69.99/$129.99, One-Time $19.99, no ads
  * (6) useResumeExport hook + ExportModal centralizes export flow
  * (7) Template modal scale-to-fit, responsive max-height
  */
@@ -741,7 +741,7 @@ function BuilderPage() {
  * 4. Export remains via top Export button only; no export UI in preview.
  *
  * === ALL PRICING BANNERS UPDATED + TEMPLATE LOCKS + LIMIT POPUPS + CONSISTENT LOGIC ===
- * - 2026 plans: Free ($0, 5 exports/mo, 10 templates, 3 AI), Pro ($7.99/$59/$99), One-Time $19.99
+ * - 2026 plans: Free ($0, 5 exports/mo, 10 templates, 3 AI), Pro ($7.99/$69.99/$129.99), One-Time $19.99
  * - Template locking: Free users get 10 basic templates; premium locked with upgrade popup
  * - AI limit (3/resume): UpgradeModal when hit
  * - Export limit (5/mo): UpgradeModal when hit

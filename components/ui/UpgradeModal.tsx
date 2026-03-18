@@ -129,7 +129,7 @@ export function UpgradeModal({
               variant="outline"
               className="w-full border-white/[0.12] text-slate-300 hover:bg-white/[0.06]"
             >
-              View all plans ($59/year or $99 lifetime)
+              View all plans ($69.99/year or $129.99 lifetime)
             </Button>
           </Link>
         </div>

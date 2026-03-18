@@ -73,6 +73,10 @@ A production-ready SaaS web application for building professional, ATS-friendly 
    STRIPE_SECRET_KEY="sk_test_your-stripe-secret-key"
    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_your-stripe-publishable-key"
    STRIPE_WEBHOOK_SECRET="whsec_your-webhook-secret"
+   STRIPE_PRO_PRICE_ID="price_xxx"
+   STRIPE_PRO_ANNUAL_PRICE_ID="price_xxx"
+   STRIPE_PRO_LIFETIME_PRICE_ID="price_xxx"
+   STRIPE_ONE_TIME_PRICE_ID="price_xxx"
    ```
 
 4. **Set up the database**
@@ -92,8 +96,12 @@ A production-ready SaaS web application for building professional, ATS-friendly 
 
 ### Stripe Setup
 
-1. Create a product in Stripe Dashboard with a $2.99/month recurring price
-2. Copy the Price ID and set it as `STRIPE_PRO_PRICE_ID` in your `.env`
+1. Create products in Stripe Dashboard:
+   - Pro Monthly: $7.99/month recurring
+   - Pro Annual: $69.99/year recurring
+   - Pro Lifetime: $129.99 one-time
+   - One-Time Export: $19.99 one-time
+2. Copy each Price ID to `.env`: `STRIPE_PRO_PRICE_ID`, `STRIPE_PRO_ANNUAL_PRICE_ID`, `STRIPE_PRO_LIFETIME_PRICE_ID`, `STRIPE_ONE_TIME_PRICE_ID`
 3. Set up a webhook endpoint pointing to `your-domain/api/stripe/webhook`
 4. Listen for events: `checkout.session.completed`, `invoice.payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`
 

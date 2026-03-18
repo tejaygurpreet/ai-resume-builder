@@ -63,6 +63,16 @@ export default function DashboardPage() {
 
   useEffect(() => { if (status === "authenticated") fetchResumes(); }, [status, fetchResumes]);
 
+  // Refetch when returning from checkout (webhook may have just processed)
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("upgraded") === "true" || params.get("exportUnlocked") === "true") {
+      fetchResumes();
+      window.history.replaceState({}, "", "/dashboard");
+    }
+  }, [status, fetchResumes]);
+
   function handleCreate() {
     router.push("/templates");
   }

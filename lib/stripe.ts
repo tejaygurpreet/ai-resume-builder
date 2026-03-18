@@ -2,6 +2,7 @@ import Stripe from "stripe";
 
 let _stripe: Stripe | null = null;
 
+/** Returns Stripe client. Throws only when actually used for API calls if key is missing. */
 export function getStripe(): Stripe {
   if (!_stripe) {
     const key = process.env.STRIPE_SECRET_KEY;
@@ -12,6 +13,14 @@ export function getStripe(): Stripe {
     }
     _stripe = new Stripe(key, { typescript: true });
   }
+  return _stripe;
+}
+
+/** Safe check: returns null if Stripe is not configured (e.g. during build). */
+export function getStripeOrNull(): Stripe | null {
+  const key = process.env.STRIPE_SECRET_KEY;
+  if (!key) return null;
+  if (!_stripe) _stripe = new Stripe(key, { typescript: true });
   return _stripe;
 }
 
@@ -29,6 +38,8 @@ export const PLANS = {
   pro: {
     name: "Pro",
     price: 7.99,
+    priceAnnual: 69.99,
+    priceLifetime: 129.99,
     templates: Infinity,
     maxExportsPerMonth: Infinity,
     aiGenerationsPerResume: Infinity,

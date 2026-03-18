@@ -7,6 +7,11 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
+function getPurchaseType(session: Stripe.Checkout.Session): string | null {
+  const meta = session.metadata as Record<string, string> | null;
+  return meta?.purchaseType ?? meta?.type ?? null;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.text();
@@ -56,6 +61,7 @@ export async function POST(req: Request) {
           return NextResponse.json({ received: true }, { status: 200 });
         }
 
+        const purchaseType = getPurchaseType(session);
         const stripeCustomerId =
           typeof session.customer === "string"
             ? session.customer
@@ -65,6 +71,96 @@ export async function POST(req: Request) {
             ? session.subscription
             : session.subscription?.id ?? null;
 
+        // One-time payment (lifetime or one-time export) — no subscription
+        if (session.mode === "payment") {
+          if (purchaseType === "pro_lifetime") {
+            await prisma.subscription.upsert({
+              where: { userId: user.id },
+              create: {
+                userId: user.id,
+                stripeCustomerId,
+                plan: "pro",
+                status: "active",
+                stripeSubscriptionId: null,
+              },
+              update: {
+                stripeCustomerId,
+                plan: "pro",
+                status: "active",
+                stripeSubscriptionId: null,
+              },
+            });
+          } else if (purchaseType === "one_time_export") {
+            await prisma.subscription.upsert({
+              where: { userId: user.id },
+              create: {
+                userId: user.id,
+                stripeCustomerId,
+                plan: "free",
+                status: "active",
+                oneTimeExport: true,
+              },
+              update: {
+                stripeCustomerId,
+                oneTimeExport: true,
+              },
+            });
+          } else {
+            // Fallback: infer from price ID when metadata is missing
+            let priceId: string | undefined;
+            if (session.line_items?.data?.[0]?.price) {
+              const p = session.line_items.data[0].price;
+              priceId = typeof p === "string" ? p : p.id;
+            }
+            if (!priceId && session.id) {
+              const items = await getStripe().checkout.sessions.listLineItems(
+                session.id,
+                { limit: 1 }
+              );
+              const p = items.data[0]?.price;
+              priceId = typeof p === "string" ? p : p?.id;
+            }
+            const lifetimePriceId = process.env.STRIPE_PRO_LIFETIME_PRICE_ID;
+            const oneTimePriceId = process.env.STRIPE_ONE_TIME_PRICE_ID;
+
+            if (lifetimePriceId && priceId === lifetimePriceId) {
+              await prisma.subscription.upsert({
+                where: { userId: user.id },
+                create: {
+                  userId: user.id,
+                  stripeCustomerId,
+                  plan: "pro",
+                  status: "active",
+                  stripeSubscriptionId: null,
+                },
+                update: {
+                  stripeCustomerId,
+                  plan: "pro",
+                  status: "active",
+                  stripeSubscriptionId: null,
+                },
+              });
+            } else if (oneTimePriceId && priceId === oneTimePriceId) {
+              await prisma.subscription.upsert({
+                where: { userId: user.id },
+                create: {
+                  userId: user.id,
+                  stripeCustomerId,
+                  plan: "free",
+                  status: "active",
+                  oneTimeExport: true,
+                },
+                update: {
+                  stripeCustomerId,
+                  oneTimeExport: true,
+                },
+              });
+            }
+          }
+          break;
+        }
+
+        // Subscription (monthly or annual)
         if (!stripeCustomerId || !stripeSubscriptionId) {
           console.error("Missing customer or subscription ID in session");
           return NextResponse.json({ received: true }, { status: 200 });
@@ -141,7 +237,6 @@ export async function POST(req: Request) {
       }
 
       default:
-        // Unhandled event type
         break;
     }
 

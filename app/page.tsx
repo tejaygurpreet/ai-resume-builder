@@ -49,7 +49,7 @@ const testimonials = [
 
 const faqItems = [
   { question: "What is OptimaCV?", answer: "OptimaCV is an AI-powered resume builder that helps you create professional, ATS-optimized resumes in minutes using advanced language models." },
-  { question: "Is it free to use?", answer: "Yes! Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $59/year or $99 lifetime – unlimited AI, all 50+ templates, job tailoring, cover letter, ATS score, unlimited exports." },
+  { question: "Is it free to use?", answer: "Yes! Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $69.99/year or $129.99 lifetime – unlimited AI, all 50+ templates, job tailoring, cover letter, ATS score, unlimited exports." },
   { question: "Are the resumes ATS-compatible?", answer: "Absolutely. Every template uses clean formatting, standard section headings, and proper document structure to pass ATS systems." },
   { question: "How do you handle my data?", answer: "Your privacy is our top priority. All data is encrypted. We never sell your information. Delete your account and data at any time." },
   { question: "Can I cancel anytime?", answer: "Yes. Cancel your Pro subscription at any time. Keep access until the end of your billing period." },
