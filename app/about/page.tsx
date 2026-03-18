@@ -4,7 +4,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Sparkles, Target, FileText, Zap, Shield, Brain, Heart, Users, GraduationCap, Briefcase, Code, ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = { title: "About | ResumeAI", description: "Learn about ResumeAI — the AI-powered resume builder helping job seekers land their dream jobs." };
+export const metadata: Metadata = { title: "About | OptimaCV", description: "Learn about OptimaCV — the AI-powered resume builder helping job seekers land their dream jobs." };
 
 const aiFeatures = [
   { Icon: Sparkles, title: "Smart Bullet Points", description: "AI analyzes your experience and generates impactful, quantified bullet points that highlight your achievements." },
@@ -35,7 +35,7 @@ export default function AboutPage() {
         <div className="orb orb-blue absolute top-0 left-1/3 h-[500px] w-[500px] animate-pulse-glow" />
         <div className="relative mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
           <span className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-300"><Sparkles className="h-3.5 w-3.5" /> Our Story</span>
-          <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">About <span className="gradient-text">ResumeAI</span></h1>
+          <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">About <span className="gradient-text">OptimaCV</span></h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-slate-400">We&apos;re on a mission to help everyone create the perfect resume. No more staring at a blank page — just smart tools that get you hired faster.</p>
         </div>
       </section>
@@ -45,9 +45,9 @@ export default function AboutPage() {
           <div className="mx-auto grid max-w-5xl items-center gap-12 lg:grid-cols-2">
             <div>
               <span className="text-sm font-semibold uppercase tracking-wider text-brand-400">Our Story</span>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">We Built ResumeAI Because Writing a Resume Shouldn&apos;t Take Hours</h2>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">We Built OptimaCV Because Writing a Resume Shouldn&apos;t Take Hours</h2>
               <p className="mt-6 text-base leading-relaxed text-slate-400">We&apos;ve all been there — staring at a blank document, trying to condense years of experience into a single page. Rewording the same bullet points over and over.</p>
-              <p className="mt-4 text-base leading-relaxed text-slate-400">ResumeAI was born from that frustration. Our AI-powered platform helps job seekers create professional, ATS-optimized resumes in minutes — not hours.</p>
+              <p className="mt-4 text-base leading-relaxed text-slate-400">OptimaCV was born from that frustration. Our AI-powered platform helps job seekers create professional, ATS-optimized resumes in minutes — not hours.</p>
             </div>
             <div className="relative" aria-hidden="true">
               <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-10 shadow-glass backdrop-blur-sm">
@@ -92,7 +92,7 @@ export default function AboutPage() {
           <div className="mx-auto max-w-2xl text-center">
             <span className="text-sm font-semibold uppercase tracking-wider text-brand-400">Built For You</span>
             <h2 className="mt-2 text-3xl font-bold tracking-tight text-white sm:text-4xl">Who It&apos;s For</h2>
-            <p className="mt-4 text-lg text-slate-400">No matter where you are in your career, ResumeAI has your back.</p>
+            <p className="mt-4 text-lg text-slate-400">No matter where you are in your career, OptimaCV has your back.</p>
           </div>
           <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {audiences.map(({ Icon, title, description }) => (

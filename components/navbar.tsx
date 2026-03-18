@@ -64,7 +64,10 @@ export function Navbar() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-violet shadow-glow">
             <FileText className="h-5 w-5 text-white" aria-hidden />
           </div>
-          <span className="nav-logo-text text-xl font-bold text-white tracking-tight">ResumeAI</span>
+          <div className="flex flex-col">
+            <span className="nav-logo-text text-xl font-bold text-white tracking-tight">OptimaCV</span>
+            <span className="text-[10px] font-medium text-slate-500">Your Optimal Career Advantage</span>
+          </div>
         </Link>
 
         <div className="hidden items-center gap-1 lg:flex">

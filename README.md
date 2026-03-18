@@ -1,4 +1,4 @@
-# ResumeAI - AI-Powered Resume Builder
+# OptimaCV - AI-Powered Resume Builder
 
 A production-ready SaaS web application for building professional, ATS-friendly resumes with AI assistance.
 

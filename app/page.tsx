@@ -42,13 +42,13 @@ const features = [
 ];
 
 const testimonials = [
-  { quote: "ResumeAI helped me land interviews at three FAANG companies within two weeks. The AI suggestions were spot-on!", name: "Sarah Chen", title: "Software Engineer at Google", stars: 5 },
+  { quote: "OptimaCV helped me land interviews at three FAANG companies within two weeks. The AI suggestions were spot-on!", name: "Sarah Chen", title: "Software Engineer at Google", stars: 5 },
   { quote: "I went from getting zero callbacks to five interview requests in one week. The ATS optimization made all the difference.", name: "Marcus Johnson", title: "Marketing Manager", stars: 5 },
-  { quote: "As a career changer, I struggled to frame my experience. ResumeAI rewrote my bullets perfectly for my new field.", name: "Emily Rodriguez", title: "UX Designer at Shopify", stars: 5 },
+  { quote: "As a career changer, I struggled to frame my experience. OptimaCV rewrote my bullets perfectly for my new field.", name: "Emily Rodriguez", title: "UX Designer at Shopify", stars: 5 },
 ];
 
 const faqItems = [
-  { question: "What is ResumeAI?", answer: "ResumeAI is an AI-powered resume builder that helps you create professional, ATS-optimized resumes in minutes using advanced language models." },
+  { question: "What is OptimaCV?", answer: "OptimaCV is an AI-powered resume builder that helps you create professional, ATS-optimized resumes in minutes using advanced language models." },
   { question: "Is it free to use?", answer: "Yes! Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $59/year or $99 lifetime – unlimited AI, all 50+ templates, job tailoring, cover letter, ATS score, unlimited exports." },
   { question: "Are the resumes ATS-compatible?", answer: "Absolutely. Every template uses clean formatting, standard section headings, and proper document structure to pass ATS systems." },
   { question: "How do you handle my data?", answer: "Your privacy is our top priority. All data is encrypted. We never sell your information. Delete your account and data at any time." },
@@ -108,18 +108,18 @@ export default function Home() {
             <FadeUp>
               <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/15 px-5 py-2 text-xs font-bold uppercase tracking-wider text-brand-300 backdrop-blur-md">
                 <Sparkles className="h-4 w-4" />
-                Powered by GPT-4o
+                AI-Powered by Advanced Models
               </span>
             </FadeUp>
             <FadeUp delay={0.1}>
               <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-7xl lg:leading-[1.05]">
-                Resumes That{" "}
-                <span className="gradient-text">Get You Hired</span>
+                OptimaCV: Craft Your Optimal Resume with{" "}
+                <span className="gradient-text">AI Precision</span>
               </h1>
             </FadeUp>
             <FadeUp delay={0.2}>
               <p className="mt-6 max-w-xl text-xl leading-relaxed text-slate-400">
-                AI writes your content, optimizes for ATS, and formats everything. Stop getting ghosted — start getting interviews.
+                AI tailors your CV perfectly to any job — boost ATS scores, generate standout bullets & cover letters, land more interviews. Free to start, no credit card required.
               </p>
             </FadeUp>
             <FadeUp delay={0.3}>
@@ -129,7 +129,7 @@ export default function Home() {
                   authHref="/templates"
                   className="btn-premium relative inline-flex h-14 items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-r from-[#6366F1] via-[#8B5CF6] to-[#6366F1] bg-[length:200%_100%] bg-[position:0%_50%] px-8 text-base font-bold text-white shadow-[0_0_24px_-8px_rgba(99,102,241,0.5)] ring-1 ring-white/20 transition-all duration-300 hover:scale-[1.03] hover:bg-[position:100%_50%] hover:shadow-[0_0_40px_-6px_rgba(99,102,241,0.6),0_0_0_1px_rgba(139,92,246,0.4)] hover:ring-white/30 active:scale-[0.99]"
                 >
-                  Start Building Free
+                  Build Optimal Resume
                   <ArrowRight className="h-5 w-5" />
                 </AuthCTA>
                 <Link
@@ -211,7 +211,7 @@ export default function Home() {
               <Zap className="h-3.5 w-3.5" /> Features
             </span>
             <h2 className="mt-6 text-4xl font-black tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
-              Everything You Need to <span className="gradient-text">Land the Job</span>
+              Everything You Need for Your <span className="gradient-text">Optimal Career Move</span>
             </h2>
             <p className="mt-5 text-xl text-slate-600">Tools that give you an unfair advantage in today&apos;s job market.</p>
           </FadeUp>
@@ -407,7 +407,7 @@ export default function Home() {
             Ready to Build Your <span className="gradient-text">Perfect Resume</span>?
           </h2>
           <p className="mt-6 text-xl text-slate-400">
-            Join thousands of job seekers who landed their dream jobs with ResumeAI.
+            Join thousands of job seekers who landed their dream jobs with OptimaCV.
           </p>
           <AuthCTA
             guestHref="/signup"

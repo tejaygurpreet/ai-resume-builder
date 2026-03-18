@@ -41,10 +41,10 @@ export function Footer() {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-violet shadow-glow">
                 <FileText className="h-4 w-4 text-white" aria-hidden />
               </div>
-              <span className="text-lg font-bold tracking-tight text-white">ResumeAI</span>
+              <span className="text-lg font-bold tracking-tight text-white">OptimaCV</span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
-              Build professional, ATS-optimized resumes in minutes with the power of AI.
+              Craft your optimal resume with AI precision. OptimaCV helps you land more interviews.
             </p>
             <div className="mt-6 flex items-center gap-3">
               {socialLinks.map(({ href, label, Icon }) => (
@@ -88,7 +88,7 @@ export function Footer() {
         </div>
 
         <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/[0.04] pt-8 sm:flex-row">
-          <p className="text-sm text-slate-600">&copy; {currentYear} ResumeAI. All rights reserved.</p>
+          <p className="text-sm text-slate-600">&copy; {currentYear} OptimaCV. All rights reserved.</p>
           <p className="text-xs text-slate-700">Built with AI for job seekers worldwide</p>
         </div>
       </div>

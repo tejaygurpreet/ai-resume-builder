@@ -3,9 +3,9 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Terms of Service | ResumeAI",
+  title: "Terms of Service | OptimaCV",
   description:
-    "Read the terms and conditions for using ResumeAI's resume builder platform.",
+    "Read the terms and conditions for using OptimaCV's resume builder platform.",
 };
 
 export default function TermsOfServicePage() {
@@ -21,7 +21,7 @@ export default function TermsOfServicePage() {
               Terms of Service
             </h1>
             <p className="mt-4 text-lg text-slate-600">
-              Please read these terms carefully before using ResumeAI.
+              Please read these terms carefully before using OptimaCV.
             </p>
             <p className="mt-2 text-sm text-slate-400">
               Last updated: March 14, 2026
@@ -38,11 +38,11 @@ export default function TermsOfServicePage() {
                 1. Acceptance of Terms
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                By accessing or using ResumeAI (&quot;the Service&quot;), you
+                By accessing or using OptimaCV (&quot;the Service&quot;), you
                 agree to be bound by these Terms of Service (&quot;Terms&quot;).
                 If you do not agree to all of these Terms, you may not access or
                 use the Service. These Terms constitute a legally binding
-                agreement between you and ResumeAI.
+                agreement between you and OptimaCV.
               </p>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
                 We may update these Terms from time to time. Your continued use
@@ -57,7 +57,7 @@ export default function TermsOfServicePage() {
                 2. Description of Service
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                ResumeAI is an AI-powered resume builder platform that provides:
+                OptimaCV is an AI-powered resume builder platform that provides:
               </p>
               <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
                 <li className="flex gap-3">
@@ -104,7 +104,7 @@ export default function TermsOfServicePage() {
                 3. User Accounts
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                To use certain features of ResumeAI, you must create an account.
+                To use certain features of OptimaCV, you must create an account.
                 When creating an account, you agree to:
               </p>
               <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
@@ -146,7 +146,7 @@ export default function TermsOfServicePage() {
                 4. Acceptable Use
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                You agree to use ResumeAI only for lawful purposes and in
+                You agree to use OptimaCV only for lawful purposes and in
                 accordance with these Terms. You agree not to:
               </p>
               <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
@@ -189,14 +189,14 @@ export default function TermsOfServicePage() {
               <p className="mt-3 text-base leading-relaxed text-slate-600">
                 <strong className="text-slate-900">Your Content:</strong> You
                 retain full ownership of the resumes and content you create using
-                ResumeAI. We do not claim any intellectual property rights over
+                OptimaCV. We do not claim any intellectual property rights over
                 the materials you provide or the documents you generate.
               </p>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
                 <strong className="text-slate-900">Our Property:</strong> The
-                ResumeAI platform, including its templates, user interface,
+                OptimaCV platform, including its templates, user interface,
                 design, branding, logos, and underlying technology, is owned by
-                ResumeAI and protected by applicable intellectual property laws.
+                OptimaCV and protected by applicable intellectual property laws.
                 You may not copy, modify, distribute, or reverse-engineer any
                 part of our platform without prior written consent.
               </p>
@@ -208,7 +208,7 @@ export default function TermsOfServicePage() {
                 6. Subscription and Payments
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                ResumeAI offers the following plans:
+                OptimaCV offers the following plans:
               </p>
               <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
                 <li className="flex gap-3">
@@ -243,7 +243,7 @@ export default function TermsOfServicePage() {
                 7. AI-Generated Content
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                ResumeAI uses artificial intelligence to generate suggestions for
+                OptimaCV uses artificial intelligence to generate suggestions for
                 your resume, including bullet points, summaries, skills, and
                 cover letters. You acknowledge and agree that:
               </p>
@@ -266,7 +266,7 @@ export default function TermsOfServicePage() {
                 <li className="flex gap-3">
                   <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
-                    ResumeAI does not guarantee any specific outcomes, including
+                    OptimaCV does not guarantee any specific outcomes, including
                     but not limited to job interviews, job offers, or employment
                     placement.
                   </span>
@@ -280,7 +280,7 @@ export default function TermsOfServicePage() {
                 8. Export and Data
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                You may export your resume data at any time. ResumeAI supports
+                You may export your resume data at any time. OptimaCV supports
                 the following export formats:
               </p>
               <ul className="mt-4 space-y-3 text-base leading-relaxed text-slate-600">
@@ -363,7 +363,7 @@ export default function TermsOfServicePage() {
                 11. Limitation of Liability
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
-                To the maximum extent permitted by applicable law, ResumeAI and
+                To the maximum extent permitted by applicable law, OptimaCV and
                 its officers, directors, employees, and agents shall not be
                 liable for any indirect, incidental, special, consequential, or
                 punitive damages, including but not limited to loss of profits,
@@ -372,7 +372,7 @@ export default function TermsOfServicePage() {
               </p>
               <p className="mt-3 text-base leading-relaxed text-slate-600">
                 In no event shall our total liability exceed the amount you have
-                paid to ResumeAI in the twelve (12) months preceding the claim.
+                paid to OptimaCV in the twelve (12) months preceding the claim.
               </p>
             </div>
 
@@ -418,14 +418,14 @@ export default function TermsOfServicePage() {
                 Service, please contact us:
               </p>
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-6">
-                <p className="text-base font-medium text-slate-900">ResumeAI</p>
+                <p className="text-base font-medium text-slate-900">OptimaCV</p>
                 <p className="mt-1 text-base text-slate-600">
                   Email:{" "}
                   <a
-                    href="mailto:support@resumeai.com"
+                    href="mailto:support@optimacv.com"
                     className="font-medium text-brand-600 hover:text-brand-700"
                   >
-                    support@resumeai.com
+                    support@optimacv.com
                   </a>
                 </p>
               </div>

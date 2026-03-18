@@ -3,9 +3,9 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | ResumeAI",
+  title: "Privacy Policy | OptimaCV",
   description:
-    "Learn how ResumeAI collects, uses, and protects your personal data.",
+    "Learn how OptimaCV collects, uses, and protects your personal data.",
 };
 
 export default function PrivacyPolicyPage() {
@@ -38,15 +38,15 @@ export default function PrivacyPolicyPage() {
                 1. Introduction
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-400">
-                Welcome to ResumeAI (&quot;we,&quot; &quot;our,&quot; or
-                &quot;us&quot;). ResumeAI is an AI-powered resume builder
+                Welcome to OptimaCV (&quot;we,&quot; &quot;our,&quot; or
+                &quot;us&quot;). OptimaCV is an AI-powered resume builder
                 Software-as-a-Service (SaaS) platform designed to help you
                 create professional, job-winning resumes. This Privacy Policy
                 explains how we collect, use, disclose, and safeguard your
                 personal information when you use our website and services.
               </p>
               <p className="mt-3 text-base leading-relaxed text-slate-400">
-                By accessing or using ResumeAI, you agree to the terms of this
+                By accessing or using OptimaCV, you agree to the terms of this
                 Privacy Policy. If you do not agree, please discontinue use of
                 our services.
               </p>
@@ -152,7 +152,7 @@ export default function PrivacyPolicyPage() {
                 4. AI Processing
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-400">
-                ResumeAI uses artificial intelligence to enhance your resume
+                OptimaCV uses artificial intelligence to enhance your resume
                 building experience. When you use AI-powered features — such as
                 bullet point generation, resume scoring, keyword analysis, and
                 cover letter generation — your resume data is sent to the OpenAI
@@ -309,10 +309,10 @@ export default function PrivacyPolicyPage() {
               <p className="mt-3 text-base leading-relaxed text-slate-400">
                 To exercise any of these rights, please contact us at{" "}
                 <a
-                  href="mailto:support@resumeai.com"
+                  href="mailto:support@optimacv.com"
                   className="font-medium text-brand-600 hover:text-brand-700"
                 >
-                  support@resumeai.com
+                  support@optimacv.com
                 </a>
                 .
               </p>
@@ -338,17 +338,17 @@ export default function PrivacyPolicyPage() {
                 10. Children&apos;s Privacy
               </h2>
               <p className="mt-3 text-base leading-relaxed text-slate-400">
-                ResumeAI is not intended for use by individuals under the age of
+                OptimaCV is not intended for use by individuals under the age of
                 13. We do not knowingly collect personal information from children
                 under 13. If we become aware that a child under 13 has provided
                 us with personal data, we will take steps to delete that
                 information promptly. If you believe a child under 13 has
                 provided us with personal data, please contact us at{" "}
                 <a
-                  href="mailto:support@resumeai.com"
+                  href="mailto:support@optimacv.com"
                   className="font-medium text-brand-600 hover:text-brand-700"
                 >
-                  support@resumeai.com
+                  support@optimacv.com
                 </a>
                 .
               </p>
@@ -379,14 +379,14 @@ export default function PrivacyPolicyPage() {
                 Privacy Policy or our data practices, please contact us:
               </p>
               <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-6">
-                <p className="text-base font-medium text-slate-900">ResumeAI</p>
+                <p className="text-base font-medium text-slate-900">OptimaCV</p>
                 <p className="mt-1 text-base text-slate-600">
                   Email:{" "}
                   <a
-                    href="mailto:support@resumeai.com"
+                    href="mailto:support@optimacv.com"
                     className="font-medium text-brand-600 hover:text-brand-700"
                   >
-                    support@resumeai.com
+                    support@optimacv.com
                   </a>
                 </p>
               </div>

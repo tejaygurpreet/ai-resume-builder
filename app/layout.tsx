@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ResumeAI — AI-Powered Resume Builder",
+  title: "OptimaCV – AI Resume & CV Builder | Tailored for Success",
   description:
-    "Build professional, ATS-optimized resumes in minutes with AI. Land your dream job faster.",
+    "OptimaCV: Craft your optimal resume with AI precision. Boost ATS scores, generate standout bullets & cover letters, land more interviews. Free to start.",
 };
 
 export default function RootLayout({

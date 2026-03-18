@@ -81,7 +81,7 @@ export default function ContactPage() {
               <div className="mt-8 space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400"><Mail className="h-5 w-5" /></div>
-                  <div><p className="text-sm font-medium text-white">Email</p><a href="mailto:support@resumeai.com" className="text-sm text-brand-400 hover:underline">support@resumeai.com</a></div>
+                  <div><p className="text-sm font-medium text-white">Email</p><a href="mailto:support@optimacv.com" className="text-sm text-brand-400 hover:underline">support@optimacv.com</a></div>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400"><Clock className="h-5 w-5" /></div>

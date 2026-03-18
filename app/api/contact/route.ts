@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     }
 
     const { error } = await resend.emails.send({
-      from: "ResumeAI Contact <onboarding@resend.dev>",
+      from: "OptimaCV Contact <onboarding@resend.dev>",
       to: supportEmail,
       replyTo: email.trim(),
       subject: "New Contact Form Message",

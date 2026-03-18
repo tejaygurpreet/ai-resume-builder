@@ -48,7 +48,7 @@ function LoginForm() {
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-accent-violet shadow-glow">
             <FileText className="h-4.5 w-4.5 text-white" />
           </div>
-          <span className="text-2xl font-bold text-white">ResumeAI</span>
+          <span className="text-2xl font-bold text-white">OptimaCV</span>
         </Link>
 
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.04] p-8 shadow-glass-lg backdrop-blur-sm">
