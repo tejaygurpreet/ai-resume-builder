@@ -10,9 +10,29 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "OptimaCV – AI Resume & CV Builder | Tailored for Success",
+  metadataBase: new URL("https://optimacv.io"),
+  title: "OptimaCV - AI Resume Builder",
   description:
-    "OptimaCV: Craft your optimal resume with AI precision. Boost ATS scores, generate standout bullets & cover letters, land more interviews. Free to start.",
+    "Create professional resumes with AI. Build, customize, and export job-winning resumes in minutes.",
+  keywords: [
+    "AI resume builder",
+    "resume builder",
+    "CV builder",
+    "resume maker",
+    "ATS resume",
+  ],
+  openGraph: {
+    title: "OptimaCV - AI Resume Builder",
+    description: "Create professional resumes with AI in minutes.",
+    url: "https://optimacv.io",
+    siteName: "OptimaCV",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OptimaCV - AI Resume Builder",
+    description: "Create professional resumes with AI in minutes.",
+  },
 };
 
 export default function RootLayout({

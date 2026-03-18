@@ -112,12 +112,15 @@ export default function Home() {
                 AI POWERED BY GPT-4o
               </span>
             </FadeUp>
-            {/* Updated headline: removed brand prefix per request */}
             <FadeUp delay={0.1}>
               <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-7xl lg:leading-[1.05]">
-                Craft Your Optimal Resume with{" "}
-                <span className="gradient-text">AI Precision</span>
+                AI Resume Builder
               </h1>
+            </FadeUp>
+            <FadeUp delay={0.15}>
+              <h2 className="mt-3 text-2xl font-semibold text-slate-300 sm:text-3xl lg:text-4xl">
+                Create Professional Resumes Online
+              </h2>
             </FadeUp>
             <FadeUp delay={0.2}>
               <p className="mt-6 max-w-xl text-xl leading-relaxed text-slate-400">
