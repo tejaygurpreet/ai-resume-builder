@@ -103,18 +103,41 @@ const SECTION_LABELS: Record<string, string> = {
   languages: "Languages",
 };
 
+/** Editor sidebar display order only — does NOT affect template/PDF output order. */
+const EDITOR_DISPLAY_ORDER: string[] = [
+  "education",
+  "experience",
+  "summary",
+  "personal",
+  "skills",
+  "projects",
+  "certifications",
+  "languages",
+];
+
+function sortSectionsForEditor(sections: ResumeSection[]): ResumeSection[] {
+  const orderMap = new Map(EDITOR_DISPLAY_ORDER.map((t, i) => [t, i]));
+  return [...sections].sort((a, b) => {
+    const ia = orderMap.get(a.type) ?? 999;
+    const ib = orderMap.get(b.type) ?? 999;
+    return ia - ib;
+  });
+}
+
 function SortableSectionCard({
   section,
   resumeId,
   isPro,
   onTailor,
   onLimitReached,
+  onImproveProLocked,
 }: {
   section: ResumeSection;
   resumeId?: string;
   isPro?: boolean;
   onTailor: () => void;
   onLimitReached?: () => void;
+  onImproveProLocked?: () => void;
 }) {
   const {
     attributes,
@@ -176,6 +199,7 @@ function SortableSectionCard({
           resumeId={resumeId}
           isPro={isPro}
           onLimitReached={onLimitReached}
+          onImproveProLocked={onImproveProLocked}
         />
       </div>
     </div>
@@ -246,7 +270,7 @@ function BuilderPage() {
   const [exportsUsed, setExportsUsed] = useState(0);
   const [hasOneTimeExport, setHasOneTimeExport] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeModalReason, setUpgradeModalReason] = useState<"ai_limit" | "export_limit">("export_limit");
+  const [upgradeModalReason, setUpgradeModalReason] = useState<"ai_limit" | "export_limit" | "improve_pro">("export_limit");
 
   const validation = validateResumeCompletion(sections);
 
@@ -500,7 +524,7 @@ function BuilderPage() {
               strategy={verticalListSortingStrategy}
             >
               <div className="mx-auto w-full space-y-5">
-                {sections.map((section) => (
+                {sortSectionsForEditor(sections).map((section) => (
                   <SortableSectionCard
                     key={section.id}
                     section={section}
@@ -509,6 +533,10 @@ function BuilderPage() {
                     onTailor={() => setTailorOpen(true)}
                     onLimitReached={() => {
                       setUpgradeModalReason("ai_limit");
+                      setUpgradeModalOpen(true);
+                    }}
+                    onImproveProLocked={() => {
+                      setUpgradeModalReason("improve_pro");
                       setUpgradeModalOpen(true);
                     }}
                   />
@@ -693,4 +721,6 @@ function BuilderPage() {
  * - AI limit (3/resume): UpgradeModal when hit
  * - Export limit (10/mo): UpgradeModal when hit
  * - usePlan, UpgradeModal, useMembershipLimit centralize logic
+ *
+ * === REQUESTED CHANGES COMPLETE: EDITOR ORDER + AI LOGIC + IMPROVE WITH AI PRO + PRICING FIXES (50+ TEMPLATES + CLEAN ONE-TIME) ===
  */

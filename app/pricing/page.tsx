@@ -20,7 +20,7 @@ const freeFeatures = [
 
 const proFeatures = [
   "Unlimited AI generations",
-  "All 20+ premium templates",
+  "All 50+ premium templates",
   "Job tailoring",
   "Cover letter generator",
   "ATS score analysis",
@@ -32,7 +32,6 @@ const oneTimeFeatures = [
   "Unlimited exports forever",
   "No ads",
   "All formats (PDF, DOCX, TXT, JSON, MD)",
-  "No Pro AI features",
 ];
 
 type ProInterval = "monthly" | "annual" | "lifetime";

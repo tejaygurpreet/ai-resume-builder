@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown, Wand2, Copy, BarChart2, Minus } from "lucide-react";
+import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown, Wand2, Copy, BarChart2, Minus, Lock } from "lucide-react";
 import { v4 as uuid } from "uuid";
 import { useResumeStore } from "@/hooks/use-resume-store";
 import { cn } from "@/lib/utils";
@@ -18,9 +18,10 @@ interface SectionEditorProps {
   resumeId?: string;
   isPro?: boolean;
   onLimitReached?: () => void;
+  onImproveProLocked?: () => void;
 }
 
-export function SectionEditor({ sectionId, type, content, resumeId, isPro, onLimitReached }: SectionEditorProps) {
+export function SectionEditor({ sectionId, type, content, resumeId, isPro, onLimitReached, onImproveProLocked }: SectionEditorProps) {
   const updateSection = useResumeStore((s) => s.updateSection);
 
   const update = useCallback(
@@ -32,13 +33,13 @@ export function SectionEditor({ sectionId, type, content, resumeId, isPro, onLim
     case "personal":
       return <PersonalEditor content={content} onChange={update} />;
     case "summary":
-      return <SummaryEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} />;
+      return <SummaryEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} onImproveProLocked={onImproveProLocked} />;
     case "experience":
-      return <ExperienceEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} />;
+      return <ExperienceEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} onImproveProLocked={onImproveProLocked} />;
     case "education":
       return <EducationEditor content={content} onChange={update} />;
     case "skills":
-      return <SkillsEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} />;
+      return <SkillsEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} onImproveProLocked={onImproveProLocked} />;
     case "projects":
       return <ProjectsEditor content={content} onChange={update} />;
     case "certifications":
@@ -283,12 +284,14 @@ function SummaryEditor({
   resumeId,
   isPro,
   onLimitReached,
+  onImproveProLocked,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
   onLimitReached?: () => void;
+  onImproveProLocked?: () => void;
 }) {
   const { generate, loading, error, clearError } = useAIGenerate();
   const resume = useResumeStore((s) => s.resume);
@@ -302,11 +305,15 @@ function SummaryEditor({
     const yearsExp = experience?.items?.length
       ? `${experience.items.length} position(s)`
       : "Not specified";
+    const workExpDetail = (experience?.items ?? [])
+      .map((it: any) => `${it.title || "Role"} at ${it.company || "Company"}: ${(it.bullets ?? []).filter(Boolean).join("; ")}`)
+      .join(" | ") || "Not provided";
 
     const { result, limitReached } = await generate("summary", {
       name: personal?.fullName || [personal?.firstName, personal?.lastName].filter(Boolean).join(" ") || "",
       target_role: experience?.items?.[0]?.title || "",
       years_experience: yearsExp,
+      work_experience: workExpDetail,
       skills: (skills?.items ?? []).filter(Boolean).join(", "),
     }, resumeId);
 
@@ -366,12 +373,22 @@ function SummaryEditor({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleTransform("improve")}
+          onClick={() => {
+            if (!isPro) {
+              onImproveProLocked?.();
+              return;
+            }
+            handleTransform("improve");
+          }}
           disabled={transformLoading !== null || !(content.text ?? "").trim()}
-          className="gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20"
+          className={cn(
+            "gap-1.5 border-purple-500/40 text-purple-300 hover:border-purple-400/50",
+            isPro ? "bg-purple-500/10 hover:bg-purple-500/20" : "bg-amber-500/10 hover:bg-amber-500/20"
+          )}
         >
-          {transformLoading === "improve" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <span className="text-purple-400">✦</span>}
-          Improve with AI
+          {transformLoading === "improve" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : !isPro ? <Lock className="h-3.5 w-3.5" /> : <span className="text-purple-400">✦</span>}
+          Improve with AI PRO
+          {!isPro && <span className="ml-1 rounded bg-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">Pro</span>}
         </Button>
         <Button
           variant="outline"
@@ -412,12 +429,14 @@ function ExperienceEditor({
   resumeId,
   isPro,
   onLimitReached,
+  onImproveProLocked,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
   onLimitReached?: () => void;
+  onImproveProLocked?: () => void;
 }) {
   const { generate, loading, error, clearError } = useAIGenerate();
   const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
@@ -547,6 +566,9 @@ function ExperienceEditor({
     const { result, limitReached } = await generate("experience", {
       job_title: item.title || "",
       company: item.company || "",
+      start_date: item.startDate || "",
+      end_date: item.endDate || "",
+      current: String(!!item.current),
       responsibilities: (item.bullets ?? []).filter(Boolean).join("; ") || "General duties",
     }, resumeId);
 
@@ -571,6 +593,10 @@ function ExperienceEditor({
   };
 
   const handleImproveBullet = async (itemIdx: number, bulletIdx: number) => {
+    if (!isPro) {
+      onImproveProLocked?.();
+      return;
+    }
     const item = items[itemIdx];
     const bullet = item?.bullets?.[bulletIdx];
     if (!bullet || bullet.trim().length < 5) {
@@ -737,18 +763,25 @@ function ExperienceEditor({
                     <button
                       onClick={() => handleImproveBullet(idx, bi)}
                       disabled={isImproving || !bullet.trim()}
-                      title="Improve with AI"
+                      title={isPro ? "Improve with AI PRO" : "Improve with AI PRO — Upgrade to Pro"}
                       className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors",
+                        "flex h-7 shrink-0 items-center gap-0.5 rounded-lg border px-1.5 transition-colors",
                         isImproving
                           ? "border-purple-500/40 bg-purple-500/20"
-                          : "border-white/[0.1] text-purple-400 hover:border-purple-500/40 hover:bg-purple-500/10"
+                          : isPro
+                            ? "border-white/[0.1] text-purple-400 hover:border-purple-500/40 hover:bg-purple-500/10"
+                            : "border-amber-500/40 text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10"
                       )}
                     >
                       {isImproving ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
-                      ) : (
+                      ) : isPro ? (
                         <Wand2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <>
+                          <Lock className="h-3 w-3" />
+                          <span className="text-[9px] font-semibold text-amber-300">Pro</span>
+                        </>
                       )}
                     </button>
                     <button
@@ -959,12 +992,14 @@ function SkillsEditor({
   resumeId,
   isPro,
   onLimitReached,
+  onImproveProLocked,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
   onLimitReached?: () => void;
+  onImproveProLocked?: () => void;
 }) {
   const { generate, loading, error, clearError } = useAIGenerate();
   const resume = useResumeStore((s) => s.resume);
@@ -1011,6 +1046,10 @@ function SkillsEditor({
   };
 
   const handleGenerateSkills = async () => {
+    if (!isPro) {
+      onImproveProLocked?.();
+      return;
+    }
     const targetRole = experience?.items?.[0]?.title || "";
 
     const { result, limitReached } = await generate("skills", {
@@ -1052,9 +1091,22 @@ function SkillsEditor({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <AIButton onClick={handleGenerateSkills} loading={loading}>
-          ✦ Improve with AI
-        </AIButton>
+        {isPro ? (
+          <AIButton onClick={handleGenerateSkills} loading={loading}>
+            ✦ Improve with AI PRO
+          </AIButton>
+        ) : (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onImproveProLocked?.()}
+            className="gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+          >
+            <Lock className="h-3.5 w-3.5" />
+            Improve with AI PRO
+            <span className="rounded bg-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">Pro</span>
+          </Button>
+        )}
       </div>
 
       <AIErrorBanner error={error} onDismiss={clearError} />

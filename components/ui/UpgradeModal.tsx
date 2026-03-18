@@ -11,7 +11,8 @@ export type UpgradeReason =
   | "ai_limit"
   | "export_limit"
   | "template_lock"
-  | "pro_feature";
+  | "pro_feature"
+  | "improve_pro";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -48,6 +49,12 @@ const REASON_CONFIG: Record<
     message:
       "Upgrade to Pro for unlimited AI generations, all templates, job tailoring, cover letters, ATS score – only $7/month",
     icon: Crown,
+  },
+  improve_pro: {
+    title: "Improve with AI PRO",
+    message:
+      "Upgrade to Pro to unlock Improve with AI PRO, unlimited generations, and better quality AI.",
+    icon: Sparkles,
   },
 };
 

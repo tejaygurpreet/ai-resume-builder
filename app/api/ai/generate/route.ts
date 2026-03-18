@@ -6,52 +6,99 @@ import { prisma } from "@/lib/prisma";
 
 const FREE_AI_LIMIT = 3;
 const MODEL = "gpt-4o-mini";
-const MAX_TOKENS = 200;
+const MAX_TOKENS = 400;
 
 type GenerationType = "summary" | "experience" | "skills";
 
-function buildPrompt(type: GenerationType, data: Record<string, string>): string {
+function buildPrompt(
+  type: GenerationType,
+  data: Record<string, string>,
+  isPro: boolean
+): string {
   switch (type) {
     case "summary":
-      return [
-        "You are a professional resume writer.",
-        "",
-        "Write a strong professional resume summary (3–4 lines).",
-        "",
-        "Requirements:",
-        "- ATS friendly",
-        "- concise and impactful",
-        "- highlight achievements and skills",
-        "- avoid generic phrases",
-        "",
-        "User data:",
-        `Name: ${data.name || "Not provided"}`,
-        `Role: ${data.target_role || "Not provided"}`,
-        `Experience: ${data.years_experience || "Not provided"}`,
-        `Skills: ${data.skills || "Not provided"}`,
-        "",
-        "Return only the summary text.",
-      ].join("\n");
+      return isPro
+        ? [
+            "You are an elite executive resume writer. Write a compelling professional summary.",
+            "",
+            "Requirements:",
+            "- Base the summary STRICTLY on the user's Work Experience and Skills provided below",
+            "- Write 4–6 full sentences (at least 5 lines when formatted)",
+            "- Lead with years of experience and target role",
+            "- Highlight key achievements and quantifiable impact from their experience",
+            "- Incorporate relevant skills naturally",
+            "- Achievement-focused, professional, ATS-optimized",
+            "- No generic phrases (team player, hard worker, etc.)",
+            "",
+            "User data:",
+            `Name: ${data.name || "Not provided"}`,
+            `Target Role: ${data.target_role || "Not provided"}`,
+            `Experience: ${data.years_experience || "Not provided"}`,
+            `Work Experience Detail: ${data.work_experience || "Not provided"}`,
+            `Skills: ${data.skills || "Not provided"}`,
+            "",
+            "Return ONLY the summary text, 4–6 sentences.",
+          ].join("\n")
+        : [
+            "You are a professional resume writer. Write a strong professional summary.",
+            "",
+            "Requirements:",
+            "- Base it on the user's Work Experience and Skills below",
+            "- Write at least 4–6 full sentences (5+ lines when formatted)",
+            "- ATS friendly, highlight achievements and skills",
+            "- Avoid generic phrases",
+            "",
+            "User data:",
+            `Name: ${data.name || "Not provided"}`,
+            `Role: ${data.target_role || "Not provided"}`,
+            `Experience: ${data.years_experience || "Not provided"}`,
+            `Work Experience: ${data.work_experience || "Not provided"}`,
+            `Skills: ${data.skills || "Not provided"}`,
+            "",
+            "Return only the summary text, 4–6 sentences.",
+          ].join("\n");
 
     case "experience":
-      return [
-        "You are an expert resume writer.",
-        "",
-        "Generate 4 strong resume bullet points.",
-        "",
-        "Rules:",
-        "- start with action verbs",
-        "- highlight measurable impact",
-        "- ATS friendly",
-        "- professional tone",
-        "- under 20 words each",
-        "",
-        `Job Title: ${data.job_title || "Not provided"}`,
-        `Company: ${data.company || "Not provided"}`,
-        `Responsibilities: ${data.responsibilities || "Not provided"}`,
-        "",
-        "Return bullet points only, one per line, without numbering or bullet characters.",
-      ].join("\n");
+      const dateRange = data.start_date || data.end_date
+        ? `${data.start_date || "?"} – ${data.current === "true" ? "Present" : data.end_date || "?"}`
+        : "";
+      return isPro
+        ? [
+            "You are an elite resume writer. Generate 4–5 achievement-focused bullet points.",
+            "",
+            "Rules:",
+            "- Base bullets on the job title, company, and dates provided",
+            "- Start with strong action verbs (Led, Achieved, Increased, Delivered, etc.)",
+            "- Include measurable impact (%, $, team size, time saved)",
+            "- Achievement-oriented, not task lists",
+            "- Under 25 words each, ATS-optimized",
+            "",
+            `Job Title: ${data.job_title || "Not provided"}`,
+            `Company: ${data.company || "Not provided"}`,
+            dateRange ? `Dates: ${dateRange}` : "",
+            `Context/Responsibilities: ${data.responsibilities || "General duties"}`,
+            "",
+            "Return bullet points only, one per line, no numbering or bullet characters.",
+          ]
+            .filter(Boolean)
+            .join("\n")
+        : [
+            "You are an expert resume writer. Generate 4 strong bullet points.",
+            "",
+            "Rules:",
+            "- Base on job title, company, and dates provided",
+            "- Start with action verbs, highlight measurable impact",
+            "- ATS friendly, under 20 words each",
+            "",
+            `Job Title: ${data.job_title || "Not provided"}`,
+            `Company: ${data.company || "Not provided"}`,
+            dateRange ? `Dates: ${dateRange}` : "",
+            `Responsibilities: ${data.responsibilities || "Not provided"}`,
+            "",
+            "Return bullet points only, one per line, no numbering or bullet characters.",
+          ]
+            .filter(Boolean)
+            .join("\n");
 
     case "skills":
       return [
@@ -155,7 +202,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const prompt = buildPrompt(type as GenerationType, data);
+    const prompt = buildPrompt(type as GenerationType, data, isPro);
     const result = await callOpenAI(prompt);
 
     if (!result) {

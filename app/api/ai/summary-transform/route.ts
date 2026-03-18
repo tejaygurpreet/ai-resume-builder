@@ -76,18 +76,33 @@ export async function POST(request: Request) {
     }
 
     const prompts: Record<TransformType, string> = {
-      improve: [
-        "You are an expert resume writer. Rewrite this professional summary to be:",
-        "- More impactful and achievement-focused",
-        "- ATS-optimized with relevant keywords",
-        "- Professional and concise (3-4 lines)",
-        "- Free of generic phrases like 'team player' or 'hard worker'",
-        "",
-        "Original summary:",
-        summary,
-        "",
-        "Return ONLY the improved summary text, nothing else.",
-      ].join("\n"),
+      improve: isPro
+        ? [
+            "You are an elite executive resume writer. Rewrite this professional summary to be:",
+            "- Achievement-focused with quantifiable impact where possible",
+            "- 4–6 full sentences (at least 5 lines when formatted)",
+            "- ATS-optimized with relevant keywords",
+            "- Lead with experience level and value proposition",
+            "- No generic phrases (team player, hard worker, passionate, etc.)",
+            "- Professional, confident tone",
+            "",
+            "Original summary:",
+            summary,
+            "",
+            "Return ONLY the improved summary text, 4–6 sentences.",
+          ].join("\n")
+        : [
+            "You are an expert resume writer. Rewrite this professional summary to be:",
+            "- More impactful and achievement-focused",
+            "- ATS-optimized with relevant keywords",
+            "- Professional and concise (3-4 lines)",
+            "- Free of generic phrases like 'team player' or 'hard worker'",
+            "",
+            "Original summary:",
+            summary,
+            "",
+            "Return ONLY the improved summary text, nothing else.",
+          ].join("\n"),
 
       shorten: [
         "You are an expert resume writer. Condense this professional summary to 2-3 concise lines.",
