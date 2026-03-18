@@ -105,15 +105,17 @@ export default function Home() {
         <div className="relative mx-auto flex min-h-[90vh] max-w-7xl flex-col items-center gap-12 px-4 py-20 sm:px-6 lg:flex-row lg:gap-20 lg:px-8 lg:py-28">
           {/* Left: Copy */}
           <div className="flex-1 text-center lg:text-left">
+            {/* Updated AI badge to GPT-4o */}
             <FadeUp>
               <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/15 px-5 py-2 text-xs font-bold uppercase tracking-wider text-brand-300 backdrop-blur-md">
                 <Sparkles className="h-4 w-4" />
-                AI-Powered by Advanced Models
+                AI POWERED BY GPT-4o
               </span>
             </FadeUp>
+            {/* Updated headline: removed brand prefix per request */}
             <FadeUp delay={0.1}>
               <h1 className="mt-4 text-4xl font-black tracking-tight text-white sm:text-5xl lg:text-7xl lg:leading-[1.05]">
-                OptimaCV: Craft Your Optimal Resume with{" "}
+                Craft Your Optimal Resume with{" "}
                 <span className="gradient-text">AI Precision</span>
               </h1>
             </FadeUp>
