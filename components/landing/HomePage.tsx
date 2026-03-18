@@ -107,7 +107,7 @@ export default function HomePage() {
           <div className="flex-1 text-center lg:text-left">
             {/* Updated AI badge to GPT-4o */}
             <FadeUp>
-              <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/15 px-5 py-2 text-xs font-bold uppercase tracking-wider text-brand-300 backdrop-blur-md">
+              <span className="hero-ai-badge mb-6 inline-flex items-center gap-2 rounded-full border border-brand-500/30 bg-brand-500/15 px-5 py-2 text-xs font-bold uppercase tracking-wider text-brand-300 backdrop-blur-md transition-all duration-300 ease-out">
                 <Sparkles className="h-4 w-4" />
                 AI POWERED BY GPT-4o
               </span>
@@ -139,7 +139,7 @@ export default function HomePage() {
                 </AuthCTA>
                 <Link
                   href="/#templates"
-                  className="inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl border-2 border-white/20 bg-white/[0.03] px-8 text-base font-bold text-slate-300 backdrop-blur-sm transition-all duration-300 hover:bg-white/[0.08] hover:border-white/30 hover:text-white hover:-translate-y-[1px]"
+                  className="hero-secondary-btn inline-flex h-14 items-center justify-center gap-2.5 rounded-2xl border-2 border-white/20 bg-white/[0.03] px-8 text-base font-bold text-slate-300 backdrop-blur-sm transition-all duration-300 ease-out hover:bg-white/[0.08] hover:border-white/30 hover:text-white hover:-translate-y-[1px]"
                 >
                   See Templates
                 </Link>
@@ -166,7 +166,7 @@ export default function HomePage() {
       {/* ═══ TRUST SIGNALS — Below hero ═══ */}
       <section className="relative z-10 px-4 py-8 sm:px-6 lg:px-8">
         <FadeUp>
-          <div className="mx-auto max-w-4xl rounded-2xl border border-white/[0.06] bg-white/[0.02] px-8 py-6 shadow-[0_2px_16px_-8px_rgba(0,0,0,0.4)] backdrop-blur-xl">
+          <div className="glass mx-auto max-w-4xl rounded-2xl border border-white/[0.06] bg-white/[0.02] px-8 py-6 shadow-[0_2px_16px_-8px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-300 ease-out">
             <p className="mb-6 text-center text-sm font-semibold uppercase tracking-wider text-slate-500">
               Trusted by job seekers worldwide
             </p>
@@ -190,7 +190,7 @@ export default function HomePage() {
       {/* ═══ STATS — Animated counters, glowing icons ═══ */}
       <section className="relative -mt-12 z-10 px-4 sm:px-6 lg:px-8">
         <FadeUp>
-          <div className="mx-auto max-w-5xl rounded-3xl glass p-10 shadow-[0_2px_24px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)_inset]">
+          <div className="mx-auto max-w-5xl rounded-3xl glass p-10 shadow-[0_2px_24px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)_inset] transition-all duration-300 ease-out">
             <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
               {stats.map((stat, i) => (
                 <AnimatedStat

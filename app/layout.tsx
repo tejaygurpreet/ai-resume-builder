@@ -52,7 +52,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="font-sans antialiased transition-colors duration-300">
+      <body className="font-sans antialiased transition-all duration-300 ease-out">
         <Providers>{children}</Providers>
       </body>
     </html>

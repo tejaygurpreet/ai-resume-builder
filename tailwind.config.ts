@@ -115,6 +115,10 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-16px)" },
         },
+        "float-resume": {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-8px)" },
+        },
         "spin-slow": {
           from: { transform: "rotate(0deg)" },
           to: { transform: "rotate(360deg)" },
@@ -137,6 +141,7 @@ const config: Config = {
         "float-slow": "float-slow 8s ease-in-out infinite",
         "pulse-glow": "pulse-glow 3s ease-in-out infinite",
         "float-strong": "float-strong 5s ease-in-out infinite",
+        "float-resume": "float-resume 4s ease-in-out infinite",
         "spin-slow": "spin-slow 20s linear infinite",
         progress: "progress 2.5s linear",
         "gradient-x": "gradient-x 3s ease infinite",
