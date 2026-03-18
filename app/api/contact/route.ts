@@ -3,75 +3,31 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const body = await request.json();
-    const { name, email, message } = body as {
-      name?: string;
-      email?: string;
-      message?: string;
-    };
+    const { name, email, message } = await req.json();
 
-    if (!name || !name.trim()) {
-      return NextResponse.json(
-        { error: "Name is required" },
-        { status: 400 }
-      );
+    if (!name || !email || !message) {
+      return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    if (!email || !EMAIL_REGEX.test(email)) {
-      return NextResponse.json(
-        { error: "A valid email address is required" },
-        { status: 400 }
-      );
-    }
-
-    if (!message || !message.trim()) {
-      return NextResponse.json(
-        { error: "Message is required" },
-        { status: 400 }
-      );
-    }
-
-    const supportEmail = process.env.SUPPORT_EMAIL;
-    if (!supportEmail) {
-      console.error("SUPPORT_EMAIL is not configured");
-      return NextResponse.json(
-        { error: "Server configuration error" },
-        { status: 500 }
-      );
-    }
-
-    const { error } = await resend.emails.send({
-      from: "OptimaCV Contact <onboarding@resend.dev>",
-      to: supportEmail,
-      replyTo: email.trim(),
-      subject: "New Contact Form Message",
-      text: [
-        `Name: ${name.trim()}`,
-        `Email: ${email.trim()}`,
-        "",
-        "Message:",
-        message.trim(),
-      ].join("\n"),
+    const data = await resend.emails.send({
+      from: "OptimaCV <support@optimacv.io>",
+      to: process.env.SUPPORT_EMAIL!,
+      subject: "New Contact Message",
+      replyTo: email,
+      html: `
+        <h2>New Contact Message</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong></p>
+        <p>${message}</p>
+      `,
     });
 
-    if (error) {
-      console.error("Resend error:", error);
-      return NextResponse.json(
-        { error: "Failed to send message. Please try again." },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("Contact form error:", err);
-    return NextResponse.json(
-      { error: "Something went wrong. Please try again." },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error("Contact form error:", error);
+    return NextResponse.json({ error: "Failed to send" }, { status: 500 });
   }
 }
