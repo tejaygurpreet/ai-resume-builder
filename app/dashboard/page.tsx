@@ -145,7 +145,7 @@ export default function DashboardPage() {
     return (
       <>
         <Navbar />
-        <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#010409]">
+        <main className="dashboard-page flex min-h-[calc(100vh-4rem)] items-center justify-center bg-[#010409] transition-colors duration-200">
           <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
         </main>
       </>
@@ -170,9 +170,9 @@ export default function DashboardPage() {
   return (
     <>
       <Navbar />
-      <main className="mx-auto min-h-[calc(100vh-4rem)] max-w-7xl bg-[#010409] px-4 py-10 sm:px-6 lg:px-8">
+      <main className="dashboard-page mx-auto min-h-[calc(100vh-4rem)] max-w-7xl bg-[#010409] px-4 py-10 sm:px-6 lg:px-8 transition-colors duration-200">
         {!isPro && !hasOneTimeExport && (
-          <div className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3">
+          <div className="dashboard-banner mb-6 flex items-center justify-between gap-4 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-3 transition-colors duration-200">
             <div className="flex items-center gap-3">
               <span className="text-sm text-slate-400">
                 Free plan: {exportsUsed}/{maxExports} exports used this month
@@ -215,7 +215,7 @@ export default function DashboardPage() {
         </div>
 
         {resumes.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/[0.08] bg-white/[0.02] px-6 py-20">
+          <div className="dashboard-empty flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/[0.08] bg-white/[0.02] px-6 py-20 transition-colors duration-200">
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-brand-500/10">
               <FileText className="h-10 w-10 text-brand-400" />
             </div>
@@ -228,7 +228,7 @@ export default function DashboardPage() {
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {resumes.map((resume) => (
-              <Card key={resume.id} className="group relative overflow-hidden border-white/[0.06] bg-white/[0.03] transition-all duration-300 hover:border-white/[0.14] hover:bg-white/[0.06] hover:-translate-y-2 hover:shadow-glass-lg">
+              <Card key={resume.id} className="dashboard-resume-card group relative overflow-hidden border-white/[0.06] bg-white/[0.03] transition-all duration-300 hover:border-white/[0.14] hover:bg-white/[0.06] hover:-translate-y-2 hover:shadow-glass-lg">
                 <div className="h-1.5 rounded-t-xl" style={{ backgroundColor: resume.color }} />
                 <CardContent className="p-5">
                   <div className="mb-3 flex items-start justify-between gap-2">

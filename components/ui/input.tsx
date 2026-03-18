@@ -2,6 +2,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -10,10 +11,11 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, id, variant = "dark", ...props }, ref) => {
+  ({ className, label, error, id, variant, ...props }, ref) => {
+    const { theme } = useTheme();
     const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
 
-    const isDark = variant === "dark";
+    const isLight = theme === "light" || variant === "light";
 
     return (
       <div className="w-full">
@@ -21,8 +23,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <label
             htmlFor={inputId}
             className={cn(
-              "mb-1.5 block text-[13px] font-medium",
-              isDark ? "text-slate-300" : "text-slate-700"
+              "mb-1.5 block text-[13px] font-medium transition-colors duration-200",
+              isLight ? "text-slate-700" : "text-slate-300"
             )}
           >
             {label}
@@ -35,18 +37,18 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             "flex h-10 w-full rounded-xl border px-3.5 py-2 text-sm",
             "transition-all duration-200",
             "focus:outline-none focus:ring-2 focus:ring-offset-0",
-            isDark
+            isLight
               ? cn(
+                  "bg-white border-[#cbd5e1] text-[#0f172a] placeholder:text-slate-400",
+                  error
+                    ? "border-red-300 focus:border-red-400 focus:ring-red-500/20"
+                    : "hover:border-slate-400 focus:border-violet-600 focus:ring-violet-600/20"
+                )
+              : cn(
                   "bg-white/[0.05] border-white/[0.08] text-white placeholder:text-slate-500",
                   error
                     ? "border-red-500/50 focus:border-red-400 focus:ring-red-500/20"
                     : "hover:border-white/[0.15] focus:border-brand-500/50 focus:ring-brand-500/20"
-                )
-              : cn(
-                  "bg-white border-slate-200 text-slate-900 placeholder:text-slate-400",
-                  error
-                    ? "border-red-300 focus:border-red-400 focus:ring-red-500/20"
-                    : "hover:border-slate-300 focus:border-brand-400 focus:ring-brand-500/20"
                 ),
             "disabled:cursor-not-allowed disabled:opacity-50",
             className
@@ -58,7 +60,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {error && (
           <p
             id={`${inputId}-error`}
-            className="mt-1.5 text-[13px] text-red-400"
+            className={cn(
+              "mt-1.5 text-[13px] transition-colors duration-200",
+              isLight ? "text-red-600" : "text-red-400"
+            )}
             role="alert"
           >
             {error}

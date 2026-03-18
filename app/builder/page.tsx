@@ -159,14 +159,14 @@ function SortableSectionCard({
     section.type === "skills";
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={cn(
-        "group rounded-xl border border-white/[0.08] bg-white/[0.03] shadow-sm transition-all hover:border-white/[0.12] hover:bg-white/[0.05]",
-        isDragging && "opacity-50 shadow-lg"
-      )}
-    >
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={cn(
+          "editor-section-card group rounded-xl border border-white/[0.08] bg-white/[0.03] shadow-sm transition-all duration-200 hover:border-white/[0.12] hover:bg-white/[0.05]",
+          isDragging && "opacity-50 shadow-lg"
+        )}
+      >
       <div className="flex items-center gap-2 border-b border-white/[0.06] px-4 py-3">
         <button
           {...attributes}
@@ -427,7 +427,7 @@ function BuilderPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#0a0a0b]">
+      <div className="editor-page flex h-screen items-center justify-center bg-[#0a0a0b] transition-colors duration-200">
         <Loader2 className="h-8 w-8 animate-spin text-brand-500" />
       </div>
     );
@@ -436,9 +436,9 @@ function BuilderPage() {
   if (!session) return null;
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-[#0a0a0b]">
+    <div className="editor-page flex h-screen flex-col overflow-hidden bg-[#0a0a0b] transition-colors duration-200">
       {/* Top nav */}
-      <header className="z-30 flex shrink-0 items-center gap-3 border-b border-white/[0.06] bg-[#0a0a0b]/95 px-4 py-3 backdrop-blur-xl">
+      <header className="editor-header z-30 flex shrink-0 items-center gap-3 border-b border-white/[0.06] bg-[#0a0a0b]/95 px-4 py-3 backdrop-blur-xl transition-colors duration-200">
         <Link
           href="/dashboard"
           className="inline-flex h-9 items-center gap-2 rounded-xl bg-gradient-to-r from-[#6b46c1] to-violet-600 px-4 text-[13px] font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:from-violet-600 hover:to-[#6b46c1] hover:shadow-purple-500/30 hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]"
@@ -452,7 +452,7 @@ function BuilderPage() {
           type="text"
           value={resume.title}
           onChange={(e) => updateTitle(e.target.value)}
-          className="max-w-[200px] rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold text-white placeholder:text-slate-500 focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+          className="editor-title-input max-w-[200px] rounded-lg border border-transparent bg-transparent px-3 py-1.5 text-sm font-semibold text-white placeholder:text-slate-500 focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-colors duration-200"
           placeholder="Resume name"
         />
 
@@ -528,7 +528,7 @@ function BuilderPage() {
       {/* Main: split screen — 35% left, 45–50% center, right sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left: sections (~35%) */}
-        <div className="flex w-[35%] min-w-[280px] max-w-[420px] shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] bg-[#0a0a0b] p-5 scrollbar-thin">
+        <div className="editor-sidebar flex w-[35%] min-w-[280px] max-w-[420px] shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] bg-[#0a0a0b] p-5 scrollbar-thin transition-colors duration-200">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -562,9 +562,9 @@ function BuilderPage() {
         </div>
 
         {/* Center: live preview (~45–50%) — clean HTML/DOM, no PDF toolbar, scrollable */}
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0a0b]">
+        <div className="editor-preview-area flex min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0a0b] transition-colors duration-200">
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-8">
-            <div className="mx-auto flex min-h-0 flex-1 max-w-[210mm] flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-[#111113] shadow-2xl shadow-black/40">
+            <div className="editor-preview-frame mx-auto flex min-h-0 flex-1 max-w-[210mm] flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-[#111113] shadow-2xl shadow-black/40 transition-colors duration-200">
               <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6 scrollbar-thin">
                 <div className="w-full rounded-lg border border-white/[0.04] bg-white shadow-xl">
                   <LivePreview
@@ -580,7 +580,7 @@ function BuilderPage() {
 
         {/* Right sidebar: ATS, Job matcher, Cover letter, Color picker */}
         {sidebarOpen && (
-          <div className="flex w-72 shrink-0 flex-col border-l border-white/[0.06] bg-[#0a0a0b]">
+          <div className="editor-right-sidebar flex w-72 shrink-0 flex-col border-l border-white/[0.06] bg-[#0a0a0b] transition-colors duration-200">
             <div className="mb-4 flex shrink-0 items-center justify-between p-4 pb-0">
               <span className="text-sm font-medium text-slate-400">Tools</span>
               <button
@@ -667,7 +667,7 @@ function BuilderPage() {
         {!sidebarOpen && (
           <button
             onClick={() => setSidebarOpen(true)}
-            className="fixed right-4 top-24 z-20 flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#0a0a0b] px-3 py-2 text-sm text-slate-400 shadow-lg hover:bg-white/[0.06] hover:text-white"
+            className="editor-tools-toggle fixed right-4 top-24 z-20 flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#0a0a0b] px-3 py-2 text-sm text-slate-400 shadow-lg transition-colors duration-200 hover:bg-white/[0.06] hover:text-white"
           >
             <PanelRightOpen className="h-4 w-4" />
             Tools

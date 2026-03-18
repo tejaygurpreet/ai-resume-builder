@@ -693,4 +693,202 @@
   .resume-template { width: 100%; min-height: auto; box-shadow: none; }
 }
 
+/* ═══ LIGHT MODE: EDITOR PAGE ═══ */
+[data-theme="light"] .editor-page,
+[data-theme="light"] .editor-page .editor-header,
+[data-theme="light"] .editor-page .editor-sidebar,
+[data-theme="light"] .editor-page .editor-preview-area,
+[data-theme="light"] .editor-page .editor-right-sidebar,
+[data-theme="light"] .editor-page .editor-tools-toggle {
+  background-color: #f8fafc !important;
+}
+
+[data-theme="light"] .editor-header {
+  border-color: #e2e8f0 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
+[data-theme="light"] .editor-sidebar {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .editor-preview-area {
+  background-color: #f8fafc !important;
+}
+
+[data-theme="light"] .editor-preview-frame {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05) !important;
+}
+
+[data-theme="light"] .editor-right-sidebar {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .editor-right-sidebar .text-white,
+[data-theme="light"] .editor-right-sidebar .text-slate-400,
+[data-theme="light"] .editor-right-sidebar .text-slate-500 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .editor-right-sidebar .text-slate-500 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .editor-right-sidebar .rounded-xl.border {
+  border-color: #e2e8f0 !important;
+  background: #f8fafc !important;
+}
+
+[data-theme="light"] .editor-right-sidebar .rounded-xl.border h4,
+[data-theme="light"] .editor-right-sidebar .rounded-xl.border p {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .editor-tools-toggle {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .editor-tools-toggle:hover {
+  background: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .editor-title-input {
+  color: #0f172a !important;
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .editor-title-input::placeholder {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .editor-section-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .editor-section-card:hover {
+  border-color: rgba(124, 58, 237, 0.2) !important;
+  background: #ffffff !important;
+}
+
+[data-theme="light"] .editor-section-card .text-white,
+[data-theme="light"] .editor-section-card .text-slate-500 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .editor-section-card .text-slate-500 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .editor-section-card .border-white\/\[0\.06\] {
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .editor-page .text-slate-500,
+[data-theme="light"] .editor-page .text-slate-400 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .editor-page .hover\:text-white:hover {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .editor-page .hover\:bg-white\/\[0\.06\]:hover {
+  background: rgba(0, 0, 0, 0.04) !important;
+}
+
+/* ═══ LIGHT MODE: DASHBOARD PAGE ═══ */
+[data-theme="light"] .dashboard-page {
+  background-color: #f8fafc !important;
+}
+
+[data-theme="light"] .dashboard-page .text-white,
+[data-theme="light"] .dashboard-page h1 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .dashboard-page .text-slate-500 {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .dashboard-banner {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .dashboard-banner .text-slate-400 {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .dashboard-resume-card {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04) !important;
+}
+
+[data-theme="light"] .dashboard-resume-card:hover {
+  border-color: rgba(124, 58, 237, 0.2) !important;
+  box-shadow: 0 10px 15px -3px rgba(0,0,0,0.08), 0 4px 6px -4px rgba(0,0,0,0.05) !important;
+}
+
+[data-theme="light"] .dashboard-resume-card .text-white,
+[data-theme="light"] .dashboard-resume-card h3 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .dashboard-empty {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .dashboard-empty .text-white,
+[data-theme="light"] .dashboard-empty h2 {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .dashboard-empty .text-slate-500 {
+  color: #475569 !important;
+}
+
+/* Light mode: raw input/textarea in editor/dashboard/modals (fallback) */
+[data-theme="light"] .editor-page input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
+[data-theme="light"] .editor-page textarea,
+[data-theme="light"] .dashboard-page input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
+[data-theme="light"] .dashboard-page textarea,
+[data-theme="light"] .site-modal input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
+[data-theme="light"] .site-modal textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .editor-page input::placeholder,
+[data-theme="light"] .editor-page textarea::placeholder,
+[data-theme="light"] .dashboard-page input::placeholder,
+[data-theme="light"] .dashboard-page textarea::placeholder,
+[data-theme="light"] .site-modal input::placeholder,
+[data-theme="light"] .site-modal textarea::placeholder {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .editor-page input:focus,
+[data-theme="light"] .editor-page textarea:focus,
+[data-theme="light"] .dashboard-page input:focus,
+[data-theme="light"] .dashboard-page textarea:focus,
+[data-theme="light"] .site-modal input:focus,
+[data-theme="light"] .site-modal textarea:focus {
+  border-color: #7c3aed !important;
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.2) !important;
+}
+
 /* === LIGHT MODE POLISHED + HOMEPAGE RESUME PREVIEW REFINED ANIMATION === */
+
+/* === LIGHT MODE FIXED: INPUT TEXT VISIBLE + POLISHED EDITOR & DASHBOARD === */
