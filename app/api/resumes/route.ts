@@ -103,7 +103,18 @@ export async function GET() {
       oneTimeExport: false,
     };
 
-    if (sub.exportsResetAt && new Date(sub.exportsResetAt).getMonth() !== new Date().getMonth()) {
+    const now = new Date();
+    const resetAt = sub.exportsResetAt ? new Date(sub.exportsResetAt) : now;
+    const isNewMonth =
+      resetAt.getMonth() !== now.getMonth() || resetAt.getFullYear() !== now.getFullYear();
+
+    if (isNewMonth && subscription) {
+      await prisma.subscription.update({
+        where: { userId },
+        data: { exportsUsed: 0, exportsResetAt: now },
+      });
+      sub = { ...sub, exportsUsed: 0, exportsResetAt: now };
+    } else if (isNewMonth) {
       sub = { ...sub, exportsUsed: 0 };
     }
 

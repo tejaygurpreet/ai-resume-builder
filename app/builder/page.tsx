@@ -372,6 +372,14 @@ function BuilderPage() {
     [sections, reorderSections]
   );
 
+  const refreshSubscription = useCallback(async () => {
+    try {
+      const res = await fetch("/api/resumes");
+      const data = await res.json().catch(() => ({}));
+      if (data.subscription?.exportsUsed != null) setExportsUsed(data.subscription.exportsUsed);
+    } catch {}
+  }, []);
+
   const handleExport = useCallback(
     async (format: ExportFormat, filename: string) => {
       const name = filename || resume.title;
@@ -392,8 +400,14 @@ function BuilderPage() {
           exportToMarkdown(sections, name);
           break;
       }
+      if (!userPlan || userPlan === "free") {
+        if (!hasOneTimeExport) {
+          const incRes = await fetch("/api/resumes/increment-export", { method: "POST" });
+          if (incRes.ok) await refreshSubscription();
+        }
+      }
     },
-    [resume.title, resume.template, resume.color, sections]
+    [resume.title, resume.template, resume.color, sections, userPlan, hasOneTimeExport, refreshSubscription]
   );
 
   const canExport = userPlan === "pro" || hasOneTimeExport || exportsUsed < 10;
@@ -682,6 +696,7 @@ function BuilderPage() {
         exportsUsed={exportsUsed}
         maxExports={10}
         onExport={handleExport}
+        onAfterExport={refreshSubscription}
         resumeTitle={resume.title}
         templateName={TEMPLATE_LABEL_MAP[resume.template] ?? resume.template}
       />

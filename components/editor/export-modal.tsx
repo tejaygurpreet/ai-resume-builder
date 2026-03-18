@@ -85,6 +85,8 @@ interface ExportModalProps {
   exportsUsed?: number;
   maxExports?: number;
   onExport: (format: ExportFormat, filename: string) => void | Promise<void>;
+  /** Called after export completes (for refreshing subscription/exportsUsed) */
+  onAfterExport?: () => void | Promise<void>;
   resumeTitle?: string;
   templateName?: string;
 }
@@ -97,6 +99,7 @@ export function ExportModal({
   exportsUsed = 0,
   maxExports = 10,
   onExport,
+  onAfterExport,
   resumeTitle = "Resume",
   templateName = "modern",
 }: ExportModalProps) {
@@ -111,7 +114,7 @@ export function ExportModal({
     }
   }, [isOpen, resumeTitle, templateName]);
 
-  const handleExportClick = useCallback(() => {
+  const handleExportClick = useCallback(async () => {
     if (!canExport) return;
     const ext =
       FORMAT_OPTIONS.find((f) => f.format === selectedFormat)?.ext ?? "";
@@ -120,7 +123,8 @@ export function ExportModal({
     if (safeName.endsWith(ext)) {
       safeName = safeName.slice(0, -ext.length);
     }
-    onExport(selectedFormat, safeName);
+    await onExport(selectedFormat, safeName);
+    await onAfterExport?.();
     onClose();
   }, [
     canExport,
@@ -129,6 +133,7 @@ export function ExportModal({
     resumeTitle,
     templateName,
     onExport,
+    onAfterExport,
     onClose,
   ]);
 

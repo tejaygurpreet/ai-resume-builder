@@ -15,6 +15,18 @@ import { Modal } from "@/components/ui/modal";
 import { formatDate } from "@/lib/utils";
 import { templateRegistry } from "@/components/resume/templates";
 import { PLANS } from "@/lib/stripe";
+import { validateResumeCompletion } from "@/lib/resume-validation";
+import {
+  exportToPdf,
+  exportToTxt,
+  exportToJson,
+  exportToDocx,
+  exportToMarkdown,
+  type ExportFormat,
+} from "@/components/editor/pdf-export";
+import { ExportModal } from "@/components/editor/export-modal";
+import { ResumeCompletionModal } from "@/components/editor/resume-completion-modal";
+import { UpgradeModal } from "@/components/ui/UpgradeModal";
 
 const TEMPLATE_LABELS: Record<string, string> = {};
 templateRegistry.forEach((t) => { TEMPLATE_LABELS[t.id] = t.name; });
@@ -30,10 +42,12 @@ export default function DashboardPage() {
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Resume | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState<string | null>(null);
+  const [exportResume, setExportResume] = useState<Resume | null>(null);
+  const [completionModalResume, setCompletionModalResume] = useState<Resume | null>(null);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
   useEffect(() => { if (status === "unauthenticated") router.replace("/login"); }, [status, router]);
 
@@ -49,14 +63,8 @@ export default function DashboardPage() {
 
   useEffect(() => { if (status === "authenticated") fetchResumes(); }, [status, fetchResumes]);
 
-  async function handleCreate() {
-    setCreating(true);
-    try {
-      const res = await fetch("/api/resumes", { method: "POST" });
-      if (!res.ok) throw new Error("Failed to create resume");
-      const data = await res.json();
-      router.push(`/builder?id=${data.resume.id}`);
-    } catch { setCreating(false); }
+  function handleCreate() {
+    router.push("/templates");
   }
 
   async function handleDelete() {
@@ -70,9 +78,57 @@ export default function DashboardPage() {
     } catch {} finally { setDeleting(false); }
   }
 
+  const isPro = subscription?.plan === "pro";
+  const hasOneTimeExport = !!subscription?.oneTimeExport;
+  const exportsUsed = subscription?.exportsUsed ?? 0;
+  const maxExports = PLANS.free.maxExportsPerMonth;
+  const canExport = isPro || hasOneTimeExport || exportsUsed < maxExports;
+
   function handleExport(resume: Resume) {
-    router.push(`/builder?id=${resume.id}&export=1`);
+    const sections = resume.sections ?? [];
+    const validation = validateResumeCompletion(sections);
+    const isComplete = validation.isComplete || validation.percentage >= 70;
+
+    if (!isComplete) {
+      setCompletionModalResume(resume);
+      return;
+    }
+    if (!canExport) {
+      setUpgradeModalOpen(true);
+      return;
+    }
+    setExportResume(resume);
   }
+
+  const handleDashboardExport = useCallback(
+    async (format: ExportFormat, filename: string) => {
+      if (!exportResume) return;
+      const sections = exportResume.sections ?? [];
+      const name = filename || exportResume.title;
+      switch (format) {
+        case "pdf":
+          await exportToPdf(sections, name, exportResume.color);
+          break;
+        case "txt":
+          exportToTxt(sections, name);
+          break;
+        case "json":
+          exportToJson(sections, name, exportResume.template, exportResume.color);
+          break;
+        case "docx":
+          await exportToDocx(sections, name);
+          break;
+        case "md":
+          exportToMarkdown(sections, name);
+          break;
+      }
+      if (!isPro && !hasOneTimeExport) {
+        const incRes = await fetch("/api/resumes/increment-export", { method: "POST" });
+        if (incRes.ok) await fetchResumes();
+      }
+    },
+    [exportResume, isPro, hasOneTimeExport, fetchResumes]
+  );
 
 
   if (status === "loading" || loading) {
@@ -97,10 +153,9 @@ export default function DashboardPage() {
     } catch {} finally { setDuplicating(null); }
   }
 
-  const isPro = subscription?.plan === "pro";
-  const hasOneTimeExport = !!subscription?.oneTimeExport;
-  const exportsUsed = subscription?.exportsUsed ?? 0;
-  const maxExports = PLANS.free.maxExportsPerMonth;
+  const completionValidation = completionModalResume
+    ? validateResumeCompletion(completionModalResume.sections ?? [])
+    : { isComplete: false, percentage: 0, missingItems: [] as string[], suggestions: [] as string[] };
 
   return (
     <>
@@ -143,7 +198,7 @@ export default function DashboardPage() {
                 <LayoutTemplate className="h-4 w-4" /> Browse Templates
               </Button>
             </Link>
-            <Button onClick={handleCreate} loading={creating}>
+            <Button onClick={handleCreate}>
               <Plus className="h-4 w-4" /> Create New Resume
             </Button>
           </div>
@@ -156,7 +211,7 @@ export default function DashboardPage() {
             </div>
             <h2 className="mt-6 text-xl font-semibold text-white">No resumes yet</h2>
             <p className="mt-2 max-w-sm text-center text-sm text-slate-500">Create your first AI-powered resume and land your dream job faster.</p>
-            <Button onClick={handleCreate} loading={creating} className="mt-6">
+            <Button onClick={handleCreate} className="mt-6">
               <Sparkles className="h-4 w-4" /> Create Your First Resume
             </Button>
           </div>
@@ -201,6 +256,38 @@ export default function DashboardPage() {
           <Button variant="destructive" onClick={handleDelete} loading={deleting}>Delete</Button>
         </div>
       </Modal>
+
+      <ResumeCompletionModal
+        isOpen={!!completionModalResume}
+        onClose={() => setCompletionModalResume(null)}
+        validation={completionValidation}
+        onGoToStep={() => {
+          if (completionModalResume) router.push(`/builder?id=${completionModalResume.id}`);
+          setCompletionModalResume(null);
+        }}
+        getStepForMissing={() => null}
+      />
+
+      <ExportModal
+        isOpen={!!exportResume}
+        onClose={() => setExportResume(null)}
+        isPro={isPro}
+        hasOneTimeExport={hasOneTimeExport}
+        exportsUsed={exportsUsed}
+        maxExports={maxExports}
+        onExport={handleDashboardExport}
+        onAfterExport={fetchResumes}
+        resumeTitle={exportResume?.title ?? "Resume"}
+        templateName={TEMPLATE_LABELS[exportResume?.template ?? ""] ?? exportResume?.template ?? "modern"}
+      />
+
+      <UpgradeModal
+        isOpen={upgradeModalOpen}
+        onClose={() => setUpgradeModalOpen(false)}
+        reason="export_limit"
+      />
     </>
   );
 }
+
+/* === DASHBOARD EXPORT LOGIC FIXED + COUNTER + CREATE NEW RESUME FLOW === */
