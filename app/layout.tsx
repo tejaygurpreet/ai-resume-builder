@@ -12,8 +12,11 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://optimacv.io"),
   title: "OptimaCV - AI Resume Builder",
-  description:
-    "Create professional resumes with AI. Build, customize, and export job-winning resumes in minutes.",
+  description: "Create professional resumes with AI. Build resumes fast.",
+  robots: {
+    index: true,
+    follow: true,
+  },
   keywords: [
     "AI resume builder",
     "resume builder",
