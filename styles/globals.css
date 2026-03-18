@@ -403,15 +403,22 @@
 [data-theme="light"] .nav-profile-btn {
   border-color: rgba(0, 0, 0, 0.08) !important;
   background: rgba(0, 0, 0, 0.03) !important;
+  color: #334155 !important;
+  transition: all 0.2s ease !important;
 }
 
 [data-theme="light"] .nav-profile-btn:hover {
   border-color: rgba(0, 0, 0, 0.12) !important;
-  background: rgba(0, 0, 0, 0.06) !important;
+  background: rgba(0, 0, 0, 0.08) !important;
+  color: #0f172a !important;
 }
 
 [data-theme="light"] .nav-profile-btn .text-slate-500 {
   color: #64748b !important;
+}
+
+[data-theme="light"] .nav-profile-btn:hover .text-slate-500 {
+  color: #0f172a !important;
 }
 
 [data-theme="light"] .nav-dropdown {
@@ -858,6 +865,66 @@
   color: #475569 !important;
 }
 
+/* Light mode: Dashboard buttons — dark text, proper hover (never white-on-white) */
+[data-theme="light"] .dashboard-page .dashboard-btn-secondary,
+[data-theme="light"] .dashboard-page .dashboard-btn-outline,
+[data-theme="light"] .dashboard-page .dashboard-btn-ghost {
+  background: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+  transition: all 0.2s ease !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-btn-secondary:hover,
+[data-theme="light"] .dashboard-page .dashboard-btn-outline:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-btn-ghost:hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-btn-delete {
+  color: #dc2626 !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-btn-delete:hover {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+
+/* Light mode: Dashboard badges/pills — good contrast */
+[data-theme="light"] .dashboard-page .dashboard-badge-plan {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-badge-plan-pro {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #047857 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-badge-template {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-badge-upgrade {
+  background: rgba(124, 58, 237, 0.12) !important;
+  color: #5b21b6 !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-badge-upgrade:hover {
+  background: rgba(124, 58, 237, 0.2) !important;
+  color: #4c1d95 !important;
+}
+
 /* Light mode: raw input/textarea in editor/dashboard/modals (fallback) */
 [data-theme="light"] .editor-page input:not([type="color"]):not([type="checkbox"]):not([type="radio"]),
 [data-theme="light"] .editor-page textarea,
@@ -892,3 +959,5 @@
 /* === LIGHT MODE POLISHED + HOMEPAGE RESUME PREVIEW REFINED ANIMATION === */
 
 /* === LIGHT MODE FIXED: INPUT TEXT VISIBLE + POLISHED EDITOR & DASHBOARD === */
+
+/* === DASHBOARD LIGHT MODE FIXED: HOVER VISIBILITY + BUTTONS + PILLS + PROFILE === */

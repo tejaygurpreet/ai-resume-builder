@@ -178,13 +178,13 @@ export default function DashboardPage() {
                 Free plan: {exportsUsed}/{maxExports} exports used this month
               </span>
               <Link href="/pricing">
-                <Badge className="cursor-pointer bg-purple-500/20 text-purple-300 hover:bg-purple-500/30">
+                <Badge className="dashboard-badge-upgrade cursor-pointer bg-purple-500/20 text-purple-300 hover:bg-purple-500/30">
                   <Crown className="mr-1 h-3 w-3" /> Upgrade to Pro
                 </Badge>
               </Link>
             </div>
             <Link href="/pricing">
-              <Button size="sm" variant="outline" className="border-white/[0.12] text-slate-300">
+              <Button size="sm" variant="outline" className="dashboard-btn dashboard-btn-outline border-white/[0.12] text-slate-300">
                 Upgrade
               </Button>
             </Link>
@@ -194,7 +194,7 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">My Resumes</h1>
-              <Badge variant={isPro ? "success" : "default"}>
+              <Badge variant={isPro ? "success" : "default"} className={isPro ? "dashboard-badge-plan dashboard-badge-plan-pro" : "dashboard-badge-plan"}>
                 {isPro ? "Pro — $7.99/mo" : "Free — 5 exports/mo"}
               </Badge>
             </div>
@@ -204,11 +204,11 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/templates">
-              <Button variant="outline" size="md" className="gap-2">
+              <Button variant="outline" size="md" className="dashboard-btn dashboard-btn-outline gap-2">
                 <LayoutTemplate className="h-4 w-4" /> Browse Templates
               </Button>
             </Link>
-            <Button onClick={handleCreate}>
+            <Button onClick={handleCreate} className="dashboard-btn dashboard-btn-primary">
               <Plus className="h-4 w-4" /> Create New Resume
             </Button>
           </div>
@@ -221,7 +221,7 @@ export default function DashboardPage() {
             </div>
             <h2 className="mt-6 text-xl font-semibold text-white">No resumes yet</h2>
             <p className="mt-2 max-w-sm text-center text-sm text-slate-500">Create your first AI-powered resume and land your dream job faster.</p>
-            <Button onClick={handleCreate} className="mt-6">
+            <Button onClick={handleCreate} className="dashboard-btn dashboard-btn-primary mt-6">
               <Sparkles className="h-4 w-4" /> Create Your First Resume
             </Button>
           </div>
@@ -233,20 +233,20 @@ export default function DashboardPage() {
                 <CardContent className="p-5">
                   <div className="mb-3 flex items-start justify-between gap-2">
                     <h3 className="truncate text-base font-semibold text-white">{resume.title}</h3>
-                    <Badge className="shrink-0 text-[11px]">{TEMPLATE_LABELS[resume.template] ?? resume.template}</Badge>
+                    <Badge className="dashboard-badge-template shrink-0 text-[11px]">{TEMPLATE_LABELS[resume.template] ?? resume.template}</Badge>
                   </div>
                   <p className="text-xs text-slate-500">Updated {formatDate(resume.updatedAt)}</p>
                   <div className="mt-4 flex items-center gap-2">
                     <Link href={`/builder?id=${resume.id}`} className="flex-1">
-                      <Button variant="secondary" size="sm" className="w-full"><Pencil className="h-3.5 w-3.5" /> Edit</Button>
+                      <Button variant="secondary" size="sm" className="dashboard-btn dashboard-btn-secondary w-full"><Pencil className="h-3.5 w-3.5" /> Edit</Button>
                     </Link>
-                    <Button variant="secondary" size="sm" onClick={() => handleDuplicate(resume.id)} disabled={duplicating === resume.id} aria-label={`Duplicate ${resume.title}`}>
+                    <Button variant="secondary" size="sm" className="dashboard-btn dashboard-btn-secondary" onClick={() => handleDuplicate(resume.id)} disabled={duplicating === resume.id} aria-label={`Duplicate ${resume.title}`}>
                       {duplicating === resume.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Copy className="h-3.5 w-3.5" />}
                     </Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleExport(resume)} aria-label={`Export ${resume.title}`}>
+                    <Button variant="secondary" size="sm" className="dashboard-btn dashboard-btn-secondary" onClick={() => handleExport(resume)} aria-label={`Export ${resume.title}`}>
                       <Download className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(resume)} className="text-red-400 hover:bg-red-500/10 hover:text-red-300" aria-label={`Delete ${resume.title}`}>
+                    <Button variant="ghost" size="sm" className="dashboard-btn dashboard-btn-ghost dashboard-btn-delete" onClick={() => setDeleteTarget(resume)} aria-label={`Delete ${resume.title}`}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
                   </div>
@@ -301,3 +301,4 @@ export default function DashboardPage() {
 }
 
 /* === DASHBOARD EXPORT LOGIC FIXED + COUNTER + CREATE NEW RESUME FLOW === */
+/* === DASHBOARD LIGHT MODE FIXED: HOVER VISIBILITY + BUTTONS + PILLS + PROFILE === */
