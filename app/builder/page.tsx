@@ -4,7 +4,7 @@
  * (2) Template switching updates store + color from template accent
  * (3) Accent color from template, synced on template change
  * (4) Right sidebar scroll with max-h and overflow-y-auto
- * (5) Pricing: Free 10 exports, Pro $7/$59/$99, One-Time $19, no ads
+ * (5) Pricing: Free 5 exports, Pro $7.99/$59/$99, One-Time $19.99, no ads
  * (6) useResumeExport hook + ExportModal centralizes export flow
  * (7) Template modal scale-to-fit, responsive max-height
  */
@@ -37,7 +37,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  ArrowLeft,
   ChevronDown,
   Download,
   LayoutTemplate,
@@ -105,10 +104,10 @@ const SECTION_LABELS: Record<string, string> = {
 
 /** Editor sidebar display order only — does NOT affect template/PDF output order. */
 const EDITOR_DISPLAY_ORDER: string[] = [
+  "personal",
   "education",
   "experience",
   "summary",
-  "personal",
   "skills",
   "projects",
   "certifications",
@@ -410,7 +409,7 @@ function BuilderPage() {
     [resume.title, resume.template, resume.color, sections, userPlan, hasOneTimeExport, refreshSubscription]
   );
 
-  const canExport = userPlan === "pro" || hasOneTimeExport || exportsUsed < 10;
+  const canExport = userPlan === "pro" || hasOneTimeExport || exportsUsed < 5;
 
   const handleExportClick = () => {
     if (!validation.isComplete) {
@@ -441,10 +440,10 @@ function BuilderPage() {
       <header className="z-30 flex shrink-0 items-center gap-3 border-b border-white/[0.06] bg-[#0a0a0b]/95 px-4 py-3 backdrop-blur-xl">
         <Link
           href="/dashboard"
-          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-white/[0.06] hover:text-white"
-          aria-label="Back"
+          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+          aria-label="Dashboard"
         >
-          <ArrowLeft className="h-4 w-4" />
+          Dashboard
         </Link>
 
         <input
@@ -694,7 +693,7 @@ function BuilderPage() {
         isPro={userPlan === "pro"}
         hasOneTimeExport={hasOneTimeExport}
         exportsUsed={exportsUsed}
-        maxExports={10}
+        maxExports={5}
         onExport={handleExport}
         onAfterExport={refreshSubscription}
         resumeTitle={resume.title}
@@ -731,10 +730,10 @@ function BuilderPage() {
  * 4. Export remains via top Export button only; no export UI in preview.
  *
  * === ALL PRICING BANNERS UPDATED + TEMPLATE LOCKS + LIMIT POPUPS + CONSISTENT LOGIC ===
- * - 2026 plans: Free ($0, 10 exports/mo, 10 templates, 3 AI), Pro ($7/$59/$99), One-Time $19
+ * - 2026 plans: Free ($0, 5 exports/mo, 10 templates, 3 AI), Pro ($7.99/$59/$99), One-Time $19.99
  * - Template locking: Free users get 10 basic templates; premium locked with upgrade popup
  * - AI limit (3/resume): UpgradeModal when hit
- * - Export limit (10/mo): UpgradeModal when hit
+ * - Export limit (5/mo): UpgradeModal when hit
  * - usePlan, UpgradeModal, useMembershipLimit centralize logic
  *
  * === REQUESTED CHANGES COMPLETE: EDITOR ORDER + AI LOGIC + IMPROVE WITH AI PRO + PRICING FIXES (50+ TEMPLATES + CLEAN ONE-TIME) ===

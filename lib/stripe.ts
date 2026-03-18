@@ -20,7 +20,7 @@ export const PLANS = {
     name: "Free",
     price: 0,
     templates: 10,
-    maxExportsPerMonth: 10,
+    maxExportsPerMonth: 5,
     aiGenerationsPerResume: 3,
     aiFeatures: true,
     adsBeforeExport: 0,
@@ -28,7 +28,7 @@ export const PLANS = {
   },
   pro: {
     name: "Pro",
-    price: 7,
+    price: 7.99,
     templates: Infinity,
     maxExportsPerMonth: Infinity,
     aiGenerationsPerResume: Infinity,
@@ -40,7 +40,7 @@ export const PLANS = {
   },
   oneTimeExport: {
     name: "One-Time Export",
-    price: 19,
+    price: 19.99,
     stripePriceId: process.env.STRIPE_ONE_TIME_PRICE_ID || "price_one_time_export",
   },
 } as const;

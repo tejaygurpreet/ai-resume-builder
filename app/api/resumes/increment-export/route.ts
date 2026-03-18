@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const MAX_EXPORTS_FREE = 10;
+const MAX_EXPORTS_FREE = 5;
 
 function getUserId(session: unknown): string | undefined {
   const s = session as { user?: { id?: string } } | null;

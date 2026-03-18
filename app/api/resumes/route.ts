@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { TEMPLATE_CONFIGS } from "@/lib/template-config";
 
 const DEFAULT_SECTIONS = [
   {
@@ -151,7 +152,9 @@ export async function GET() {
   }
 }
 
-export async function POST() {
+const VALID_TEMPLATES = new Set(TEMPLATE_CONFIGS.map((c) => c.id));
+
+export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     const userId = getUserId(session);
@@ -159,15 +162,30 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    let template = "modern";
+    let color = "#2563eb";
+    let body: { template?: string; color?: string; title?: string } = {};
+    try {
+      body = await req.json().catch(() => ({}));
+      if (body.template && typeof body.template === "string" && VALID_TEMPLATES.has(body.template)) {
+        template = body.template;
+        const config = TEMPLATE_CONFIGS.find((c) => c.id === template);
+        if (config) color = config.accent;
+      }
+      if (body.color && typeof body.color === "string") {
+        color = body.color;
+      }
+    } catch {}
+
     const count = await prisma.resume.count({ where: { userId } });
-    const title = `Resume ${count + 1}`;
+    const title = body?.title && typeof body.title === "string" ? body.title : `Resume ${count + 1}`;
 
     const resume = await prisma.resume.create({
       data: {
         userId,
         title,
-        template: "modern",
-        color: "#2563eb",
+        template,
+        color,
         sections: {
           create: DEFAULT_SECTIONS.map(({ type, order, content }) => ({
             type,

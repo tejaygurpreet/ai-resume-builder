@@ -48,7 +48,7 @@ export default function TemplatesPage() {
           </h1>
           <p className="mt-3 text-lg text-slate-400">
             Choose from {templateRegistry.length} professionally designed,
-            ATS-friendly templates. Free: 10 basic templates. Pro: all 20+.
+            ATS-friendly templates. Free: 10 basic templates. Pro: all 50+.
           </p>
         </div>
 

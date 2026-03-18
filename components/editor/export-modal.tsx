@@ -97,7 +97,7 @@ export function ExportModal({
   isPro,
   hasOneTimeExport = false,
   exportsUsed = 0,
-  maxExports = 10,
+  maxExports = 5,
   onExport,
   onAfterExport,
   resumeTitle = "Resume",
@@ -212,7 +212,7 @@ export function ExportModal({
           {!canExport && (
             <div className="flex items-center gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300">
               <Crown className="h-3.5 w-3.5 flex-shrink-0" />
-              You&apos;ve reached your 10 free exports this month. Upgrade to Pro for unlimited exports or One-Time Export ($19).
+              You&apos;ve reached your 5 free exports this month. Upgrade to Pro for unlimited exports or One-Time Export ($19.99).
             </div>
           )}
 

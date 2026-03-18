@@ -29,25 +29,25 @@ const REASON_CONFIG: Record<
   ai_limit: {
     title: "AI Limit Reached",
     message:
-      "You've used all 3 free AI generations. Upgrade to Pro for unlimited AI tailoring & rewriting – only $7/month",
+      "You've used all 3 free AI generations. Upgrade to Pro for unlimited AI tailoring & rewriting – only $7.99/month",
     icon: Sparkles,
   },
   export_limit: {
     title: "Export Limit Reached",
     message:
-      "You've reached your 10 free exports this month. Upgrade to Pro for unlimited exports + premium features",
+      "You've reached your 5 free exports this month. Upgrade to Pro for unlimited exports + premium features",
     icon: Zap,
   },
   template_lock: {
     title: "Premium Template",
     message:
-      "Unlock all 20+ premium templates with Pro – only $7/month",
+      "Unlock all 50+ premium templates with Pro – only $7.99/month",
     icon: Crown,
   },
   pro_feature: {
     title: "Pro Feature",
     message:
-      "Upgrade to Pro for unlimited AI generations, all templates, job tailoring, cover letters, ATS score – only $7/month",
+      "Upgrade to Pro for unlimited AI generations, all templates, job tailoring, cover letters, ATS score – only $7.99/month",
     icon: Crown,
   },
   improve_pro: {
@@ -70,7 +70,7 @@ export function UpgradeModal({
   const Icon = config.icon;
 
   const message = templateName && reason === "template_lock"
-    ? `Unlock "${templateName}" and all 20+ premium templates with Pro – only $7/month`
+    ? `Unlock "${templateName}" and all 50+ premium templates with Pro – only $7.99/month`
     : config.message;
 
   const handleUpgrade = async () => {
@@ -115,7 +115,7 @@ export function UpgradeModal({
             className="w-full bg-gradient-to-r from-purple-600 to-violet-600 font-semibold hover:from-purple-500 hover:to-violet-500"
           >
             <Crown className="mr-2 h-4 w-4" />
-            Upgrade to Pro — $7/month
+            Upgrade to Pro — $7.99/month
           </Button>
           <Link href="/pricing" onClick={onClose}>
             <Button

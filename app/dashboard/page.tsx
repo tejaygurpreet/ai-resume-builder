@@ -185,7 +185,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">My Resumes</h1>
               <Badge variant={isPro ? "success" : "default"}>
-                {isPro ? "Pro — $7/mo" : "Free — 10 exports/mo"}
+                {isPro ? "Pro — $7.99/mo" : "Free — 5 exports/mo"}
               </Badge>
             </div>
             <p className="mt-1 text-sm text-slate-500">
