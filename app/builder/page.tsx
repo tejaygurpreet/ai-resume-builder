@@ -270,7 +270,7 @@ function BuilderPage() {
   const [exportsUsed, setExportsUsed] = useState(0);
   const [hasOneTimeExport, setHasOneTimeExport] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeModalReason, setUpgradeModalReason] = useState<"ai_limit" | "export_limit" | "improve_pro">("export_limit");
+  const [upgradeModalReason, setUpgradeModalReason] = useState<"ai_limit" | "export_limit" | "improve_pro" | "cover_letter">("export_limit");
 
   const validation = validateResumeCompletion(sections);
 
