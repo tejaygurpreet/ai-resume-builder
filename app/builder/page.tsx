@@ -39,6 +39,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   ChevronDown,
   Download,
+  LayoutDashboard,
   LayoutTemplate,
   Loader2,
   CloudOff,
@@ -440,9 +441,10 @@ function BuilderPage() {
       <header className="z-30 flex shrink-0 items-center gap-3 border-b border-white/[0.06] bg-[#0a0a0b]/95 px-4 py-3 backdrop-blur-xl">
         <Link
           href="/dashboard"
-          className="rounded-lg px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+          className="inline-flex h-9 items-center gap-2 rounded-xl bg-gradient-to-r from-[#6b46c1] to-violet-600 px-4 text-[13px] font-semibold text-white shadow-lg shadow-purple-500/25 transition-all hover:from-violet-600 hover:to-[#6b46c1] hover:shadow-purple-500/30 hover:-translate-y-[2px] hover:scale-[1.02] active:translate-y-0 active:scale-[0.99]"
           aria-label="Dashboard"
         >
+          <LayoutDashboard className="h-4 w-4" />
           Dashboard
         </Link>
 
@@ -559,12 +561,12 @@ function BuilderPage() {
           </DndContext>
         </div>
 
-        {/* Center: live preview (~45–50%) — clean HTML/DOM, no PDF toolbar */}
+        {/* Center: live preview (~45–50%) — clean HTML/DOM, no PDF toolbar, scrollable */}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-[#0a0a0b]">
-          <div className="flex flex-1 flex-col overflow-hidden p-8">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-8">
             <div className="mx-auto flex min-h-0 flex-1 max-w-[210mm] flex-col overflow-hidden rounded-xl border border-white/[0.06] bg-[#111113] shadow-2xl shadow-black/40">
-              <div className="flex flex-1 overflow-hidden p-6">
-                <div className="w-full overflow-hidden rounded-lg border border-white/[0.04] bg-white shadow-xl">
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6 scrollbar-thin">
+                <div className="w-full rounded-lg border border-white/[0.04] bg-white shadow-xl">
                   <LivePreview
                     template={resume.template}
                     sections={sections}
@@ -630,7 +632,16 @@ function BuilderPage() {
                 </div>
               </button>
               <button
-                onClick={() => setActiveModal("coverLetter")}
+                onClick={() => {
+                  if (userPlan === "pro") {
+                    setActiveModal("coverLetter");
+                  } else if (hasOneTimeExport) {
+                    toast.error("Cover letter generator is a Pro feature");
+                  } else {
+                    setUpgradeModalReason("cover_letter");
+                    setUpgradeModalOpen(true);
+                  }
+                }}
                 className="flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.05]"
               >
                 <FileSignature className="h-5 w-5 text-purple-400" />
@@ -737,4 +748,6 @@ function BuilderPage() {
  * - usePlan, UpgradeModal, useMembershipLimit centralize logic
  *
  * === REQUESTED CHANGES COMPLETE: EDITOR ORDER + AI LOGIC + IMPROVE WITH AI PRO + PRICING FIXES (50+ TEMPLATES + CLEAN ONE-TIME) ===
+ *
+ * === EDITOR FIXES: DASHBOARD BUTTON STYLE + PREVIEW SCROLL + COVER LETTER MEMBERSHIP LOGIC ===
  */
