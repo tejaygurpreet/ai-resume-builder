@@ -11,7 +11,10 @@ export function getStripe(): Stripe {
         "STRIPE_SECRET_KEY is not set. Add it to your environment variables."
       );
     }
-    _stripe = new Stripe(key, { typescript: true });
+    _stripe = new Stripe(key, {
+      apiVersion: "2025-02-24.acacia",
+      typescript: true,
+    });
   }
   return _stripe;
 }
@@ -20,7 +23,11 @@ export function getStripe(): Stripe {
 export function getStripeOrNull(): Stripe | null {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) return null;
-  if (!_stripe) _stripe = new Stripe(key, { typescript: true });
+  if (!_stripe)
+    _stripe = new Stripe(key, {
+      apiVersion: "2025-02-24.acacia",
+      typescript: true,
+    });
   return _stripe;
 }
 
@@ -45,13 +52,13 @@ export const PLANS = {
     aiGenerationsPerResume: Infinity,
     aiFeatures: true,
     adsBeforeExport: 0,
-    stripePriceId: process.env.STRIPE_PRO_PRICE_ID || "price_pro_monthly",
-    stripeAnnualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID || null,
-    stripeLifetimePriceId: process.env.STRIPE_PRO_LIFETIME_PRICE_ID || null,
+    stripePriceId: process.env.STRIPE_PRO_PRICE_ID ?? null,
+    stripeAnnualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID ?? null,
+    stripeLifetimePriceId: process.env.STRIPE_PRO_LIFETIME_PRICE_ID ?? null,
   },
   oneTimeExport: {
     name: "One-Time Export",
     price: 19.99,
-    stripePriceId: process.env.STRIPE_ONE_TIME_PRICE_ID || "price_one_time_export",
+    stripePriceId: process.env.STRIPE_ONE_TIME_PRICE_ID ?? null,
   },
 } as const;

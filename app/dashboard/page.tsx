@@ -67,7 +67,7 @@ export default function DashboardPage() {
   useEffect(() => {
     if (status !== "authenticated") return;
     const params = new URLSearchParams(window.location.search);
-    if (params.get("upgraded") === "true" || params.get("exportUnlocked") === "true") {
+    if (params.get("upgraded") === "true" || params.get("exportUnlocked") === "true" || params.get("success") === "true") {
       fetchResumes();
       window.history.replaceState({}, "", "/dashboard");
     }

@@ -45,6 +45,10 @@ export async function POST(req: Request) {
       process.env.NEXTAUTH_URL ||
       (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
       "http://localhost:3000";
+    const successUrl =
+      process.env.STRIPE_SUCCESS_URL || `${baseUrl}/dashboard?success=true`;
+    const cancelUrl =
+      process.env.STRIPE_CANCEL_URL || `${baseUrl}/pricing?canceled=true`;
 
     const isLifetime = interval === "lifetime";
     const purchaseType =
@@ -56,8 +60,8 @@ export async function POST(req: Request) {
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: isLifetime ? "payment" : "subscription",
       line_items: [{ price: priceId as string, quantity: 1 }],
-      success_url: `${baseUrl}/dashboard?upgraded=true`,
-      cancel_url: `${baseUrl}/pricing`,
+      success_url: successUrl,
+      cancel_url: cancelUrl,
       customer_email: session.user.email,
       metadata: {
         userId: (session.user as { id?: string }).id || "",
