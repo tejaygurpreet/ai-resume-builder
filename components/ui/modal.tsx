@@ -66,7 +66,7 @@ function Modal({ isOpen, onClose, title, children, className, size = "md" }: Mod
             aria-modal="true"
             aria-label={title}
             className={cn(
-              "relative z-10 w-full rounded-2xl border border-white/[0.08] bg-dark-50 p-6 shadow-glass-lg",
+              "site-modal relative z-10 w-full rounded-2xl border border-white/[0.08] bg-dark-50 p-6 shadow-glass-lg transition-colors duration-300",
               SIZE_CLASSES[size],
               className
             )}

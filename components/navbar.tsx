@@ -13,9 +13,12 @@ import {
   User,
   LayoutDashboard,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
 
 const navLinks = [
   { href: "/templates", label: "Templates" },
@@ -34,6 +37,7 @@ function isActivePath(pathname: string, href: string): boolean {
 export function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
+  const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -54,13 +58,13 @@ export function Navbar() {
   const isAuthenticated = status === "authenticated" && !!session?.user;
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/[0.05] bg-dark/80 backdrop-blur-2xl">
+    <header className="site-navbar sticky top-0 z-50 w-full border-b border-white/[0.05] bg-dark/80 backdrop-blur-2xl transition-colors duration-300">
       <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3 transition-all duration-200 hover:opacity-90">
+        <Link href="/" className="nav-logo flex items-center gap-3 transition-all duration-200 hover:opacity-90">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-accent-violet shadow-glow">
             <FileText className="h-5 w-5 text-white" aria-hidden />
           </div>
-          <span className="text-xl font-bold text-white tracking-tight">ResumeAI</span>
+          <span className="nav-logo-text text-xl font-bold text-white tracking-tight">ResumeAI</span>
         </Link>
 
         <div className="hidden items-center gap-1 lg:flex">
@@ -71,7 +75,7 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "group relative rounded-lg px-4 py-2.5 text-[14px] font-medium transition-all duration-[200ms] ease-out",
+                  "nav-link group relative rounded-lg px-4 py-2.5 text-[14px] font-medium transition-all duration-[200ms] ease-out",
                   active ? "text-white" : "text-slate-400"
                 )}
               >
@@ -98,6 +102,13 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <button
+            onClick={toggleTheme}
+            className="theme-toggle-btn flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-slate-400 transition-all duration-200 hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </button>
           {isAuthenticated ? (
             <>
               <Link href="/dashboard">
@@ -113,7 +124,7 @@ export function Navbar() {
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
-                  className="flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] p-1.5 pr-3 transition-all hover:border-white/[0.15] hover:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+                  className="nav-profile-btn flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] p-1.5 pr-3 transition-all hover:border-white/[0.15] hover:bg-white/[0.08] focus:outline-none focus:ring-2 focus:ring-brand-500/30"
                   aria-expanded={dropdownOpen}
                   aria-haspopup="true"
                 >
@@ -134,7 +145,7 @@ export function Navbar() {
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.96, y: 4 }}
                       transition={{ duration: 0.15 }}
-                      className="absolute right-0 mt-2 w-52 origin-top-right rounded-xl border border-white/[0.08] bg-dark-100 py-1 shadow-glass-lg"
+                      className="nav-dropdown absolute right-0 mt-2 w-52 origin-top-right rounded-xl border border-white/[0.08] bg-dark-100 py-1 shadow-glass-lg"
                       role="menu"
                     >
                       <div className="border-b border-white/[0.06] px-4 py-3">
@@ -192,7 +203,7 @@ export function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeInOut" }}
-            className="overflow-hidden border-t border-white/[0.06] bg-dark-50 lg:hidden"
+            className="nav-mobile overflow-hidden border-t border-white/[0.06] bg-dark-50 lg:hidden"
           >
             <div className="space-y-1 px-4 py-4">
               {navLinks.map((link) => {
@@ -212,6 +223,13 @@ export function Navbar() {
                 );
               })}
               <div className="my-3 border-t border-white/[0.06]" />
+              <button
+                onClick={() => { toggleTheme(); setMobileOpen(false); }}
+                className="theme-toggle-btn-mobile flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-[15px] font-medium text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </button>
               {isAuthenticated ? (
                 <>
                   <Link
