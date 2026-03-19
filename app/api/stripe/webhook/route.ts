@@ -7,9 +7,44 @@ import { prisma } from "@/lib/prisma";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-function getPurchaseType(session: Stripe.Checkout.Session): string | null {
+type PlanType = "pro_monthly" | "pro_annual" | "pro_lifetime" | "one_time_export";
+
+function getMetadata(session: Stripe.Checkout.Session): {
+  userId: string | null;
+  userEmail: string | null;
+  planType: PlanType | null;
+} {
   const meta = session.metadata as Record<string, string> | null;
-  return meta?.purchaseType ?? meta?.type ?? null;
+  if (!meta) return { userId: null, userEmail: null, planType: null };
+  const planType = meta.planType ?? meta.purchaseType ?? null;
+  const validPlanTypes: PlanType[] = ["pro_monthly", "pro_annual", "pro_lifetime", "one_time_export"];
+  return {
+    userId: meta.userId?.trim() || null,
+    userEmail: meta.userEmail?.trim() || null,
+    planType: validPlanTypes.includes(planType as PlanType) ? (planType as PlanType) : null,
+  };
+}
+
+async function findUser(
+  metadata: { userId: string | null; userEmail: string | null },
+  customerEmail: string | null
+): Promise<{ id: string; email: string } | null> {
+  if (metadata.userId) {
+    const user = await prisma.user.findUnique({
+      where: { id: metadata.userId },
+      select: { id: true, email: true },
+    });
+    if (user) return user;
+  }
+  const emailToTry = metadata.userEmail || customerEmail;
+  if (emailToTry) {
+    const user = await prisma.user.findUnique({
+      where: { email: emailToTry },
+      select: { id: true, email: true },
+    });
+    if (user) return user;
+  }
+  return null;
 }
 
 export async function POST(req: Request) {
@@ -44,24 +79,27 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const email = session.customer_details?.email ?? session.customer_email;
+        const metadata = getMetadata(session);
+        const customerEmail =
+          session.customer_details?.email ?? session.customer_email ?? null;
 
-        if (!email) {
-          console.error("No email in checkout.session.completed");
-          return NextResponse.json({ received: true }, { status: 200 });
-        }
-
-        const user = await prisma.user.findUnique({
-          where: { email },
-          include: { subscription: true },
+        console.log("[webhook] checkout.session.completed", {
+          planType: metadata.planType,
+          metadataUserId: metadata.userId ? "present" : "missing",
+          metadataUserEmail: metadata.userEmail ? "present" : "missing",
         });
 
+        const user = await findUser(metadata, customerEmail);
+
         if (!user) {
-          console.error(`User not found for email: ${email}`);
+          console.error("[webhook] User not found", {
+            metadataUserId: metadata.userId,
+            metadataUserEmail: metadata.userEmail,
+            customerEmail,
+          });
           return NextResponse.json({ received: true }, { status: 200 });
         }
 
-        const purchaseType = getPurchaseType(session);
         const stripeCustomerId =
           typeof session.customer === "string"
             ? session.customer
@@ -71,9 +109,10 @@ export async function POST(req: Request) {
             ? session.subscription
             : session.subscription?.id ?? null;
 
-        // One-time payment (lifetime or one-time export) — no subscription
+        const planType = metadata.planType;
+
         if (session.mode === "payment") {
-          if (purchaseType === "pro_lifetime") {
+          if (planType === "pro_lifetime") {
             await prisma.subscription.upsert({
               where: { userId: user.id },
               create: {
@@ -90,7 +129,11 @@ export async function POST(req: Request) {
                 stripeSubscriptionId: null,
               },
             });
-          } else if (purchaseType === "one_time_export") {
+            console.log("[webhook] Access updated: pro_lifetime", {
+              userId: user.id,
+              userEmail: user.email,
+            });
+          } else if (planType === "one_time_export") {
             await prisma.subscription.upsert({
               where: { userId: user.id },
               create: {
@@ -105,8 +148,13 @@ export async function POST(req: Request) {
                 oneTimeExport: true,
               },
             });
+            console.log("[webhook] Access updated: one_time_export", {
+              userId: user.id,
+              userEmail: user.email,
+            });
           } else {
-            // Fallback: infer from price ID when metadata is missing
+            const lifetimePriceId = process.env.STRIPE_PRO_LIFETIME_PRICE_ID;
+            const oneTimePriceId = process.env.STRIPE_ONE_TIME_PRICE_ID;
             let priceId: string | undefined;
             if (session.line_items?.data?.[0]?.price) {
               const p = session.line_items.data[0].price;
@@ -120,9 +168,6 @@ export async function POST(req: Request) {
               const p = items.data[0]?.price;
               priceId = typeof p === "string" ? p : p?.id;
             }
-            const lifetimePriceId = process.env.STRIPE_PRO_LIFETIME_PRICE_ID;
-            const oneTimePriceId = process.env.STRIPE_ONE_TIME_PRICE_ID;
-
             if (lifetimePriceId && priceId === lifetimePriceId) {
               await prisma.subscription.upsert({
                 where: { userId: user.id },
@@ -140,6 +185,9 @@ export async function POST(req: Request) {
                   stripeSubscriptionId: null,
                 },
               });
+              console.log("[webhook] Access updated: pro_lifetime (inferred)", {
+                userId: user.id,
+              });
             } else if (oneTimePriceId && priceId === oneTimePriceId) {
               await prisma.subscription.upsert({
                 where: { userId: user.id },
@@ -155,50 +203,59 @@ export async function POST(req: Request) {
                   oneTimeExport: true,
                 },
               });
+              console.log("[webhook] Access updated: one_time_export (inferred)", {
+                userId: user.id,
+              });
             }
           }
           break;
         }
 
-        // Subscription (monthly or annual)
-        if (!stripeCustomerId || !stripeSubscriptionId) {
-          console.error("Missing customer or subscription ID in session");
-          return NextResponse.json({ received: true }, { status: 200 });
-        }
-
-        await prisma.subscription.upsert({
-          where: { userId: user.id },
-          create: {
+        const isRecurringPro =
+          planType === "pro_monthly" ||
+          planType === "pro_annual" ||
+          (session.mode === "subscription" && !planType);
+        if (isRecurringPro) {
+          if (!stripeCustomerId || !stripeSubscriptionId) {
+            console.error("[webhook] Missing customer or subscription ID for recurring plan");
+            return NextResponse.json({ received: true }, { status: 200 });
+          }
+          await prisma.subscription.upsert({
+            where: { userId: user.id },
+            create: {
+              userId: user.id,
+              stripeCustomerId,
+              stripeSubscriptionId,
+              plan: "pro",
+              status: "active",
+            },
+            update: {
+              stripeCustomerId,
+              stripeSubscriptionId,
+              plan: "pro",
+              status: "active",
+            },
+          });
+          console.log("[webhook] Access updated: recurring Pro", {
+            planType,
             userId: user.id,
-            stripeCustomerId,
-            stripeSubscriptionId,
-            plan: "pro",
-            status: "active",
-          },
-          update: {
-            stripeCustomerId,
-            stripeSubscriptionId,
-            plan: "pro",
-            status: "active",
-          },
-        });
+            userEmail: user.email,
+          });
+        }
         break;
       }
 
+      case "invoice.paid":
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
-
         if (!invoice.subscription) break;
-
         const subscriptionId =
           typeof invoice.subscription === "string"
             ? invoice.subscription
             : invoice.subscription.id;
-
         const stripeSubscription = await getStripe().subscriptions.retrieve(
           subscriptionId
         );
-
         await prisma.subscription.updateMany({
           where: { stripeSubscriptionId: subscriptionId },
           data: {
@@ -212,7 +269,6 @@ export async function POST(req: Request) {
 
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
-
         await prisma.subscription.updateMany({
           where: { stripeSubscriptionId: subscription.id },
           data: {
@@ -225,7 +281,6 @@ export async function POST(req: Request) {
 
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
-
         await prisma.subscription.updateMany({
           where: { stripeSubscriptionId: subscription.id },
           data: {

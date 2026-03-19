@@ -51,12 +51,19 @@ export async function POST(req: Request) {
       process.env.STRIPE_CANCEL_URL || `${baseUrl}/pricing?canceled=true`;
 
     const isLifetime = interval === "lifetime";
-    const purchaseType =
+    const planType =
       interval === "monthly"
         ? "pro_monthly"
         : interval === "annual"
           ? "pro_annual"
           : "pro_lifetime";
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Session missing user id. Please sign in again." },
+        { status: 401 }
+      );
+    }
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: isLifetime ? "payment" : "subscription",
       line_items: [{ price: priceId as string, quantity: 1 }],
@@ -64,9 +71,9 @@ export async function POST(req: Request) {
       cancel_url: cancelUrl,
       customer_email: session.user.email,
       metadata: {
-        userId: (session.user as { id?: string }).id || "",
-        purchaseType,
-        planType: "pro",
+        userId,
+        userEmail: session.user.email,
+        planType,
       },
     });
 
