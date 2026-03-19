@@ -6,6 +6,8 @@ import { PLANS } from "@/lib/stripe";
 
 export interface PlanState {
   plan: "free" | "pro";
+  /** True when user has Export Access without Pro */
+  isExportOnly: boolean;
   isPro: boolean;
   hasOneTimeExport: boolean;
   exportsUsed: number;
@@ -64,6 +66,7 @@ export function usePlan(resumeId?: string): PlanState & { aiGenerationsUsed?: nu
 
   const isPro = subscription?.plan === "pro";
   const hasOneTimeExport = !!subscription?.oneTimeExport;
+  const isExportOnly = hasOneTimeExport && !isPro;
   const exportsUsed = subscription?.exportsUsed ?? 0;
   const maxExportsPerMonth = isPro ? Infinity : PLANS.free.maxExportsPerMonth;
   const aiGenerationsPerResume = isPro ? Infinity : PLANS.free.aiGenerationsPerResume;
@@ -71,6 +74,7 @@ export function usePlan(resumeId?: string): PlanState & { aiGenerationsUsed?: nu
 
   return {
     plan: isPro ? "pro" : "free",
+    isExportOnly,
     isPro,
     hasOneTimeExport,
     exportsUsed,

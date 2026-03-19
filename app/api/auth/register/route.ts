@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { isValidPhoneDigits, normalizePhoneDigits } from "@/lib/phone";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
@@ -8,10 +9,11 @@ const MIN_PASSWORD_LENGTH = 6;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, name } = body as {
+    const { email, password, name, phone } = body as {
       email?: string;
       password?: string;
       name?: string;
+      phone?: string;
     };
 
     if (!email || typeof email !== "string") {
@@ -43,6 +45,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const phoneRaw = typeof phone === "string" ? phone.trim() : "";
+    if (!phoneRaw) {
+      return NextResponse.json(
+        { error: "Phone number is required" },
+        { status: 400 }
+      );
+    }
+    const phoneNormalized = normalizePhoneDigits(phoneRaw);
+    if (!isValidPhoneDigits(phoneNormalized)) {
+      return NextResponse.json(
+        { error: "Enter a valid phone number (at least 10 digits)" },
+        { status: 400 }
+      );
+    }
+
+    const phoneTaken = await prisma.user.findFirst({
+      where: { phoneNormalized },
+    });
+    if (phoneTaken) {
+      return NextResponse.json(
+        { error: "An account with this phone number already exists" },
+        { status: 409 }
+      );
+    }
+
     const existingUser = await prisma.user.findUnique({
       where: { email: trimmedEmail },
     });
@@ -62,6 +89,8 @@ export async function POST(request: NextRequest) {
           email: trimmedEmail,
           password: hashedPassword,
           name: typeof name === "string" ? name.trim() || null : null,
+          phone: phoneRaw,
+          phoneNormalized,
         },
       });
 

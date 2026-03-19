@@ -17,6 +17,19 @@ function getSectionByType(sections: TemplateProps["sections"], type: string) {
   return sections.find((s) => s.type === type);
 }
 
+const SECTION_TITLES: Record<string, string> = {
+  summary: "Professional Summary",
+  experience: "Experience",
+  education: "Education",
+  skills: "Skills",
+  projects: "Projects",
+  certifications: "Certifications",
+  languages: "Languages",
+  awards: "Awards",
+  volunteer: "Volunteer Experience",
+  interests: "Interests",
+};
+
 function hasContent(section: any): boolean {
   if (!section) return false;
   const c = section.content;
@@ -24,7 +37,12 @@ function hasContent(section: any): boolean {
   if (c.text && c.text.trim()) return true;
   if (c.fullName && c.fullName.trim()) return true;
   if (c.firstName || c.lastName) return true;
-  if (c.items && c.items.length > 0) return true;
+  if (c.items && c.items.length > 0) {
+    if (section.type === "interests") {
+      return (c.items as string[]).some((s) => (s ?? "").trim());
+    }
+    return true;
+  }
   return false;
 }
 
@@ -85,7 +103,7 @@ export default function ModernTemplate({ sections, color }: TemplateProps) {
                 lineHeight: 1.4,
               }}
             >
-              {section.type}
+              {SECTION_TITLES[section.type] ?? section.type}
             </h2>
 
             {section.type === "summary" && (
@@ -227,6 +245,61 @@ export default function ModernTemplate({ sections, color }: TemplateProps) {
                   </span>
                 ))}
               </div>
+            )}
+
+            {section.type === "awards" && (
+              <div>
+                {section.content.items.map((item: any) => (
+                  <div key={item.id} style={{ marginBottom: "4px", display: "flex", justifyContent: "space-between" }}>
+                    <div>
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: "#222" }}>{item.name}</span>
+                      {item.issuer && (
+                        <span style={{ fontSize: "10.5px", color: "#555" }}> — {item.issuer}</span>
+                      )}
+                    </div>
+                    {item.date && (
+                      <span style={{ fontSize: "10px", color: "#777" }}>{item.date}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {section.type === "volunteer" && (
+              <div>
+                {section.content.items.map((item: any) => (
+                  <div key={item.id} style={{ marginBottom: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                      <div>
+                        <span style={{ fontSize: "12.5px", fontWeight: 600, color: "#1a1a1a" }}>{item.role}</span>
+                        {item.organization && (
+                          <span style={{ fontSize: "11.5px", color: "#555" }}> — {item.organization}</span>
+                        )}
+                      </div>
+                      <span style={{ fontSize: "10.5px", color: "#777", whiteSpace: "nowrap" }}>
+                        {item.startDate}
+                        {item.endDate || item.current ? ` – ${item.current ? "Present" : item.endDate}` : ""}
+                      </span>
+                    </div>
+                    {item.bullets && item.bullets.filter((b: string) => (b ?? "").trim()).length > 0 && (
+                      <ul style={{ margin: "8px 0 0 0", paddingLeft: "20px", listStyleType: "disc" }}>
+                        {item.bullets.filter((b: string) => (b ?? "").trim()).map((b: string, i: number) => (
+                          <li key={i} style={{ fontSize: "11px", lineHeight: 1.65, color: "#444" }}>{b}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {section.type === "interests" && (
+              <p style={{ fontSize: "11.5px", lineHeight: 1.7, color: "#444", margin: 0 }}>
+                {(section.content.items ?? [])
+                  .map((s: string) => (s ?? "").trim())
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
             )}
           </div>
         );

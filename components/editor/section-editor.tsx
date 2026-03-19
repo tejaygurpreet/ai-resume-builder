@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown, Wand2, Copy, BarChart2, Minus, Lock } from "lucide-react";
+import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown, Wand2, Copy, BarChart2, Minus, Lock, CheckCircle2 } from "lucide-react";
+import { useTheme } from "@/components/theme-provider";
 import { v4 as uuid } from "uuid";
 import { useResumeStore } from "@/hooks/use-resume-store";
 import { cn } from "@/lib/utils";
@@ -17,11 +18,24 @@ interface SectionEditorProps {
   content: any;
   resumeId?: string;
   isPro?: boolean;
+  /** false for Export-only — AI actions show upgrade */
+  canUseAI?: boolean;
   onLimitReached?: () => void;
   onImproveProLocked?: () => void;
+  onExportAiLocked?: () => void;
 }
 
-export function SectionEditor({ sectionId, type, content, resumeId, isPro, onLimitReached, onImproveProLocked }: SectionEditorProps) {
+export function SectionEditor({
+  sectionId,
+  type,
+  content,
+  resumeId,
+  isPro,
+  canUseAI = true,
+  onLimitReached,
+  onImproveProLocked,
+  onExportAiLocked,
+}: SectionEditorProps) {
   const updateSection = useResumeStore((s) => s.updateSection);
 
   const update = useCallback(
@@ -33,19 +47,58 @@ export function SectionEditor({ sectionId, type, content, resumeId, isPro, onLim
     case "personal":
       return <PersonalEditor content={content} onChange={update} />;
     case "summary":
-      return <SummaryEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} onImproveProLocked={onImproveProLocked} />;
+      return (
+        <SummaryEditor
+          content={content}
+          onChange={update}
+          resumeId={resumeId}
+          isPro={isPro}
+          canUseAI={canUseAI}
+          onLimitReached={onLimitReached}
+          onImproveProLocked={onImproveProLocked}
+          onExportAiLocked={onExportAiLocked}
+        />
+      );
     case "experience":
-      return <ExperienceEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} onImproveProLocked={onImproveProLocked} />;
+      return (
+        <ExperienceEditor
+          content={content}
+          onChange={update}
+          resumeId={resumeId}
+          isPro={isPro}
+          canUseAI={canUseAI}
+          onLimitReached={onLimitReached}
+          onImproveProLocked={onImproveProLocked}
+          onExportAiLocked={onExportAiLocked}
+        />
+      );
     case "education":
       return <EducationEditor content={content} onChange={update} />;
     case "skills":
-      return <SkillsEditor content={content} onChange={update} resumeId={resumeId} isPro={isPro} onLimitReached={onLimitReached} onImproveProLocked={onImproveProLocked} />;
+      return (
+        <SkillsEditor
+          content={content}
+          onChange={update}
+          resumeId={resumeId}
+          isPro={isPro}
+          canUseAI={canUseAI}
+          onLimitReached={onLimitReached}
+          onImproveProLocked={onImproveProLocked}
+          onExportAiLocked={onExportAiLocked}
+        />
+      );
     case "projects":
       return <ProjectsEditor content={content} onChange={update} />;
     case "certifications":
       return <CertificationsEditor content={content} onChange={update} />;
     case "languages":
       return <LanguagesEditor content={content} onChange={update} />;
+    case "awards":
+      return <CertificationsEditor content={content} onChange={update} awardMode />;
+    case "volunteer":
+      return <VolunteerEditor content={content} onChange={update} />;
+    case "interests":
+      return <InterestsEditor content={content} onChange={update} />;
     default:
       return (
         <p className="text-sm text-slate-500">
@@ -57,7 +110,7 @@ export function SectionEditor({ sectionId, type, content, resumeId, isPro, onLim
 
 /* ─── AI Generate Hook ────────────────────────────────────────── */
 
-function useAIGenerate() {
+function useAIGenerate(canUseAI: boolean, onExportAiLocked?: () => void) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -67,6 +120,10 @@ function useAIGenerate() {
       data: Record<string, string>,
       resumeId?: string
     ): Promise<{ result?: string; limitReached?: boolean }> => {
+      if (!canUseAI) {
+        onExportAiLocked?.();
+        return {};
+      }
       if (!resumeId) {
         setError("Resume must be saved first");
         return {};
@@ -106,7 +163,7 @@ function useAIGenerate() {
         setLoading(false);
       }
     },
-    []
+    [canUseAI, onExportAiLocked]
   );
 
   return { generate, loading, error, clearError: () => setError("") };
@@ -142,23 +199,25 @@ function AIButton({
   onClick,
   loading,
   children,
+  disabled,
 }: {
   onClick: () => void;
   loading: boolean;
   children: React.ReactNode;
+  disabled?: boolean;
 }) {
   return (
     <Button
       variant="outline"
       size="sm"
       onClick={onClick}
-      disabled={loading}
-      className="gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20 hover:text-purple-200"
+      disabled={loading || disabled}
+      className="editor-ai-btn group gap-1.5 border-violet-500/45 bg-gradient-to-br from-violet-500/15 to-purple-600/10 text-violet-200 shadow-sm shadow-violet-900/20 hover:border-violet-400/60 hover:from-violet-500/25 hover:to-purple-600/15 hover:text-white disabled:opacity-45"
     >
       {loading ? (
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
       ) : (
-        <span className="text-purple-400">✦</span>
+        <Sparkles className="h-3.5 w-3.5 text-violet-400 group-hover:text-violet-200" />
       )}
       {loading ? "Generating…" : children}
     </Button>
@@ -179,6 +238,14 @@ function getPersonalDisplayName(content: any) {
   };
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function capitalizeWord(s: string) {
+  const t = s.trim();
+  if (!t) return "";
+  return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+}
+
 function PersonalEditor({
   content,
   onChange,
@@ -186,7 +253,11 @@ function PersonalEditor({
   content: any;
   onChange: (c: any) => void;
 }) {
+  const { theme } = useTheme();
+  const inputVariant = theme === "light" ? "light" : "dark";
   const { firstName, lastName } = getPersonalDisplayName(content);
+  const email = (content.email ?? "").trim();
+  const emailValid = email.length > 0 && EMAIL_RE.test(email);
 
   const set = (field: string, value: string) => {
     const next = { ...content, [field]: value };
@@ -205,25 +276,44 @@ function PersonalEditor({
           label="First Name *"
           value={firstName}
           onChange={(e) => set("firstName", e.target.value)}
+          onBlur={() => {
+            const v = (content.firstName ?? firstName ?? "").trim();
+            if (v) set("firstName", capitalizeWord(v));
+          }}
           placeholder="John"
-          variant="dark"
+          variant={inputVariant}
         />
         <Input
           label="Last Name *"
           value={lastName}
           onChange={(e) => set("lastName", e.target.value)}
+          onBlur={() => {
+            const v = (content.lastName ?? lastName ?? "").trim();
+            if (v) set("lastName", capitalizeWord(v));
+          }}
           placeholder="Doe"
-          variant="dark"
+          variant={inputVariant}
         />
       </div>
-      <Input
-        label="Email *"
-        type="email"
-        value={content.email ?? ""}
-        onChange={(e) => set("email", e.target.value)}
-        placeholder="john@example.com"
-        variant="dark"
-      />
+      <div className="flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <Input
+            label="Email *"
+            type="email"
+            value={content.email ?? ""}
+            onChange={(e) => set("email", e.target.value)}
+            placeholder="john@example.com"
+            variant={inputVariant}
+            error={email.length > 0 && !emailValid ? "Enter a valid email address" : undefined}
+          />
+        </div>
+        {emailValid && (
+          <CheckCircle2
+            className="mt-9 h-5 w-5 shrink-0 text-emerald-500"
+            aria-label="Valid email"
+          />
+        )}
+      </div>
       <div className="grid grid-cols-2 gap-4">
         <Input
           label="Phone"
@@ -231,14 +321,14 @@ function PersonalEditor({
           value={content.phone ?? ""}
           onChange={(e) => set("phone", e.target.value)}
           placeholder="(555) 123-4567"
-          variant="dark"
+          variant={inputVariant}
         />
         <Input
           label="Location"
           value={content.location ?? ""}
           onChange={(e) => set("location", e.target.value)}
           placeholder="New York, NY"
-          variant="dark"
+          variant={inputVariant}
         />
       </div>
       <p className="text-xs text-slate-500">Optional links for recruiters</p>
@@ -248,28 +338,28 @@ function PersonalEditor({
           value={content.linkedin ?? ""}
           onChange={(e) => set("linkedin", e.target.value)}
           placeholder="linkedin.com/in/johndoe"
-          variant="dark"
+          variant={inputVariant}
         />
         <Input
           label="GitHub"
           value={content.github ?? ""}
           onChange={(e) => set("github", e.target.value)}
           placeholder="github.com/johndoe"
-          variant="dark"
+          variant={inputVariant}
         />
         <Input
           label="Portfolio"
           value={content.portfolio ?? ""}
           onChange={(e) => set("portfolio", e.target.value)}
           placeholder="portfolio.johndoe.dev"
-          variant="dark"
+          variant={inputVariant}
         />
         <Input
           label="Website"
           value={content.website ?? ""}
           onChange={(e) => set("website", e.target.value)}
           placeholder="johndoe.dev"
-          variant="dark"
+          variant={inputVariant}
         />
       </div>
     </div>
@@ -283,17 +373,23 @@ function SummaryEditor({
   onChange,
   resumeId,
   isPro,
+  canUseAI = true,
   onLimitReached,
   onImproveProLocked,
+  onExportAiLocked,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
+  canUseAI?: boolean;
   onLimitReached?: () => void;
   onImproveProLocked?: () => void;
+  onExportAiLocked?: () => void;
 }) {
-  const { generate, loading, error, clearError } = useAIGenerate();
+  const { theme } = useTheme();
+  const taVariant = theme === "light" ? "light" : "dark";
+  const { generate, loading, error, clearError } = useAIGenerate(canUseAI, onExportAiLocked);
   const resume = useResumeStore((s) => s.resume);
   const [transformLoading, setTransformLoading] = useState<"improve" | "shorten" | null>(null);
 
@@ -327,6 +423,10 @@ function SummaryEditor({
   };
 
   const handleTransform = async (action: "improve" | "shorten") => {
+    if (!canUseAI) {
+      onExportAiLocked?.();
+      return;
+    }
     const text = (content.text ?? "").trim();
     if (text.length < 20) {
       toast.error("Write at least 20 characters before improving or shortening.");
@@ -345,6 +445,10 @@ function SummaryEditor({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (json.code === "EXPORT_NO_AI" || json.exportOnlyNoAI) {
+          onExportAiLocked?.();
+          return;
+        }
         if (json.limitReached) {
           onLimitReached?.();
           return;
@@ -366,21 +470,25 @@ function SummaryEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <AIButton onClick={handleGenerate} loading={loading}>
+      <div className="editor-ai-toolbar flex flex-wrap items-center gap-2">
+        <AIButton onClick={handleGenerate} loading={loading} disabled={!canUseAI}>
           Generate Summary
         </AIButton>
         <Button
           variant="outline"
           size="sm"
           onClick={() => {
+            if (!canUseAI) {
+              onExportAiLocked?.();
+              return;
+            }
             if (!isPro) {
               onImproveProLocked?.();
               return;
             }
             handleTransform("improve");
           }}
-          disabled={transformLoading !== null || !(content.text ?? "").trim()}
+          disabled={transformLoading !== null || !(content.text ?? "").trim() || !canUseAI}
           className={cn(
             "gap-1.5 border-purple-500/40 text-purple-300 hover:border-purple-400/50",
             isPro ? "bg-purple-500/10 hover:bg-purple-500/20" : "bg-amber-500/10 hover:bg-amber-500/20"
@@ -393,8 +501,14 @@ function SummaryEditor({
         <Button
           variant="outline"
           size="sm"
-          onClick={() => handleTransform("shorten")}
-          disabled={transformLoading !== null || !(content.text ?? "").trim()}
+          onClick={() => {
+            if (!canUseAI) {
+              onExportAiLocked?.();
+              return;
+            }
+            handleTransform("shorten");
+          }}
+          disabled={transformLoading !== null || !(content.text ?? "").trim() || !canUseAI}
           className="gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20"
         >
           {transformLoading === "shorten" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Minus className="h-3.5 w-3.5" />}
@@ -414,7 +528,7 @@ function SummaryEditor({
           onChange={(e) => onChange({ ...content, text: e.target.value })}
           placeholder="Results-driven software engineer with 6+ years building scalable web applications. Passionate about clean code and mentoring teams."
           className="min-h-[140px]"
-          variant="dark"
+          variant={taVariant}
         />
       </div>
     </div>
@@ -428,17 +542,21 @@ function ExperienceEditor({
   onChange,
   resumeId,
   isPro,
+  canUseAI = true,
   onLimitReached,
   onImproveProLocked,
+  onExportAiLocked,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
+  canUseAI?: boolean;
   onLimitReached?: () => void;
   onImproveProLocked?: () => void;
+  onExportAiLocked?: () => void;
 }) {
-  const { generate, loading, error, clearError } = useAIGenerate();
+  const { generate, loading, error, clearError } = useAIGenerate(canUseAI, onExportAiLocked);
   const [generatingIdx, setGeneratingIdx] = useState<number | null>(null);
   const items: any[] = content.items ?? [];
 
@@ -518,6 +636,10 @@ function ExperienceEditor({
   };
 
   const handleAddMetrics = async (itemIdx: number, bulletIdx: number) => {
+    if (!canUseAI) {
+      onExportAiLocked?.();
+      return;
+    }
     const item = items[itemIdx];
     const bullet = item?.bullets?.[bulletIdx];
     if (!bullet || bullet.trim().length < 5) {
@@ -538,6 +660,10 @@ function ExperienceEditor({
       });
       const json = await res.json();
       if (!res.ok) {
+        if (json.code === "EXPORT_NO_AI" || json.exportOnlyNoAI) {
+          onExportAiLocked?.();
+          return;
+        }
         if (json.limitReached) {
           onLimitReached?.();
           return;
@@ -562,37 +688,43 @@ function ExperienceEditor({
     const item = items[idx];
     if (!item) return;
     setGeneratingIdx(idx);
+    try {
+      const { result, limitReached } = await generate("experience", {
+        job_title: item.title || "",
+        company: item.company || "",
+        start_date: item.startDate || "",
+        end_date: item.endDate || "",
+        current: String(!!item.current),
+        responsibilities: (item.bullets ?? []).filter(Boolean).join("; ") || "General duties",
+      }, resumeId);
 
-    const { result, limitReached } = await generate("experience", {
-      job_title: item.title || "",
-      company: item.company || "",
-      start_date: item.startDate || "",
-      end_date: item.endDate || "",
-      current: String(!!item.current),
-      responsibilities: (item.bullets ?? []).filter(Boolean).join("; ") || "General duties",
-    }, resumeId);
-
-    if (limitReached) {
-      onLimitReached?.();
-      return;
-    }
-    if (result) {
-      const bullets = result
-        .split("\n")
-        .map((b: string) => b.replace(/^[-•*]\s*/, "").trim())
-        .filter(Boolean);
-
-      if (bullets.length > 0) {
-        const updated = items.map((it, i) =>
-          i === idx ? { ...it, bullets } : it
-        );
-        onChange({ ...content, items: updated });
+      if (limitReached) {
+        onLimitReached?.();
+        return;
       }
+      if (result) {
+        const bullets = result
+          .split("\n")
+          .map((b: string) => b.replace(/^[-•*]\s*/, "").trim())
+          .filter(Boolean);
+
+        if (bullets.length > 0) {
+          const updated = items.map((it, i) =>
+            i === idx ? { ...it, bullets } : it
+          );
+          onChange({ ...content, items: updated });
+        }
+      }
+    } finally {
+      setGeneratingIdx(null);
     }
-    setGeneratingIdx(null);
   };
 
   const handleImproveBullet = async (itemIdx: number, bulletIdx: number) => {
+    if (!canUseAI) {
+      onExportAiLocked?.();
+      return;
+    }
     if (!isPro) {
       onImproveProLocked?.();
       return;
@@ -621,6 +753,10 @@ function ExperienceEditor({
       const json = await res.json();
 
       if (!res.ok) {
+        if (json.code === "EXPORT_NO_AI" || json.exportOnlyNoAI) {
+          onExportAiLocked?.();
+          return;
+        }
         if (json.limitReached) {
           onLimitReached?.();
           return;
@@ -645,6 +781,9 @@ function ExperienceEditor({
     }
   };
 
+  const { theme } = useTheme();
+  const inputVariant = theme === "light" ? "light" : "dark";
+
   return (
     <div className="space-y-6">
       <AIErrorBanner error={error} onDismiss={clearError} />
@@ -662,8 +801,9 @@ function ExperienceEditor({
               <AIButton
                 onClick={() => handleGenerateBullets(idx)}
                 loading={loading && generatingIdx === idx}
+                disabled={!canUseAI}
               >
-                ✦ Generate Bullets
+                Generate Bullets
               </AIButton>
               <Button
                 variant="ghost"
@@ -695,21 +835,21 @@ function ExperienceEditor({
               value={item.title ?? ""}
               onChange={(e) => updateItem(idx, "title", e.target.value)}
               placeholder="Software Engineer"
-              variant="dark"
+              variant={inputVariant}
             />
             <Input
               label="Company *"
               value={item.company ?? ""}
               onChange={(e) => updateItem(idx, "company", e.target.value)}
               placeholder="Acme Inc."
-              variant="dark"
+              variant={inputVariant}
             />
             <Input
               label="Location"
               value={item.location ?? ""}
               onChange={(e) => updateItem(idx, "location", e.target.value)}
               placeholder="San Francisco, CA"
-              variant="dark"
+              variant={inputVariant}
             />
             <div className="col-span-2 grid grid-cols-2 gap-4">
               <Input
@@ -717,7 +857,7 @@ function ExperienceEditor({
                 value={item.startDate ?? ""}
                 onChange={(e) => updateItem(idx, "startDate", e.target.value)}
                 placeholder="Jan 2022"
-                variant="dark"
+                variant={inputVariant}
               />
               <Input
                 label="End Date"
@@ -725,10 +865,23 @@ function ExperienceEditor({
                 onChange={(e) => updateItem(idx, "endDate", e.target.value)}
                 placeholder="Dec 2023"
                 disabled={item.current}
-                variant="dark"
+                variant={inputVariant}
               />
             </div>
           </div>
+
+          {(item.title ?? "").trim() && (item.company ?? "").trim() && (
+            <div className="rounded-xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-purple-600/5 px-4 py-3">
+              <p className="text-xs font-semibold text-violet-200/90">Suggested bullet angles</p>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+                {!isPro && canUseAI
+                  ? "Try: quantified outcomes for this role, tech stack you used, leadership scope, and business impact. Use “Generate Bullets” to apply AI (free tier: 3 uses per resume)."
+                  : !canUseAI
+                    ? "Upgrade to Pro to generate tailored bullets. Export Access includes exports only."
+                    : "Led cross-functional initiatives that improved [metric] by [%]. Owned [system] serving [scale] users. Partnered with stakeholders to deliver [outcome]."}
+              </p>
+            </div>
+          )}
 
           <label className="flex items-center gap-2 text-sm text-slate-400">
             <input
@@ -991,17 +1144,23 @@ function SkillsEditor({
   onChange,
   resumeId,
   isPro,
+  canUseAI = true,
   onLimitReached,
   onImproveProLocked,
+  onExportAiLocked,
 }: {
   content: any;
   onChange: (c: any) => void;
   resumeId?: string;
   isPro?: boolean;
+  canUseAI?: boolean;
   onLimitReached?: () => void;
   onImproveProLocked?: () => void;
+  onExportAiLocked?: () => void;
 }) {
-  const { generate, loading, error, clearError } = useAIGenerate();
+  const { theme } = useTheme();
+  const inputVariant = theme === "light" ? "light" : "dark";
+  const { generate, loading, error, clearError } = useAIGenerate(canUseAI, onExportAiLocked);
   const resume = useResumeStore((s) => s.resume);
 
   const skills: string[] = (content.items ?? []).filter(
@@ -1046,10 +1205,6 @@ function SkillsEditor({
   };
 
   const handleGenerateSkills = async () => {
-    if (!isPro) {
-      onImproveProLocked?.();
-      return;
-    }
     const targetRole = experience?.items?.[0]?.title || "";
 
     const { result, limitReached } = await generate("skills", {
@@ -1090,24 +1245,24 @@ function SkillsEditor({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2">
-        {isPro ? (
-          <AIButton onClick={handleGenerateSkills} loading={loading}>
-            ✦ Improve with AI PRO
-          </AIButton>
-        ) : (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onImproveProLocked?.()}
-            className="gap-1.5 border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
-          >
-            <Lock className="h-3.5 w-3.5" />
-            Improve with AI PRO
-            <span className="rounded bg-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">Pro</span>
-          </Button>
+      <div className="editor-ai-toolbar flex flex-wrap items-center gap-2">
+        <AIButton onClick={handleGenerateSkills} loading={loading} disabled={!canUseAI}>
+          {isPro ? "AI: expand skills" : "AI: suggest skills"}
+        </AIButton>
+        {isPro && (
+          <span className="text-[10px] font-medium uppercase tracking-wide text-violet-400/80">Pro quality</span>
         )}
       </div>
+
+      {(experience?.items?.[0]?.title ?? "").trim() && (
+        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
+          <p className="text-[11px] text-slate-400">
+            <span className="font-medium text-emerald-400/90">Tip for {experience?.items?.[0]?.title}: </span>
+            Add tools (e.g. AWS, Figma), methodologies (Agile, A/B tests), and soft skills recruiters search for.
+            {!isPro && canUseAI && " Free: 3 AI uses per resume — generating merges suggestions into your list."}
+          </p>
+        </div>
+      )}
 
       <AIErrorBanner error={error} onDismiss={clearError} />
 
@@ -1122,7 +1277,7 @@ function SkillsEditor({
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="e.g. React, Project Management"
-            variant="dark"
+            variant={inputVariant}
             className="flex-1"
           />
           <Button variant="outline" size="sm" onClick={addSkill} className="shrink-0 border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
@@ -1287,9 +1442,12 @@ function ProjectsEditor({
 function CertificationsEditor({
   content,
   onChange,
+  awardMode,
 }: {
   content: any;
   onChange: (c: any) => void;
+  /** Reuse form for Awards section */
+  awardMode?: boolean;
 }) {
   const items: any[] = content.items ?? [];
 
@@ -1306,7 +1464,7 @@ function CertificationsEditor({
       items: [
         ...items,
         {
-          id: `cert-${uuid().slice(0, 8)}`,
+          id: `${awardMode ? "award" : "cert"}-${uuid().slice(0, 8)}`,
           name: "",
           issuer: "",
           date: "",
@@ -1328,7 +1486,7 @@ function CertificationsEditor({
         >
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-500">
-              Certification {idx + 1}
+              {awardMode ? "Award" : "Certification"} {idx + 1}
             </span>
             {items.length > 1 && (
               <Button
@@ -1345,17 +1503,17 @@ function CertificationsEditor({
 
           <div className="grid grid-cols-3 gap-3">
             <Input
-              label="Certification Name"
+              label={awardMode ? "Award / honor" : "Certification Name"}
               value={item.name ?? ""}
               onChange={(e) => updateItem(idx, "name", e.target.value)}
-              placeholder="AWS Solutions Architect"
+              placeholder={awardMode ? "Employee of the Year" : "AWS Solutions Architect"}
               variant="dark"
             />
             <Input
-              label="Issuer"
+              label={awardMode ? "Organization" : "Issuer"}
               value={item.issuer ?? ""}
               onChange={(e) => updateItem(idx, "issuer", e.target.value)}
-              placeholder="Amazon Web Services"
+              placeholder={awardMode ? "Acme Corp" : "Amazon Web Services"}
               variant="dark"
             />
             <Input
@@ -1371,8 +1529,113 @@ function CertificationsEditor({
 
       <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
         <Plus className="mr-1.5 h-4 w-4" />
-        Add Certification
+        {awardMode ? "Add Award" : "Add Certification"}
       </Button>
+    </div>
+  );
+}
+
+function VolunteerEditor({
+  content,
+  onChange,
+}: {
+  content: any;
+  onChange: (c: any) => void;
+}) {
+  const items: any[] = content.items ?? [];
+  const updateItem = (index: number, field: string, value: any) => {
+    const updated = items.map((item, i) => (i === index ? { ...item, [field]: value } : item));
+    onChange({ ...content, items: updated });
+  };
+  const updateBullet = (itemIdx: number, bi: number, value: string) => {
+    const updated = items.map((item, i) => {
+      if (i !== itemIdx) return item;
+      const bullets = [...(item.bullets ?? [])];
+      bullets[bi] = value;
+      return { ...item, bullets };
+    });
+    onChange({ ...content, items: updated });
+  };
+  const addItem = () =>
+    onChange({
+      ...content,
+      items: [
+        ...items,
+        {
+          id: `vol-${uuid().slice(0, 8)}`,
+          role: "",
+          organization: "",
+          startDate: "",
+          endDate: "",
+          current: false,
+          bullets: [""],
+        },
+      ],
+    });
+  const removeItem = (i: number) =>
+    onChange({ ...content, items: items.filter((_, j) => j !== i) });
+
+  return (
+    <div className="space-y-6">
+      {items.map((item, idx) => (
+        <div key={item.id} className="space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500">Volunteer role {idx + 1}</span>
+            {items.length > 1 && (
+              <Button variant="ghost" size="sm" onClick={() => removeItem(idx)} className="h-6 text-xs text-red-400">
+                Remove
+              </Button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Role" value={item.role ?? ""} onChange={(e) => updateItem(idx, "role", e.target.value)} variant="dark" />
+            <Input label="Organization" value={item.organization ?? ""} onChange={(e) => updateItem(idx, "organization", e.target.value)} variant="dark" />
+            <Input label="Start" value={item.startDate ?? ""} onChange={(e) => updateItem(idx, "startDate", e.target.value)} variant="dark" />
+            <Input label="End" value={item.current ? "Present" : item.endDate ?? ""} onChange={(e) => updateItem(idx, "endDate", e.target.value)} disabled={item.current} variant="dark" />
+          </div>
+          <label className="flex items-center gap-2 text-xs text-slate-400">
+            <input type="checkbox" checked={!!item.current} onChange={(e) => updateItem(idx, "current", e.target.checked)} className="h-4 w-4 rounded border-white/20" />
+            Ongoing
+          </label>
+          {(item.bullets ?? [""]).map((b: string, bi: number) => (
+            <Textarea key={bi} value={b} onChange={(e) => updateBullet(idx, bi, e.target.value)} placeholder="Impact or scope…" className="min-h-[52px]" variant="dark" />
+          ))}
+        </div>
+      ))}
+      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300">
+        <Plus className="mr-1 h-4 w-4" /> Add volunteer experience
+      </Button>
+    </div>
+  );
+}
+
+function InterestsEditor({
+  content,
+  onChange,
+}: {
+  content: any;
+  onChange: (c: any) => void;
+}) {
+  const { theme } = useTheme();
+  const v = theme === "light" ? "light" : "dark";
+  const text = (content.items ?? []).filter(Boolean).join(", ");
+  return (
+    <div>
+      <p className="mb-2 text-xs text-slate-500">Optional — comma-separated (e.g. Open source, Mentoring, Photography)</p>
+      <Textarea
+        value={text}
+        onChange={(e) =>
+          onChange({
+            items: e.target.value
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean),
+          })
+        }
+        placeholder="Photography, tech talks, community volunteering…"
+        className="min-h-[100px]"
+        variant={v}
+      />
     </div>
   );
 }

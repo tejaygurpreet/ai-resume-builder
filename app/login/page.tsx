@@ -57,7 +57,17 @@ function LoginForm() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" disabled={loading} />
-            <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" disabled={loading} />
+            <div>
+              <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" disabled={loading} />
+              <div className="mt-2 text-right">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-brand-400 hover:text-brand-300"
+                >
+                  Forgot password?
+                </Link>
+              </div>
+            </div>
             <Button type="submit" className="w-full" size="lg" loading={loading} disabled={loading}>Sign In</Button>
           </form>
 

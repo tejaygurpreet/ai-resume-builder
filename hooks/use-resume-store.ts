@@ -153,6 +153,40 @@ const defaultResume: ResumeData = {
         items: [{ id: "lang-1", language: "", proficiency: "Native" }],
       },
     },
+    {
+      id: "awards",
+      type: "awards",
+      order: 8,
+      content: {
+        items: [
+          { id: "aw-1", name: "", issuer: "", date: "" },
+        ],
+      },
+    },
+    {
+      id: "volunteer",
+      type: "volunteer",
+      order: 9,
+      content: {
+        items: [
+          {
+            id: "vol-1",
+            role: "",
+            organization: "",
+            startDate: "",
+            endDate: "",
+            current: false,
+            bullets: [""],
+          },
+        ],
+      },
+    },
+    {
+      id: "interests",
+      type: "interests",
+      order: 10,
+      content: { items: [""] },
+    },
   ],
 };
 

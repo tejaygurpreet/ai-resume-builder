@@ -766,6 +766,57 @@
   color: #0f172a !important;
 }
 
+/* ATS Readiness card — light mode: readable, premium contrast */
+[data-theme="light"] .ats-readiness-panel {
+  border-color: rgba(99, 102, 241, 0.22) !important;
+  background: linear-gradient(160deg, #ffffff 0%, #f8fafc 45%, #f1f5f9 100%) !important;
+  box-shadow:
+    0 4px 24px -8px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(99, 102, 241, 0.06) inset !important;
+}
+[data-theme="light"] .ats-readiness-panel .text-white {
+  color: #0f172a !important;
+}
+[data-theme="light"] .ats-readiness-panel .text-slate-400,
+[data-theme="light"] .ats-readiness-panel .text-slate-300,
+[data-theme="light"] .ats-readiness-panel .text-slate-500 {
+  color: #475569 !important;
+}
+[data-theme="light"] .ats-readiness-toggle:hover {
+  background: rgba(241, 245, 249, 0.95) !important;
+}
+[data-theme="light"] .ats-readiness-body {
+  border-color: #e2e8f0 !important;
+}
+[data-theme="light"] .ats-score-ring-track {
+  color: rgba(15, 23, 42, 0.12) !important;
+}
+[data-theme="light"] .ats-breakdown-label {
+  color: #64748b !important;
+}
+[data-theme="light"] .ats-breakdown-value {
+  color: #0f172a !important;
+}
+[data-theme="light"] .ats-breakdown-track {
+  background: rgba(15, 23, 42, 0.08) !important;
+}
+
+/* AI toolbar buttons — light mode editor sidebar */
+[data-theme="light"] .editor-ai-toolbar .editor-ai-btn {
+  border-color: rgba(124, 58, 237, 0.35) !important;
+  background: linear-gradient(135deg, rgba(245, 243, 255, 0.95) 0%, rgba(237, 233, 254, 0.85) 100%) !important;
+  color: #5b21b6 !important;
+  box-shadow: 0 1px 3px rgba(91, 33, 182, 0.12) !important;
+}
+[data-theme="light"] .editor-ai-toolbar .editor-ai-btn:hover:not(:disabled) {
+  border-color: rgba(124, 58, 237, 0.5) !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%) !important;
+  color: #4c1d95 !important;
+}
+[data-theme="light"] .editor-ai-toolbar .editor-ai-btn:disabled {
+  opacity: 0.45 !important;
+}
+
 [data-theme="light"] .editor-title-input {
   color: #0f172a !important;
   background: #ffffff !important;

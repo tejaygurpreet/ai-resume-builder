@@ -13,7 +13,8 @@ export type UpgradeReason =
   | "template_lock"
   | "pro_feature"
   | "improve_pro"
-  | "cover_letter";
+  | "cover_letter"
+  | "export_no_ai";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -62,6 +63,12 @@ const REASON_CONFIG: Record<
     message:
       "Upgrade to Pro to generate cover letters. Pro includes unlimited AI generations, cover letter generator, job tailoring, and more.",
     icon: Crown,
+  },
+  export_no_ai: {
+    title: "AI Requires Pro",
+    message:
+      "Export Access includes unlimited exports in all formats. AI writing, tailoring, and ATS analysis require Pro — upgrade to unlock.",
+    icon: Sparkles,
   },
 };
 

@@ -82,7 +82,7 @@ import {
 } from "@/components/editor/pdf-export";
 import { ExportModal } from "@/components/editor/export-modal";
 import { ResumeCompletionModal } from "@/components/editor/resume-completion-modal";
-import { UpgradeModal } from "@/components/ui/UpgradeModal";
+import { UpgradeModal, type UpgradeReason } from "@/components/ui/UpgradeModal";
 import { validateResumeCompletion } from "@/lib/resume-validation";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
@@ -101,6 +101,9 @@ const SECTION_LABELS: Record<string, string> = {
   projects: "Projects",
   certifications: "Certifications",
   languages: "Languages",
+  awards: "Awards",
+  volunteer: "Volunteer Experience",
+  interests: "Interests",
 };
 
 /** Editor sidebar display order only — does NOT affect template/PDF output order. */
@@ -113,6 +116,9 @@ const EDITOR_DISPLAY_ORDER: string[] = [
   "projects",
   "certifications",
   "languages",
+  "awards",
+  "volunteer",
+  "interests",
 ];
 
 function sortSectionsForEditor(sections: ResumeSection[]): ResumeSection[] {
@@ -128,16 +134,20 @@ function SortableSectionCard({
   section,
   resumeId,
   isPro,
+  canUseAI,
   onTailor,
   onLimitReached,
   onImproveProLocked,
+  onExportAiLocked,
 }: {
   section: ResumeSection;
   resumeId?: string;
   isPro?: boolean;
+  canUseAI?: boolean;
   onTailor: () => void;
   onLimitReached?: () => void;
   onImproveProLocked?: () => void;
+  onExportAiLocked?: () => void;
 }) {
   const {
     attributes,
@@ -198,8 +208,10 @@ function SortableSectionCard({
           content={section.content}
           resumeId={resumeId}
           isPro={isPro}
+          canUseAI={canUseAI}
           onLimitReached={onLimitReached}
           onImproveProLocked={onImproveProLocked}
+          onExportAiLocked={onExportAiLocked}
         />
       </div>
     </div>
@@ -270,7 +282,8 @@ function BuilderPage() {
   const [exportsUsed, setExportsUsed] = useState(0);
   const [hasOneTimeExport, setHasOneTimeExport] = useState(false);
   const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
-  const [upgradeModalReason, setUpgradeModalReason] = useState<"ai_limit" | "export_limit" | "improve_pro" | "cover_letter">("export_limit");
+  const [upgradeModalReason, setUpgradeModalReason] = useState<UpgradeReason>("export_limit");
+  const [isExportOnly, setIsExportOnly] = useState(false);
 
   const validation = validateResumeCompletion(sections);
 
@@ -290,6 +303,9 @@ function BuilderPage() {
         if (subData.subscription?.exportsUsed != null) setExportsUsed(subData.subscription.exportsUsed);
         if (subData.subscription?.oneTimeExport) setHasOneTimeExport(true);
         const isPro = subData.subscription?.plan === "pro";
+        setIsExportOnly(
+          !!(subData.subscription?.oneTimeExport && subData.subscription?.plan !== "pro")
+        );
 
         if (resumeId) {
           const res = await fetch(`/api/resumes/${resumeId}`);
@@ -545,13 +561,25 @@ function BuilderPage() {
                     section={section}
                     resumeId={resume.id}
                     isPro={userPlan === "pro"}
-                    onTailor={() => setTailorOpen(true)}
+                    canUseAI={!isExportOnly}
+                    onTailor={() => {
+                      if (isExportOnly) {
+                        setUpgradeModalReason("export_no_ai");
+                        setUpgradeModalOpen(true);
+                        return;
+                      }
+                      setTailorOpen(true);
+                    }}
                     onLimitReached={() => {
                       setUpgradeModalReason("ai_limit");
                       setUpgradeModalOpen(true);
                     }}
                     onImproveProLocked={() => {
                       setUpgradeModalReason("improve_pro");
+                      setUpgradeModalOpen(true);
+                    }}
+                    onExportAiLocked={() => {
+                      setUpgradeModalReason("export_no_ai");
                       setUpgradeModalOpen(true);
                     }}
                   />
@@ -605,7 +633,7 @@ function BuilderPage() {
                   <span className="text-xs text-slate-500">{resume.color}</span>
                 </div>
               </div>
-              <ATSScorePanel sections={sections} />
+              <ATSScorePanel sections={sections} canUseAI={!isExportOnly} />
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
                 <h4 className="mb-2 text-sm font-medium text-white">Job Matcher</h4>
                 <p className="mb-3 text-xs text-slate-500">
@@ -614,7 +642,14 @@ function BuilderPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setTailorOpen(true)}
+                  onClick={() => {
+                    if (isExportOnly) {
+                      setUpgradeModalReason("export_no_ai");
+                      setUpgradeModalOpen(true);
+                      return;
+                    }
+                    setTailorOpen(true);
+                  }}
                   className="w-full gap-2 border-white/[0.12] text-slate-300"
                 >
                   <FileSearch className="h-4 w-4" />
@@ -622,7 +657,14 @@ function BuilderPage() {
                 </Button>
               </div>
               <button
-                onClick={() => setActiveModal("score")}
+                onClick={() => {
+                  if (isExportOnly) {
+                    setUpgradeModalReason("export_no_ai");
+                    setUpgradeModalOpen(true);
+                    return;
+                  }
+                  setActiveModal("score");
+                }}
                 className="flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.05]"
               >
                 <Target className="h-5 w-5 text-purple-400" />
@@ -633,10 +675,13 @@ function BuilderPage() {
               </button>
               <button
                 onClick={() => {
+                  if (isExportOnly) {
+                    setUpgradeModalReason("export_no_ai");
+                    setUpgradeModalOpen(true);
+                    return;
+                  }
                   if (userPlan === "pro") {
                     setActiveModal("coverLetter");
-                  } else if (hasOneTimeExport) {
-                    toast.error("Cover letter generator is a Pro feature");
                   } else {
                     setUpgradeModalReason("cover_letter");
                     setUpgradeModalOpen(true);
@@ -651,7 +696,14 @@ function BuilderPage() {
                 </div>
               </button>
               <button
-                onClick={() => setActiveModal("keywords")}
+                onClick={() => {
+                  if (isExportOnly) {
+                    setUpgradeModalReason("export_no_ai");
+                    setUpgradeModalOpen(true);
+                    return;
+                  }
+                  setActiveModal("keywords");
+                }}
                 className="flex w-full items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-colors hover:border-white/[0.12] hover:bg-white/[0.05]"
               >
                 <FileSearch className="h-5 w-5 text-purple-400" />

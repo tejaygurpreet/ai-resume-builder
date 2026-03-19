@@ -126,7 +126,12 @@ function hasContent(section: ResumeSection | undefined): boolean {
   if (c.text && (c.text as string).trim()) return true;
   if (c.fullName && (c.fullName as string).trim()) return true;
   if (c.firstName || c.lastName) return true;
-  if (c.items && Array.isArray(c.items) && c.items.length > 0) return true;
+  if (c.items && Array.isArray(c.items) && c.items.length > 0) {
+    if (section.type === "interests") {
+      return (c.items as string[]).some((s) => (s ?? "").trim());
+    }
+    return true;
+  }
   return false;
 }
 
@@ -173,7 +178,27 @@ export function ResumePDFDocument({ sections, color = "#1a1a1a" }: ResumePDFDocu
           return (
             <View key={section.id} style={styles.section}>
               <Text style={[styles.sectionTitle, { borderBottomColor: color }]}>
-                {section.type}
+                {section.type === "summary"
+                  ? "Professional Summary"
+                  : section.type === "experience"
+                    ? "Experience"
+                    : section.type === "education"
+                      ? "Education"
+                      : section.type === "skills"
+                        ? "Skills"
+                        : section.type === "projects"
+                          ? "Projects"
+                          : section.type === "certifications"
+                            ? "Certifications"
+                            : section.type === "languages"
+                              ? "Languages"
+                              : section.type === "awards"
+                                ? "Awards"
+                                : section.type === "volunteer"
+                                  ? "Volunteer Experience"
+                                  : section.type === "interests"
+                                    ? "Interests"
+                                    : section.type}
               </Text>
 
               {section.type === "summary" && (
@@ -303,6 +328,57 @@ export function ResumePDFDocument({ sections, color = "#1a1a1a" }: ResumePDFDocu
                         `${item.language}${item.proficiency ? ` (${item.proficiency})` : ""}`
                     )
                     .join(", ")}
+                </Text>
+              )}
+
+              {section.type === "awards" && (
+                <>
+                  {(section.content.items ?? []).map((item: any) => (
+                    <View key={item.id} style={{ marginBottom: 4 }}>
+                      <Text style={styles.jobTitle}>
+                        {item.name}
+                        {item.issuer ? ` — ${item.issuer}` : ""}
+                      </Text>
+                      {item.date && (
+                        <Text style={styles.jobDate}>{item.date}</Text>
+                      )}
+                    </View>
+                  ))}
+                </>
+              )}
+
+              {section.type === "volunteer" && (
+                <>
+                  {(section.content.items ?? []).map((item: any) => (
+                    <View key={item.id} style={{ marginBottom: 10 }}>
+                      <Text style={styles.jobTitle}>{item.role}</Text>
+                      <View style={styles.jobMeta}>
+                        <Text style={styles.jobCompany}>{item.organization}</Text>
+                        <Text style={styles.jobDate}>
+                          {item.startDate}
+                          {item.endDate || item.current
+                            ? ` – ${item.current ? "Present" : item.endDate}`
+                            : ""}
+                        </Text>
+                      </View>
+                      <View style={styles.bulletList}>
+                        {(item.bullets ?? [])
+                          .filter((b: string) => (b ?? "").trim())
+                          .map((b: string, i: number) => (
+                            <Text key={i} style={styles.bulletItem}>• {b}</Text>
+                          ))}
+                      </View>
+                    </View>
+                  ))}
+                </>
+              )}
+
+              {section.type === "interests" && (
+                <Text style={styles.summaryText}>
+                  {(section.content.items ?? [])
+                    .map((s: string) => (s ?? "").trim())
+                    .filter(Boolean)
+                    .join(" · ")}
                 </Text>
               )}
             </View>

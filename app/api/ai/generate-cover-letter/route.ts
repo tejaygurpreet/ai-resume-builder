@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getOpenAI } from "@/lib/openai";
 import { prisma } from "@/lib/prisma";
+import { blockAiIfExportOnly } from "@/lib/ai-access";
 
 const MODEL = "gpt-4o-mini";
 const MAX_TOKENS = 200;
@@ -18,6 +19,9 @@ export async function POST(request: Request) {
     if (!userId) {
       return NextResponse.json({ error: "Invalid session" }, { status: 401 });
     }
+
+    const exportBlock = await blockAiIfExportOnly(userId);
+    if (exportBlock) return exportBlock;
 
     const body = await request.json();
     const { resumeText, jobTitle, company, jobDescription } = body as {

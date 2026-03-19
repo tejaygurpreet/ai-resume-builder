@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { AboutHighlight } from "@/components/about/about-highlight";
 import { Sparkles, Target, FileText, Zap, Shield, Brain, Heart, Users, GraduationCap, Briefcase, Code, ArrowRight } from "lucide-react";
 
 export const metadata: Metadata = { title: "About | OptimaCV", description: "Learn about OptimaCV — the AI-powered resume builder helping job seekers land their dream jobs." };
@@ -49,20 +50,7 @@ export default function AboutPage() {
               <p className="mt-6 text-base leading-relaxed text-slate-400">We&apos;ve all been there — staring at a blank document, trying to condense years of experience into a single page. Rewording the same bullet points over and over.</p>
               <p className="mt-4 text-base leading-relaxed text-slate-400">OptimaCV was born from that frustration. Our AI-powered platform helps job seekers create professional, ATS-optimized resumes in minutes — not hours.</p>
             </div>
-            <div className="relative" aria-hidden="true">
-              <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-10 shadow-glass backdrop-blur-sm">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500/20 text-brand-400"><Zap className="h-6 w-6" /></div>
-                    <div><div className="h-3 w-32 rounded bg-white/20" /><div className="mt-2 h-2 w-24 rounded bg-white/10" /></div>
-                  </div>
-                  <div className="space-y-2"><div className="h-2.5 w-full rounded bg-white/[0.06]" /><div className="h-2.5 w-5/6 rounded bg-white/[0.06]" /><div className="h-2.5 w-4/6 rounded bg-white/[0.06]" /></div>
-                  <div className="flex gap-2"><div className="h-8 rounded-full bg-brand-500/10 px-4" /><div className="h-8 rounded-full bg-brand-500/10 px-6" /><div className="h-8 rounded-full bg-brand-500/10 px-3" /></div>
-                </div>
-                <div className="absolute -right-4 -top-4 h-24 w-24 rounded-full bg-brand-500/20 blur-2xl" />
-                <div className="absolute -bottom-6 -left-6 h-32 w-32 rounded-full bg-cyan-500/15 blur-3xl" />
-              </div>
-            </div>
+            <AboutHighlight />
           </div>
         </div>
       </section>

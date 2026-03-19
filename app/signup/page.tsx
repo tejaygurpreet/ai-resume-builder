@@ -16,6 +16,7 @@ function SignupForm() {
   const { status } = useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,7 +33,11 @@ function SignupForm() {
     if (password !== confirmPassword) { toast.error("Passwords do not match"); return; }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/register", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, name: name || undefined }) });
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, phone, name: name || undefined }),
+      });
       const data = await res.json();
       if (!res.ok) { toast.error(data.error || "Registration failed"); setLoading(false); return; }
       const signInResult = await signIn("credentials", { email, password, redirect: false });
@@ -70,6 +75,7 @@ function SignupForm() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input label="Name" type="text" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" disabled={loading} />
             <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" disabled={loading} />
+            <Input label="Phone" type="tel" placeholder="+1 (555) 123-4567" value={phone} onChange={(e) => setPhone(e.target.value)} required autoComplete="tel" disabled={loading} />
             <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" disabled={loading} />
             <Input label="Confirm Password" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} autoComplete="new-password" disabled={loading} />
             <Button type="submit" className="w-full" size="lg" loading={loading} disabled={loading}>Create Account</Button>

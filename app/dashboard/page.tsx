@@ -97,10 +97,12 @@ export default function DashboardPage() {
 
   const isPro = subscription?.plan === "pro";
   const hasOneTimeExport = !!subscription?.oneTimeExport;
+  const isExportOnly = hasOneTimeExport && !isPro;
   const isLifetimePro = isPro && !subscription?.stripeSubscriptionId;
   const planInterval = subscription?.planInterval ?? "monthly";
-  const proBadgeLabel =
-    !isPro
+  const proBadgeLabel = isExportOnly
+    ? "Export Access"
+    : !isPro
       ? "Free — 5 exports/mo"
       : isLifetimePro
         ? "Pro — Lifetime"
@@ -211,7 +213,16 @@ export default function DashboardPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">My Resumes</h1>
-              <Badge variant={isPro ? "success" : "default"} className={isPro ? "dashboard-badge-plan dashboard-badge-plan-pro" : "dashboard-badge-plan"}>
+              <Badge
+                variant={isPro ? "success" : isExportOnly ? "default" : "default"}
+                className={
+                  isPro
+                    ? "dashboard-badge-plan dashboard-badge-plan-pro"
+                    : isExportOnly
+                      ? "border-amber-500/40 bg-amber-500/15 text-amber-200"
+                      : "dashboard-badge-plan"
+                }
+              >
                 {proBadgeLabel}
               </Badge>
             </div>

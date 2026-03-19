@@ -27,6 +27,8 @@ interface ATSScoreResult {
 
 interface ATSScorePanelProps {
   sections: ResumeSection[];
+  /** Export-only users cannot use AI-powered ATS analysis */
+  canUseAI?: boolean;
 }
 
 function resumeToPlainText(sections: ResumeSection[]): string {
@@ -70,6 +72,20 @@ function resumeToPlainText(sections: ResumeSection[]): string {
           if (item.description) lines.push(item.description);
         }
         break;
+      case "awards":
+        for (const item of c.items ?? []) {
+          if (item.name) lines.push(`${item.name} ${item.issuer || ""}`);
+        }
+        break;
+      case "volunteer":
+        for (const item of c.items ?? []) {
+          lines.push(`${item.role || ""} at ${item.organization || ""}`);
+          for (const b of item.bullets ?? []) if (b) lines.push(b);
+        }
+        break;
+      case "interests":
+        lines.push((c.items ?? []).filter(Boolean).join(", "));
+        break;
       default:
         break;
     }
@@ -95,7 +111,7 @@ function ScoreRing({ score }: { score: number }) {
           stroke="currentColor"
           strokeWidth="6"
           fill="none"
-          className="text-white/10"
+          className="ats-score-ring-track text-white/10"
         />
         <circle
           cx="44"
@@ -128,10 +144,10 @@ function BreakdownBar({
   return (
     <div className="space-y-1">
       <div className="flex justify-between text-xs">
-        <span className="text-slate-400">{label}</span>
-        <span className="font-medium text-slate-300">{score}/{max}</span>
+        <span className="ats-breakdown-label text-slate-400">{label}</span>
+        <span className="ats-breakdown-value font-medium text-slate-300">{score}/{max}</span>
       </div>
-      <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+      <div className="ats-breakdown-track h-1.5 w-full overflow-hidden rounded-full bg-white/10">
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500",
@@ -144,13 +160,17 @@ function BreakdownBar({
   );
 }
 
-export function ATSScorePanel({ sections }: ATSScorePanelProps) {
+export function ATSScorePanel({ sections, canUseAI = true }: ATSScorePanelProps) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ATSScoreResult | null>(null);
   const [error, setError] = useState("");
   const [expanded, setExpanded] = useState(true);
 
   const analyze = useCallback(async () => {
+    if (!canUseAI) {
+      setError("ATS analysis uses AI. Upgrade to Pro — Export Access includes exports only.");
+      return;
+    }
     const text = resumeToPlainText(sections);
     if (text.trim().length < 20) {
       setError("Add more content to your resume before scoring.");
@@ -180,7 +200,7 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
     } finally {
       setLoading(false);
     }
-  }, [sections]);
+  }, [sections, canUseAI]);
 
   const SuggestionIcon = ({ suggestion }: { suggestion: string }) => {
     const lower = suggestion.toLowerCase();
@@ -192,10 +212,11 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/[0.08] bg-dark-50/80 shadow-glass">
+    <div className="ats-readiness-panel rounded-2xl border border-white/[0.08] bg-dark-50/80 shadow-glass">
       <button
+        type="button"
         onClick={() => setExpanded((e) => !e)}
-        className="flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
+        className="ats-readiness-toggle flex w-full items-center justify-between px-4 py-3.5 text-left transition-colors hover:bg-white/[0.02]"
       >
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-brand-500/15">
@@ -228,13 +249,20 @@ export function ATSScorePanel({ sections }: ATSScorePanelProps) {
       </button>
 
       {expanded && (
-        <div className="border-t border-white/[0.06] px-4 py-4">
+        <div className="ats-readiness-body border-t border-white/[0.06] px-4 py-4">
           {!result && !loading && (
             <div className="flex flex-col items-center py-3">
               <p className="mb-3 text-center text-xs text-slate-400">
-                Analyze your resume for ATS compatibility
+                {canUseAI
+                  ? "Analyze your resume for ATS compatibility"
+                  : "ATS analysis requires Pro. Export Access includes unlimited exports."}
               </p>
-              <Button size="sm" onClick={analyze} className="gap-1.5">
+              <Button
+                size="sm"
+                onClick={analyze}
+                disabled={!canUseAI}
+                className="gap-1.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+              >
                 <Target className="h-3.5 w-3.5" />
                 Analyze Resume
               </Button>
