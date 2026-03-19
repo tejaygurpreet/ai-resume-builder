@@ -13,7 +13,9 @@ model User {
   password            String
   name                String?
   image               String?
+  /// Display / raw phone from signup; optional for legacy accounts created before phone was added
   phone               String?
+  /// Digits-only form for duplicate checks; unique when set (PostgreSQL allows multiple NULLs)
   phoneNormalized     String?              @unique
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt

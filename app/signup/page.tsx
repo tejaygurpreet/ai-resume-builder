@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
+import { isValidPhoneDigits, normalizePhoneDigits } from "@/lib/phone";
 
 function SignupForm() {
   const router = useRouter();
@@ -20,6 +21,7 @@ function SignupForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldError, setFieldError] = useState<{ phone?: string }>({});
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -30,28 +32,66 @@ function SignupForm() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (password !== confirmPassword) { toast.error("Passwords do not match"); return; }
+    setFieldError({});
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    const emailNorm = email.trim().toLowerCase();
+    const phoneTrimmed = phone.trim();
+    if (phoneTrimmed) {
+      const phoneDigits = normalizePhoneDigits(phone);
+      if (!isValidPhoneDigits(phoneDigits)) {
+        setFieldError({
+          phone:
+            "Enter a valid phone number (10–15 digits), or leave blank",
+        });
+        toast.error("Please enter a valid phone number or leave it blank");
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, phone, name: name || undefined }),
+        body: JSON.stringify({
+          email: emailNorm,
+          password,
+          ...(phoneTrimmed ? { phone: phoneTrimmed } : {}),
+          name: name.trim() || undefined,
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) { toast.error(data.error || "Registration failed"); setLoading(false); return; }
-      const signInResult = await signIn("credentials", { email, password, redirect: false });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(
+          typeof data.error === "string" ? data.error : "Registration failed"
+        );
+        return;
+      }
+
+      const signInResult = await signIn("credentials", {
+        email: emailNorm,
+        password,
+        redirect: false,
+      });
       if (signInResult?.error) {
         toast.success("Account created! Please sign in.");
         router.push(templateParam ? `/login?template=${templateParam}` : "/login");
         router.refresh();
-        setLoading(false);
         return;
       }
       toast.success("Account created successfully!");
       router.push(templateParam ? `/builder?template=${templateParam}` : "/dashboard");
       router.refresh();
-    } catch { toast.error("Something went wrong. Please try again."); setLoading(false); }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -75,7 +115,24 @@ function SignupForm() {
           <form onSubmit={handleSubmit} className="space-y-5">
             <Input label="Name" type="text" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" disabled={loading} />
             <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" disabled={loading} />
-            <Input label="Phone" type="tel" placeholder="+1 (555) 123-4567" value={phone} onChange={(e) => setPhone(e.target.value)} required autoComplete="tel" disabled={loading} />
+            <div>
+              <Input
+                label="Phone (optional)"
+                type="tel"
+                placeholder="+1 (555) 123-4567"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  if (fieldError.phone) setFieldError({});
+                }}
+                autoComplete="tel"
+                disabled={loading}
+                error={fieldError.phone}
+              />
+              <p className="mt-1 text-[11px] text-slate-500">
+                Optional. If provided: 10–15 digits; duplicates are not allowed
+              </p>
+            </div>
             <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" disabled={loading} />
             <Input label="Confirm Password" type="password" placeholder="••••••••" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} autoComplete="new-password" disabled={loading} />
             <Button type="submit" className="w-full" size="lg" loading={loading} disabled={loading}>Create Account</Button>

@@ -25,16 +25,38 @@ function LoginForm() {
     }
   }, [status, router, templateParam]);
 
+  function credentialsErrorMessage(code: string | undefined): string {
+    if (!code || code === "CredentialsSignin") {
+      return "Invalid email or password. Check your details and try again.";
+    }
+    return code;
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await signIn("credentials", { email, password, redirect: false });
-      if (result?.error) { toast.error(result.error); setLoading(false); return; }
-      toast.success("Welcome back!");
-      router.push(templateParam ? `/builder?template=${templateParam}` : "/dashboard");
-      router.refresh();
-    } catch { toast.error("Something went wrong. Please try again."); setLoading(false); }
+      const emailNorm = email.trim().toLowerCase();
+      const result = await signIn("credentials", {
+        email: emailNorm,
+        password,
+        redirect: false,
+      });
+      if (result?.error) {
+        toast.error(credentialsErrorMessage(result.error));
+        return;
+      }
+      if (result?.ok) {
+        toast.success("Welcome back!");
+        router.push(templateParam ? `/builder?template=${templateParam}` : "/dashboard");
+        router.refresh();
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

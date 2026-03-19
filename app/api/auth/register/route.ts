@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { isValidPhoneDigits, normalizePhoneDigits } from "@/lib/phone";
 
@@ -46,28 +47,29 @@ export async function POST(request: NextRequest) {
     }
 
     const phoneRaw = typeof phone === "string" ? phone.trim() : "";
-    if (!phoneRaw) {
-      return NextResponse.json(
-        { error: "Phone number is required" },
-        { status: 400 }
-      );
-    }
-    const phoneNormalized = normalizePhoneDigits(phoneRaw);
-    if (!isValidPhoneDigits(phoneNormalized)) {
-      return NextResponse.json(
-        { error: "Enter a valid phone number (at least 10 digits)" },
-        { status: 400 }
-      );
-    }
+    let phoneNormalized: string | null = null;
 
-    const phoneTaken = await prisma.user.findFirst({
-      where: { phoneNormalized },
-    });
-    if (phoneTaken) {
-      return NextResponse.json(
-        { error: "An account with this phone number already exists" },
-        { status: 409 }
-      );
+    if (phoneRaw) {
+      phoneNormalized = normalizePhoneDigits(phoneRaw);
+      if (!isValidPhoneDigits(phoneNormalized)) {
+        return NextResponse.json(
+          {
+            error:
+              "Enter a valid phone number (10–15 digits), or leave phone blank",
+          },
+          { status: 400 }
+        );
+      }
+
+      const phoneTaken = await prisma.user.findFirst({
+        where: { phoneNormalized },
+      });
+      if (phoneTaken) {
+        return NextResponse.json(
+          { error: "An account with this phone number already exists" },
+          { status: 409 }
+        );
+      }
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
           email: trimmedEmail,
           password: hashedPassword,
           name: typeof name === "string" ? name.trim() || null : null,
-          phone: phoneRaw,
+          phone: phoneRaw || null,
           phoneNormalized,
         },
       });
@@ -110,9 +112,38 @@ export async function POST(request: NextRequest) {
         id: user.id,
         email: user.email,
         name: user.name,
+        phone: user.phone,
       },
     });
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        const target = error.meta?.target;
+        const fields = Array.isArray(target)
+          ? target.map(String)
+          : target != null
+            ? [String(target)]
+            : [];
+        const isPhone = fields.some((f) => f.includes("phoneNormalized"));
+        const isEmail = fields.some((f) => f.includes("email"));
+        if (isPhone) {
+          return NextResponse.json(
+            { error: "An account with this phone number already exists" },
+            { status: 409 }
+          );
+        }
+        if (isEmail) {
+          return NextResponse.json(
+            { error: "An account with this email already exists" },
+            { status: 409 }
+          );
+        }
+        return NextResponse.json(
+          { error: "This email or phone is already registered" },
+          { status: 409 }
+        );
+      }
+    }
     console.error("Registration error:", error);
     return NextResponse.json(
       { error: "Something went wrong. Please try again." },

@@ -11,33 +11,57 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
+      /**
+       * Return a user object on success, or `null` on failure.
+       * Do not throw — throws can surface as generic client errors.
+       * Email must match registration: trimmed + lowercased (legacy users included).
+       * `phone` is optional: legacy users and signups without phone have null — login still works.
+       */
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Email and password are required");
+          return null;
         }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        });
-
-        if (!user) {
-          throw new Error("No account found with this email");
+        const email = String(credentials.email).trim().toLowerCase();
+        if (!email) {
+          return null;
         }
 
-        const isPasswordValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        try {
+          const user = await prisma.user.findUnique({
+            where: { email },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              password: true,
+              phone: true,
+            },
+          });
 
-        if (!isPasswordValid) {
-          throw new Error("Invalid password");
+          if (!user) {
+            return null;
+          }
+
+          const isPasswordValid = await bcrypt.compare(
+            credentials.password,
+            user.password
+          );
+
+          if (!isPasswordValid) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            phone: user.phone ?? undefined,
+          };
+        } catch (err) {
+          console.error("[auth] authorize:", err);
+          return null;
         }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-        };
       },
     }),
   ],
@@ -48,12 +72,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.phone = user.phone ?? null;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id as string;
+        session.user.id = token.id as string;
+        session.user.phone = (token.phone as string | null | undefined) ?? null;
       }
       return session;
     },
