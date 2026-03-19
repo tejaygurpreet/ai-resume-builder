@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getStripeOrNull, PLANS } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
 
 export async function POST() {
   try {
@@ -17,6 +18,25 @@ export async function POST() {
       return NextResponse.json(
         { error: "You must be logged in" },
         { status: 401 }
+      );
+    }
+
+    const userId = (session.user as { id?: string }).id;
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Session missing user id. Please sign in again." },
+        { status: 401 }
+      );
+    }
+
+    const sub = await prisma.subscription.findUnique({
+      where: { userId },
+      select: { plan: true, planInterval: true, stripeSubscriptionId: true },
+    });
+    if (sub?.plan === "pro" && !sub.stripeSubscriptionId) {
+      return NextResponse.json(
+        { error: "Lifetime Pro users cannot purchase other plans." },
+        { status: 400 }
       );
     }
 
@@ -37,13 +57,6 @@ export async function POST() {
     const cancelUrl =
       process.env.STRIPE_CANCEL_URL || `${baseUrl}/pricing?canceled=true`;
 
-    const userId = (session.user as { id?: string }).id;
-    if (!userId) {
-      return NextResponse.json(
-        { error: "Session missing user id. Please sign in again." },
-        { status: 401 }
-      );
-    }
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: priceId as string, quantity: 1 }],

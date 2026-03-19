@@ -113,6 +113,21 @@ export async function POST(req: Request) {
 
         if (session.mode === "payment") {
           if (planType === "pro_lifetime") {
+            const existingSub = await prisma.subscription.findUnique({
+              where: { userId: user.id },
+            });
+            if (existingSub?.stripeSubscriptionId) {
+              try {
+                await getStripe().subscriptions.cancel(
+                  existingSub.stripeSubscriptionId
+                );
+                console.log("[webhook] Canceled existing subscription for lifetime upgrade", {
+                  subscriptionId: existingSub.stripeSubscriptionId,
+                });
+              } catch (cancelErr) {
+                console.error("[webhook] Failed to cancel existing subscription:", cancelErr);
+              }
+            }
             await prisma.subscription.upsert({
               where: { userId: user.id },
               create: {
@@ -136,18 +151,38 @@ export async function POST(req: Request) {
               userEmail: user.email,
             });
           } else if (planType === "one_time_export") {
+            const existingSub = await prisma.subscription.findUnique({
+              where: { userId: user.id },
+            });
+            if (existingSub?.stripeSubscriptionId) {
+              try {
+                await getStripe().subscriptions.update(
+                  existingSub.stripeSubscriptionId,
+                  { cancel_at_period_end: true }
+                );
+                console.log("[webhook] Set Pro subscription to cancel at period end for Export purchase", {
+                  subscriptionId: existingSub.stripeSubscriptionId,
+                });
+              } catch (cancelErr) {
+                console.error("[webhook] Failed to cancel Pro for Export purchase:", cancelErr);
+              }
+            }
             await prisma.subscription.upsert({
               where: { userId: user.id },
               create: {
                 userId: user.id,
                 stripeCustomerId,
                 plan: "free",
+                planInterval: null,
                 status: "active",
                 oneTimeExport: true,
               },
               update: {
                 stripeCustomerId,
+                plan: "free",
+                planInterval: null,
                 oneTimeExport: true,
+                stripeSubscriptionId: existingSub?.stripeSubscriptionId ?? undefined,
               },
             });
             console.log("[webhook] Access updated: one_time_export", {
@@ -171,6 +206,16 @@ export async function POST(req: Request) {
               priceId = typeof p === "string" ? p : p?.id;
             }
             if (lifetimePriceId && priceId === lifetimePriceId) {
+              const existingSub = await prisma.subscription.findUnique({
+                where: { userId: user.id },
+              });
+              if (existingSub?.stripeSubscriptionId) {
+                try {
+                  await getStripe().subscriptions.cancel(
+                    existingSub.stripeSubscriptionId
+                  );
+                } catch {}
+              }
               await prisma.subscription.upsert({
                 where: { userId: user.id },
                 create: {
@@ -193,18 +238,30 @@ export async function POST(req: Request) {
                 userId: user.id,
               });
             } else if (oneTimePriceId && priceId === oneTimePriceId) {
+              const existingSubForExport = await prisma.subscription.findUnique({
+                where: { userId: user.id },
+              });
+              if (existingSubForExport?.stripeSubscriptionId) {
+                try {
+                  await getStripe().subscriptions.update(
+                    existingSubForExport.stripeSubscriptionId,
+                    { cancel_at_period_end: true }
+                  );
+                } catch {}
+              }
               await prisma.subscription.upsert({
                 where: { userId: user.id },
                 create: {
                   userId: user.id,
                   stripeCustomerId,
                   plan: "free",
-                  planInterval: null,
                   status: "active",
                   oneTimeExport: true,
                 },
                 update: {
                   stripeCustomerId,
+                  plan: "free",
+                  planInterval: null,
                   oneTimeExport: true,
                 },
               });
@@ -266,12 +323,28 @@ export async function POST(req: Request) {
         const stripeSubscription = await getStripe().subscriptions.retrieve(
           subscriptionId
         );
+        const line = invoice.lines?.data?.[0];
+        const priceId =
+          line?.price && typeof line.price !== "string"
+            ? line.price.id
+            : typeof line?.price === "string"
+              ? line.price
+              : null;
+        const annualPriceId = process.env.STRIPE_PRO_ANNUAL_PRICE_ID;
+        const monthlyPriceId = process.env.STRIPE_PRO_PRICE_ID;
+        let planInterval: string | null = null;
+        if (priceId && annualPriceId && priceId === annualPriceId) {
+          planInterval = "annual";
+        } else if (priceId && monthlyPriceId && priceId === monthlyPriceId) {
+          planInterval = "monthly";
+        }
         await prisma.subscription.updateMany({
           where: { stripeSubscriptionId: subscriptionId },
           data: {
             currentPeriodEnd: new Date(
               stripeSubscription.current_period_end * 1000
             ),
+            ...(planInterval && { planInterval }),
           },
         });
         break;
@@ -279,11 +352,27 @@ export async function POST(req: Request) {
 
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription;
+        const item = subscription.items?.data?.[0];
+        const priceId =
+          item?.price && typeof item.price !== "string"
+            ? item.price.id
+            : typeof item?.price === "string"
+              ? item.price
+              : null;
+        const annualPriceId = process.env.STRIPE_PRO_ANNUAL_PRICE_ID;
+        const monthlyPriceId = process.env.STRIPE_PRO_PRICE_ID;
+        let planInterval: string | null = null;
+        if (priceId && annualPriceId && priceId === annualPriceId) {
+          planInterval = "annual";
+        } else if (priceId && monthlyPriceId && priceId === monthlyPriceId) {
+          planInterval = "monthly";
+        }
         await prisma.subscription.updateMany({
           where: { stripeSubscriptionId: subscription.id },
           data: {
             status: subscription.status,
             currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            ...(planInterval && { planInterval }),
           },
         });
         break;

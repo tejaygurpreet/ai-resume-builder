@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { getStripeOrNull, PLANS } from "@/lib/stripe";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   try {
@@ -64,6 +65,18 @@ export async function POST(req: Request) {
         { status: 401 }
       );
     }
+
+    const sub = await prisma.subscription.findUnique({
+      where: { userId },
+      select: { plan: true, stripeSubscriptionId: true },
+    });
+    if (sub?.plan === "pro" && !sub.stripeSubscriptionId) {
+      return NextResponse.json(
+        { error: "Lifetime Pro users cannot purchase other plans." },
+        { status: 400 }
+      );
+    }
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: isLifetime ? "payment" : "subscription",
       line_items: [{ price: priceId as string, quantity: 1 }],

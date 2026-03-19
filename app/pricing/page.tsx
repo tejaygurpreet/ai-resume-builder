@@ -7,7 +7,8 @@ import { useSession } from "next-auth/react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
-import { Check, X, ChevronDown, Sparkles, Zap, Star } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
+import { Check, X, ChevronDown, Sparkles, Zap, Star, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type ActivePlan =
@@ -93,7 +94,7 @@ function deriveActivePlan(sub: {
     sub.status === "active" &&
     (!sub.currentPeriodEnd || new Date(sub.currentPeriodEnd) > new Date());
   if (!isActive) return "free";
-  if (sub.planInterval === "annual") return "pro_annual";
+  if (sub.planInterval === "annual" || sub.planInterval === "yearly") return "pro_annual";
   if (sub.planInterval === "monthly") return "pro_monthly";
   return "pro_monthly";
 }
@@ -114,6 +115,11 @@ export default function PricingPage() {
   const isAuthenticated = status === "authenticated" && !!session?.user;
   const activePlan = deriveActivePlan(subscription);
 
+  const [exportWarningOpen, setExportWarningOpen] = useState(false);
+  const [currentPlanModalOpen, setCurrentPlanModalOpen] = useState(false);
+  const [cancelConfirmModalOpen, setCancelConfirmModalOpen] = useState(false);
+  const [canceling, setCanceling] = useState(false);
+
   const fetchSubscription = useCallback(async () => {
     if (status !== "authenticated") return;
     try {
@@ -130,19 +136,57 @@ export default function PricingPage() {
     fetchSubscription();
   }, [fetchSubscription]);
 
+  useEffect(() => {
+    if (activePlan === "pro_lifetime") setProInterval("lifetime");
+    else if (activePlan === "pro_annual" && proInterval === "monthly") setProInterval("annual");
+  }, [activePlan, proInterval]);
+
+  const isCurrentPlan = (plan: "pro" | "one-time") =>
+    (plan === "pro" && ((activePlan === "pro_monthly" && proInterval === "monthly") || (activePlan === "pro_annual" && proInterval === "annual") || activePlan === "pro_lifetime")) ||
+    (plan === "one-time" && activePlan === "one_time_export");
+
   const handleCheckout = async (plan: "pro" | "one-time") => {
     if (!isAuthenticated) {
       router.push("/signup");
       return;
     }
-    if (plan === "pro") {
-      if (activePlan === "pro_lifetime") return;
-      if (activePlan === "pro_monthly" && proInterval === "monthly") return;
-      if (activePlan === "pro_annual" && proInterval === "annual") return;
+    if (activePlan === "pro_lifetime") return;
+
+    if (plan === "one-time" && (activePlan === "pro_monthly" || activePlan === "pro_annual")) {
+      setExportWarningOpen(true);
+      return;
     }
-    if (plan === "one-time" && activePlan === "one_time_export") return;
+
+    if (isCurrentPlan(plan)) {
+      setCurrentPlanModalOpen(true);
+      return;
+    }
+
     setIsLoading(plan);
+
     try {
+      if (plan === "pro" && proInterval === "annual" && activePlan === "pro_monthly") {
+        const res = await fetch("/api/stripe/change-plan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ interval: "annual" }),
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          alert(data.message || "Your plan will switch to Annual at renewal.");
+          fetchSubscription();
+        } else {
+          throw new Error(data.error || "Failed");
+        }
+        setIsLoading(null);
+        return;
+      }
+
+      if (plan === "pro" && proInterval === "annual" && activePlan === "pro_annual") {
+        setIsLoading(null);
+        return;
+      }
+
       const endpoint = plan === "pro" ? "/api/stripe/checkout" : "/api/stripe/one-time-export";
       const bodyPayload =
         plan === "pro" ? { plan: "pro", interval: proInterval } : {};
@@ -160,9 +204,56 @@ export default function PricingPage() {
     } catch (err) {
       console.error(err);
       setIsLoading(null);
-      alert("Something went wrong. Please try again.");
+      alert(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     }
   };
+
+  const proceedWithExportCheckout = async () => {
+    setExportWarningOpen(false);
+    if (!isAuthenticated) return;
+    setIsLoading("one-time");
+    try {
+      const res = await fetch("/api/stripe/one-time-export", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        throw new Error(data.error || "Failed");
+      }
+    } catch (err) {
+      console.error(err);
+      setIsLoading(null);
+      alert(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    }
+  };
+
+  const handleCancelMembership = async () => {
+    setCurrentPlanModalOpen(false);
+    setCancelConfirmModalOpen(true);
+  };
+
+  const confirmCancelMembership = async () => {
+    setCanceling(true);
+    try {
+      const res = await fetch("/api/stripe/cancel-subscription", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCancelConfirmModalOpen(false);
+        alert(data.message || "Your subscription will cancel at the end of your billing period.");
+        fetchSubscription();
+      } else {
+        throw new Error(data.error || "Failed");
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to cancel.");
+    } finally {
+      setCanceling(false);
+    }
+  };
+
+  const canCancelMembership =
+    (activePlan === "pro_monthly" || activePlan === "pro_annual") &&
+    subscription?.stripeSubscriptionId;
 
   const isCurrentProInterval = (opt: ProInterval) =>
     (activePlan === "pro_monthly" && opt === "monthly") ||
@@ -173,6 +264,7 @@ export default function PricingPage() {
     if (activePlan === "pro_lifetime") return false;
     if (activePlan === "pro_monthly" && opt === "monthly") return false;
     if (activePlan === "pro_annual" && opt === "annual") return false;
+    if (activePlan === "pro_annual" && opt === "monthly") return false; // no downgrade
     return true;
   };
   const canUpgradeOneTime = activePlan !== "one_time_export";
@@ -244,8 +336,8 @@ export default function PricingPage() {
                 </div>
               )}
               {activePlan === "pro_lifetime" && (
-                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
-                  You already have Lifetime Pro
+                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-300">
+                  You are all set for Lifetime. No need to worry about plans.
                 </div>
               )}
               <div className="mt-1 flex items-center gap-2">
@@ -261,11 +353,12 @@ export default function PricingPage() {
                 {proOptions.map((opt) => {
                   const isCurrent = isCurrentProInterval(opt.id);
                   const canSelect = canUpgradeToInterval(opt.id);
+                  const isLifetimeLocked = activePlan === "pro_lifetime";
                   return (
                     <button
                       key={opt.id}
-                      onClick={() => canSelect && setProInterval(opt.id)}
-                      disabled={isCurrent}
+                      onClick={() => !isLifetimeLocked && canSelect && setProInterval(opt.id)}
+                      disabled={isCurrent || isLifetimeLocked}
                       className={cn(
                         "flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-left text-sm transition-all",
                         isCurrent
@@ -280,9 +373,13 @@ export default function PricingPage() {
                           <>Current Plan — <span className="font-semibold text-emerald-300">{opt.price}</span></>
                         ) : (
                           <>
-                            {opt.id === "lifetime" && activePlan !== "free" && activePlan !== "one_time_export"
-                              ? "Upgrade to Lifetime"
-                              : opt.label}
+                            {opt.id === "annual" && activePlan === "pro_monthly"
+                              ? "Switch to Annual at renewal"
+                              : opt.id === "lifetime" && (activePlan === "pro_monthly" || activePlan === "pro_annual")
+                                ? "Upgrade to Lifetime"
+                                : opt.id === "lifetime" && activePlan !== "free" && activePlan !== "one_time_export"
+                                  ? "Upgrade to Lifetime"
+                                  : opt.label}
                             {" — "}
                             <span className="font-semibold text-white">{opt.price}</span>
                           </>
@@ -311,17 +408,14 @@ export default function PricingPage() {
                   size="lg"
                   disabled
                 >
-                  You already have Lifetime Pro
+                  Lifetime Active
                 </Button>
               ) : (
                 <Button
                   className="mt-8 w-full bg-gradient-to-r from-purple-600 to-violet-600 text-base font-bold shadow-lg shadow-purple-500/25 hover:from-purple-500 hover:to-violet-500 hover:shadow-purple-500/30"
                   size="lg"
                   loading={isLoading === "pro"}
-                  disabled={
-                    (activePlan === "pro_monthly" && proInterval === "monthly") ||
-                    (activePlan === "pro_annual" && proInterval === "annual")
-                  }
+                  disabled={false}
                   onClick={() => handleCheckout("pro")}
                 >
                   {(activePlan === "pro_monthly" && proInterval === "monthly") ||
@@ -371,10 +465,10 @@ export default function PricingPage() {
                 className="mt-8 w-full border-amber-500/40 text-amber-300 hover:bg-amber-500/15 hover:border-amber-500/50 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
                 size="lg"
                 loading={isLoading === "one-time"}
-                disabled={activePlan === "one_time_export"}
+                disabled={activePlan === "pro_lifetime"}
                 onClick={() => handleCheckout("one-time")}
               >
-                {activePlan === "one_time_export" ? "You have Export Access" : "Buy Export Access"}
+                {activePlan === "one_time_export" ? "Current Plan" : "Buy Export Access"}
               </Button>
             </div>
           </div>
@@ -460,6 +554,101 @@ export default function PricingPage() {
           </div>
         </section>
       </main>
+
+      {/* Export warning modal: Pro user buying Export */}
+      <Modal
+        isOpen={exportWarningOpen}
+        onClose={() => setExportWarningOpen(false)}
+        title="Switch to Export Plan?"
+        size="sm"
+      >
+        <div className="space-y-5">
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3">
+            <AlertTriangle className="h-5 w-5 flex-shrink-0 text-amber-400" />
+            <p className="text-sm text-slate-300">
+              This will cancel your current Pro plan and activate only Export features.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row-reverse sm:justify-end">
+            <Button
+              variant="outline"
+              className="border-white/20 text-slate-300 hover:bg-white/10"
+              onClick={proceedWithExportCheckout}
+            >
+              Continue with Export Plan
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500"
+              onClick={() => setExportWarningOpen(false)}
+            >
+              Go Back
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Current plan modal: user clicked their current plan */}
+      <Modal
+        isOpen={currentPlanModalOpen}
+        onClose={() => setCurrentPlanModalOpen(false)}
+        title="Current Plan"
+        size="sm"
+      >
+        <div className="space-y-5">
+          <p className="text-sm text-slate-300">
+            {canCancelMembership
+              ? "You are already on this plan. Would you like to go back or cancel membership?"
+              : "You are already on this plan. Would you like to go back?"}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row-reverse sm:justify-end">
+            {canCancelMembership && (
+              <Button
+                variant="outline"
+                className="border-red-500/40 text-red-400 hover:bg-red-500/10"
+                onClick={handleCancelMembership}
+              >
+                Cancel Membership
+              </Button>
+            )}
+            <Button
+              className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500"
+              onClick={() => setCurrentPlanModalOpen(false)}
+            >
+              Go Back
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Cancel confirmation modal */}
+      <Modal
+        isOpen={cancelConfirmModalOpen}
+        onClose={() => setCancelConfirmModalOpen(false)}
+        title="Cancel Membership?"
+        size="sm"
+      >
+        <div className="space-y-5">
+          <p className="text-sm text-slate-300">
+            Are you sure you want to cancel your membership?
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row-reverse sm:justify-end">
+            <Button
+              variant="outline"
+              className="border-white/20 text-slate-300 hover:bg-white/10"
+              onClick={confirmCancelMembership}
+              loading={canceling}
+            >
+              Yes
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500"
+              onClick={() => setCancelConfirmModalOpen(false)}
+            >
+              No
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       <Footer />
     </div>

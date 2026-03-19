@@ -33,7 +33,14 @@ templateRegistry.forEach((t) => { TEMPLATE_LABELS[t.id] = t.name; });
 
 interface Section { id: string; type: string; order: number; content: unknown; }
 interface Resume { id: string; title: string; template: string; color: string; createdAt: string; updatedAt: string; sections: Section[]; }
-interface UserSubscription { plan: string; status: string; exportsUsed?: number; oneTimeExport?: boolean; }
+interface UserSubscription {
+  plan: string;
+  planInterval?: string | null;
+  status: string;
+  stripeSubscriptionId?: string | null;
+  exportsUsed?: number;
+  oneTimeExport?: boolean;
+}
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -90,6 +97,16 @@ export default function DashboardPage() {
 
   const isPro = subscription?.plan === "pro";
   const hasOneTimeExport = !!subscription?.oneTimeExport;
+  const isLifetimePro = isPro && !subscription?.stripeSubscriptionId;
+  const planInterval = subscription?.planInterval ?? "monthly";
+  const proBadgeLabel =
+    !isPro
+      ? "Free — 5 exports/mo"
+      : isLifetimePro
+        ? "Pro — Lifetime"
+        : planInterval === "annual" || planInterval === "yearly"
+          ? "Pro — $69.99/yr"
+          : "Pro — $7.99/mo";
   const exportsUsed = subscription?.exportsUsed ?? 0;
   const maxExports = PLANS.free.maxExportsPerMonth;
   const canExport = isPro || hasOneTimeExport || exportsUsed < maxExports;
@@ -195,7 +212,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">My Resumes</h1>
               <Badge variant={isPro ? "success" : "default"} className={isPro ? "dashboard-badge-plan dashboard-badge-plan-pro" : "dashboard-badge-plan"}>
-                {isPro ? "Pro — $7.99/mo" : "Free — 5 exports/mo"}
+                {proBadgeLabel}
               </Badge>
             </div>
             <p className="mt-1 text-sm text-slate-500">
