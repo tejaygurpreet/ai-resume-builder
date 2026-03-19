@@ -88,7 +88,10 @@ export async function GET() {
         where: { userId },
         select: {
           plan: true,
+          planInterval: true,
           status: true,
+          stripeSubscriptionId: true,
+          currentPeriodEnd: true,
           exportsUsed: true,
           exportsResetAt: true,
           oneTimeExport: true,
@@ -98,7 +101,10 @@ export async function GET() {
 
     let sub = subscription ?? {
       plan: "free" as const,
+      planInterval: null as string | null,
       status: "active" as const,
+      stripeSubscriptionId: null as string | null,
+      currentPeriodEnd: null as Date | null,
       exportsUsed: 0,
       exportsResetAt: new Date(),
       oneTimeExport: false,

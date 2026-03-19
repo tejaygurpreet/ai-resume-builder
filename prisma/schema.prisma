@@ -62,18 +62,19 @@ model Section {
 }
 
 model Subscription {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  stripeCustomerId String?  @unique
-  stripePriceId    String?
-  stripeSubscriptionId String? @unique
-  plan             String   @default("free")
-  status           String   @default("active")
-  currentPeriodEnd DateTime?
-  exportsUsed      Int      @default(0)
-  exportsResetAt   DateTime @default(now())
-  oneTimeExport    Boolean  @default(false)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(cuid())
+  userId                String    @unique
+  stripeCustomerId      String?   @unique
+  stripePriceId         String?
+  stripeSubscriptionId  String?   @unique
+  plan                  String    @default("free")
+  planInterval          String?   // "monthly" | "annual" | "lifetime" — for Pro plans
+  status                String    @default("active")
+  currentPeriodEnd      DateTime?
+  exportsUsed           Int       @default(0)
+  exportsResetAt        DateTime  @default(now())
+  oneTimeExport         Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

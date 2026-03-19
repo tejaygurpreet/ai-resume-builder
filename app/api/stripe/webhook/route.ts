@@ -119,12 +119,14 @@ export async function POST(req: Request) {
                 userId: user.id,
                 stripeCustomerId,
                 plan: "pro",
+                planInterval: "lifetime",
                 status: "active",
                 stripeSubscriptionId: null,
               },
               update: {
                 stripeCustomerId,
                 plan: "pro",
+                planInterval: "lifetime",
                 status: "active",
                 stripeSubscriptionId: null,
               },
@@ -175,12 +177,14 @@ export async function POST(req: Request) {
                   userId: user.id,
                   stripeCustomerId,
                   plan: "pro",
+                  planInterval: "lifetime",
                   status: "active",
                   stripeSubscriptionId: null,
                 },
                 update: {
                   stripeCustomerId,
                   plan: "pro",
+                  planInterval: "lifetime",
                   status: "active",
                   stripeSubscriptionId: null,
                 },
@@ -195,6 +199,7 @@ export async function POST(req: Request) {
                   userId: user.id,
                   stripeCustomerId,
                   plan: "free",
+                  planInterval: null,
                   status: "active",
                   oneTimeExport: true,
                 },
@@ -220,6 +225,8 @@ export async function POST(req: Request) {
             console.error("[webhook] Missing customer or subscription ID for recurring plan");
             return NextResponse.json({ received: true }, { status: 200 });
           }
+          const planInterval =
+            planType === "pro_annual" ? "annual" : planType === "pro_monthly" ? "monthly" : "monthly";
           await prisma.subscription.upsert({
             where: { userId: user.id },
             create: {
@@ -227,17 +234,20 @@ export async function POST(req: Request) {
               stripeCustomerId,
               stripeSubscriptionId,
               plan: "pro",
+              planInterval,
               status: "active",
             },
             update: {
               stripeCustomerId,
               stripeSubscriptionId,
               plan: "pro",
+              planInterval,
               status: "active",
             },
           });
           console.log("[webhook] Access updated: recurring Pro", {
             planType,
+            planInterval,
             userId: user.id,
             userEmail: user.email,
           });

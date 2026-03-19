@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -9,6 +9,13 @@ import { Footer } from "@/components/footer";
 import { Button } from "@/components/ui/button";
 import { Check, X, ChevronDown, Sparkles, Zap, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+type ActivePlan =
+  | "free"
+  | "pro_monthly"
+  | "pro_annual"
+  | "pro_lifetime"
+  | "one_time_export";
 
 const freeFeatures = [
   "5 exports/month",
@@ -69,18 +76,71 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   );
 }
 
+function deriveActivePlan(sub: {
+  plan?: string;
+  planInterval?: string | null;
+  stripeSubscriptionId?: string | null;
+  oneTimeExport?: boolean;
+  currentPeriodEnd?: string | Date | null;
+  status?: string;
+} | null): ActivePlan {
+  if (!sub) return "free";
+  if (sub.oneTimeExport && sub.plan !== "pro") return "one_time_export";
+  if (sub.plan !== "pro") return "free";
+  const isLifetime = !sub.stripeSubscriptionId;
+  if (isLifetime) return "pro_lifetime";
+  const isActive =
+    sub.status === "active" &&
+    (!sub.currentPeriodEnd || new Date(sub.currentPeriodEnd) > new Date());
+  if (!isActive) return "free";
+  if (sub.planInterval === "annual") return "pro_annual";
+  if (sub.planInterval === "monthly") return "pro_monthly";
+  return "pro_monthly";
+}
+
 export default function PricingPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [proInterval, setProInterval] = useState<ProInterval>("monthly");
+  const [subscription, setSubscription] = useState<{
+    plan?: string;
+    planInterval?: string | null;
+    stripeSubscriptionId?: string | null;
+    oneTimeExport?: boolean;
+    currentPeriodEnd?: string | Date | null;
+    status?: string;
+  } | null>(null);
   const isAuthenticated = status === "authenticated" && !!session?.user;
+  const activePlan = deriveActivePlan(subscription);
+
+  const fetchSubscription = useCallback(async () => {
+    if (status !== "authenticated") return;
+    try {
+      const res = await fetch("/api/resumes");
+      if (!res.ok) return;
+      const data = await res.json();
+      setSubscription(data.subscription ?? null);
+    } catch {
+      setSubscription(null);
+    }
+  }, [status]);
+
+  useEffect(() => {
+    fetchSubscription();
+  }, [fetchSubscription]);
 
   const handleCheckout = async (plan: "pro" | "one-time") => {
     if (!isAuthenticated) {
       router.push("/signup");
       return;
     }
+    if (plan === "pro") {
+      if (activePlan === "pro_lifetime") return;
+      if (activePlan === "pro_monthly" && proInterval === "monthly") return;
+      if (activePlan === "pro_annual" && proInterval === "annual") return;
+    }
+    if (plan === "one-time" && activePlan === "one_time_export") return;
     setIsLoading(plan);
     try {
       const endpoint = plan === "pro" ? "/api/stripe/checkout" : "/api/stripe/one-time-export";
@@ -103,6 +163,19 @@ export default function PricingPage() {
       alert("Something went wrong. Please try again.");
     }
   };
+
+  const isCurrentProInterval = (opt: ProInterval) =>
+    (activePlan === "pro_monthly" && opt === "monthly") ||
+    (activePlan === "pro_annual" && opt === "annual") ||
+    (activePlan === "pro_lifetime" && opt === "lifetime");
+  const canUpgradeToPro = activePlan !== "pro_lifetime";
+  const canUpgradeToInterval = (opt: ProInterval) => {
+    if (activePlan === "pro_lifetime") return false;
+    if (activePlan === "pro_monthly" && opt === "monthly") return false;
+    if (activePlan === "pro_annual" && opt === "annual") return false;
+    return true;
+  };
+  const canUpgradeOneTime = activePlan !== "one_time_export";
 
   return (
     <div className="min-h-screen bg-[#010409]">
@@ -160,6 +233,21 @@ export default function PricingPage() {
               <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-purple-600 to-violet-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-purple-500/30">
                 Most Popular
               </span>
+              {activePlan === "pro_monthly" && (
+                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
+                  You are currently on Pro Monthly
+                </div>
+              )}
+              {activePlan === "pro_annual" && (
+                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
+                  You are currently on Pro Annual
+                </div>
+              )}
+              {activePlan === "pro_lifetime" && (
+                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
+                  You already have Lifetime Pro
+                </div>
+              )}
               <div className="mt-1 flex items-center gap-2">
                 <h3 className="text-xl font-semibold text-white">Pro</h3>
                 <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
@@ -170,27 +258,44 @@ export default function PricingPage() {
                 <span className="ml-1 text-slate-500">/month</span>
               </p>
               <div className="mt-4 space-y-2">
-                {proOptions.map((opt) => (
-                  <button
-                    key={opt.id}
-                    onClick={() => setProInterval(opt.id)}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-left text-sm transition-all",
-                      proInterval === opt.id
-                        ? "border-purple-500/50 bg-purple-500/20 text-white"
-                        : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/[0.15] hover:text-slate-300"
-                    )}
-                  >
-                    <span>
-                      {opt.label} — <span className="font-semibold text-white">{opt.price}</span>
-                    </span>
-                    {opt.badge && (
-                      <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
-                        {opt.badge}
+                {proOptions.map((opt) => {
+                  const isCurrent = isCurrentProInterval(opt.id);
+                  const canSelect = canUpgradeToInterval(opt.id);
+                  return (
+                    <button
+                      key={opt.id}
+                      onClick={() => canSelect && setProInterval(opt.id)}
+                      disabled={isCurrent}
+                      className={cn(
+                        "flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-left text-sm transition-all",
+                        isCurrent
+                          ? "cursor-default border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                          : proInterval === opt.id
+                            ? "border-purple-500/50 bg-purple-500/20 text-white"
+                            : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/[0.15] hover:text-slate-300"
+                      )}
+                    >
+                      <span>
+                        {isCurrent ? (
+                          <>Current Plan — <span className="font-semibold text-emerald-300">{opt.price}</span></>
+                        ) : (
+                          <>
+                            {opt.id === "lifetime" && activePlan !== "free" && activePlan !== "one_time_export"
+                              ? "Upgrade to Lifetime"
+                              : opt.label}
+                            {" — "}
+                            <span className="font-semibold text-white">{opt.price}</span>
+                          </>
+                        )}
                       </span>
-                    )}
-                  </button>
-                ))}
+                      {opt.badge && !isCurrent && (
+                        <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                          {opt.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
               <ul className="mt-8 flex-1 space-y-4">
                 {proFeatures.map((f) => (
@@ -200,18 +305,46 @@ export default function PricingPage() {
                   </li>
                 ))}
               </ul>
-              <Button
-                className="mt-8 w-full bg-gradient-to-r from-purple-600 to-violet-600 text-base font-bold shadow-lg shadow-purple-500/25 hover:from-purple-500 hover:to-violet-500 hover:shadow-purple-500/30"
-                size="lg"
-                loading={isLoading === "pro"}
-                onClick={() => handleCheckout("pro")}
-              >
-                Upgrade to Pro
-              </Button>
+              {activePlan === "pro_lifetime" ? (
+                <Button
+                  className="mt-8 w-full cursor-not-allowed bg-slate-600/50 text-base font-bold text-slate-400"
+                  size="lg"
+                  disabled
+                >
+                  You already have Lifetime Pro
+                </Button>
+              ) : (
+                <Button
+                  className="mt-8 w-full bg-gradient-to-r from-purple-600 to-violet-600 text-base font-bold shadow-lg shadow-purple-500/25 hover:from-purple-500 hover:to-violet-500 hover:shadow-purple-500/30"
+                  size="lg"
+                  loading={isLoading === "pro"}
+                  disabled={
+                    (activePlan === "pro_monthly" && proInterval === "monthly") ||
+                    (activePlan === "pro_annual" && proInterval === "annual")
+                  }
+                  onClick={() => handleCheckout("pro")}
+                >
+                  {(activePlan === "pro_monthly" && proInterval === "monthly") ||
+                  (activePlan === "pro_annual" && proInterval === "annual")
+                    ? "Current Plan"
+                    : activePlan === "free" || activePlan === "one_time_export"
+                      ? "Upgrade to Pro"
+                      : proInterval === "annual"
+                        ? "Upgrade to Annual"
+                        : proInterval === "lifetime"
+                          ? "Upgrade to Lifetime"
+                          : "Upgrade to Pro"}
+                </Button>
+              )}
             </div>
 
             {/* One-Time Export */}
             <div className="flex w-full max-w-md flex-col rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 backdrop-blur-sm transition-all duration-300 hover:border-amber-500/30 hover:bg-amber-500/[0.08] lg:max-w-[340px]">
+              {activePlan === "one_time_export" && (
+                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
+                  You already have Export Access
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-amber-400" />
                 <h3 className="text-xl font-semibold text-white">One-Time Export</h3>
@@ -235,12 +368,13 @@ export default function PricingPage() {
               </ul>
               <Button
                 variant="outline"
-                className="mt-8 w-full border-amber-500/40 text-amber-300 hover:bg-amber-500/15 hover:border-amber-500/50 hover:text-amber-200"
+                className="mt-8 w-full border-amber-500/40 text-amber-300 hover:bg-amber-500/15 hover:border-amber-500/50 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
                 size="lg"
                 loading={isLoading === "one-time"}
+                disabled={activePlan === "one_time_export"}
                 onClick={() => handleCheckout("one-time")}
               >
-                Buy Export Access
+                {activePlan === "one_time_export" ? "You have Export Access" : "Buy Export Access"}
               </Button>
             </div>
           </div>
