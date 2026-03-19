@@ -40,16 +40,21 @@ function SignupForm() {
 
     const emailNorm = email.trim().toLowerCase();
     const phoneTrimmed = phone.trim();
-    if (phoneTrimmed) {
-      const phoneDigits = normalizePhoneDigits(phone);
-      if (!isValidPhoneDigits(phoneDigits)) {
-        setFieldError({
-          phone:
-            "Enter a valid phone number (10–15 digits), or leave blank",
-        });
-        toast.error("Please enter a valid phone number or leave it blank");
-        return;
-      }
+
+    if (!phoneTrimmed) {
+      setFieldError({ phone: "Phone number is required" });
+      toast.error("Phone number is required");
+      return;
+    }
+
+    const phoneDigits = normalizePhoneDigits(phone);
+    if (!isValidPhoneDigits(phoneDigits)) {
+      setFieldError({
+        phone:
+          "Enter a valid phone number (10–15 digits, country code optional)",
+      });
+      toast.error("Please enter a valid phone number");
+      return;
     }
 
     setLoading(true);
@@ -60,7 +65,7 @@ function SignupForm() {
         body: JSON.stringify({
           email: emailNorm,
           password,
-          ...(phoneTrimmed ? { phone: phoneTrimmed } : {}),
+          phone: phoneTrimmed,
           name: name.trim() || undefined,
         }),
       });
@@ -117,7 +122,7 @@ function SignupForm() {
             <Input label="Email" type="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" disabled={loading} />
             <div>
               <Input
-                label="Phone (optional)"
+                label="Phone"
                 type="tel"
                 placeholder="+1 (555) 123-4567"
                 value={phone}
@@ -125,12 +130,13 @@ function SignupForm() {
                   setPhone(e.target.value);
                   if (fieldError.phone) setFieldError({});
                 }}
+                required
                 autoComplete="tel"
                 disabled={loading}
                 error={fieldError.phone}
               />
               <p className="mt-1 text-[11px] text-slate-500">
-                Optional. If provided: 10–15 digits; duplicates are not allowed
+                Required. 10–15 digits; stored in a standard digit format for your account
               </p>
             </div>
             <Input label="Password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" disabled={loading} />

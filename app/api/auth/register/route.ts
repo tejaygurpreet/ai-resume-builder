@@ -47,29 +47,32 @@ export async function POST(request: NextRequest) {
     }
 
     const phoneRaw = typeof phone === "string" ? phone.trim() : "";
-    let phoneNormalized: string | null = null;
+    if (!phoneRaw) {
+      return NextResponse.json(
+        { error: "Phone number is required" },
+        { status: 400 }
+      );
+    }
 
-    if (phoneRaw) {
-      phoneNormalized = normalizePhoneDigits(phoneRaw);
-      if (!isValidPhoneDigits(phoneNormalized)) {
-        return NextResponse.json(
-          {
-            error:
-              "Enter a valid phone number (10–15 digits), or leave phone blank",
-          },
-          { status: 400 }
-        );
-      }
+    const phoneDigits = normalizePhoneDigits(phoneRaw);
+    if (!isValidPhoneDigits(phoneDigits)) {
+      return NextResponse.json(
+        {
+          error:
+            "Enter a valid phone number with 10–15 digits (country code optional)",
+        },
+        { status: 400 }
+      );
+    }
 
-      const phoneTaken = await prisma.user.findFirst({
-        where: { phoneNormalized },
-      });
-      if (phoneTaken) {
-        return NextResponse.json(
-          { error: "An account with this phone number already exists" },
-          { status: 409 }
-        );
-      }
+    const phoneTaken = await prisma.user.findUnique({
+      where: { phone: phoneDigits },
+    });
+    if (phoneTaken) {
+      return NextResponse.json(
+        { error: "An account with this phone number already exists" },
+        { status: 409 }
+      );
     }
 
     const existingUser = await prisma.user.findUnique({
@@ -91,8 +94,7 @@ export async function POST(request: NextRequest) {
           email: trimmedEmail,
           password: hashedPassword,
           name: typeof name === "string" ? name.trim() || null : null,
-          phone: phoneRaw || null,
-          phoneNormalized,
+          phone: phoneDigits,
         },
       });
 
@@ -124,7 +126,7 @@ export async function POST(request: NextRequest) {
           : target != null
             ? [String(target)]
             : [];
-        const isPhone = fields.some((f) => f.includes("phoneNormalized"));
+        const isPhone = fields.some((f) => f.includes("phone"));
         const isEmail = fields.some((f) => f.includes("email"));
         if (isPhone) {
           return NextResponse.json(

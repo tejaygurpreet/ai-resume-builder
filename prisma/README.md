@@ -8,7 +8,7 @@ A **single baseline migration** creates the full schema (all tables, indexes, FK
 
 This replaces older fragmented migrations that only `ALTER`ed tables (e.g. `Subscription`) and failed on Prisma’s **shadow database** with **P3006**.
 
-`User` includes optional **`phone`** and **`phoneNormalized`** (unique when set). Uniqueness for duplicate signup checks uses normalized digits, not the raw `phone` string.
+`User.phone` is **required** and **`@unique`**. Values are normalized digits (10–15) at signup for consistent uniqueness.
 
 ## Commands
 

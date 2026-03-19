@@ -14,8 +14,8 @@ export const authOptions: NextAuthOptions = {
       /**
        * Return a user object on success, or `null` on failure.
        * Do not throw — throws can surface as generic client errors.
-       * Email must match registration: trimmed + lowercased (legacy users included).
-       * `phone` is optional: legacy users and signups without phone have null — login still works.
+       * Email must match registration: trimmed + lowercased.
+       * Every user has a required `phone` (normalized digits) in the database.
        */
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -56,7 +56,7 @@ export const authOptions: NextAuthOptions = {
             id: user.id,
             email: user.email,
             name: user.name,
-            phone: user.phone ?? undefined,
+            phone: user.phone,
           };
         } catch (err) {
           console.error("[auth] authorize:", err);
@@ -72,14 +72,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.phone = user.phone ?? null;
+        token.phone = user.phone;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.phone = (token.phone as string | null | undefined) ?? null;
+        session.user.phone = token.phone as string;
       }
       return session;
     },

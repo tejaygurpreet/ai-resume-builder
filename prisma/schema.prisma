@@ -13,10 +13,8 @@ model User {
   password            String
   name                String?
   image               String?
-  /// Display / raw phone from signup; optional for legacy accounts created before phone was added
-  phone               String?
-  /// Digits-only form for duplicate checks; unique when set (PostgreSQL allows multiple NULLs)
-  phoneNormalized     String?              @unique
+  /// E.164-style digits only (10–15 digits), normalized at signup for consistent uniqueness
+  phone               String               @unique
   createdAt           DateTime             @default(now())
   updatedAt           DateTime             @updatedAt
   resumes             Resume[]
