@@ -72,6 +72,16 @@ function resumeToPlainText(sections: ResumeSection[]): string {
           if (item.description) lines.push(item.description);
         }
         break;
+      case "certifications":
+        for (const item of c.items ?? []) {
+          if (item.name) lines.push(`${item.name} ${item.issuer || ""} ${item.date || ""}`);
+        }
+        break;
+      case "languages":
+        for (const item of c.items ?? []) {
+          if (item.language) lines.push(`${item.language} ${item.proficiency || ""}`);
+        }
+        break;
       case "awards":
         for (const item of c.items ?? []) {
           if (item.name) lines.push(`${item.name} ${item.issuer || ""}`);

@@ -135,6 +135,7 @@ function sectionsToPlainText(
         }
         break;
       case "certifications":
+      case "awards":
         for (const item of c.items ?? []) {
           lines.push(`${item.name} - ${item.issuer} (${item.date})`);
         }
@@ -277,6 +278,7 @@ function sectionsToMarkdown(
         }
         break;
       case "certifications":
+      case "awards":
         lines.push(`## ${heading}`, "");
         for (const item of c.items ?? []) {
           lines.push(`- **${item.name}** — ${item.issuer} (${item.date})`);
@@ -573,6 +575,7 @@ export async function exportToDocx(
           }
           break;
         case "certifications":
+        case "awards":
           children.push(
             new Paragraph({
               children: [

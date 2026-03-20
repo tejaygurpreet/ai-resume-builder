@@ -52,6 +52,19 @@ import {
   FileSignature,
   FileSearch,
   GripVertical,
+  Plus,
+  User,
+  FileText,
+  Briefcase,
+  GraduationCap,
+  Tags,
+  FolderKanban,
+  Award,
+  Languages as LanguagesIcon,
+  Trophy,
+  HeartHandshake,
+  Sparkles,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LivePreview } from "@/components/editor/live-preview";
@@ -84,7 +97,12 @@ import { ExportModal } from "@/components/editor/export-modal";
 import { ResumeCompletionModal } from "@/components/editor/resume-completion-modal";
 import { UpgradeModal, type UpgradeReason } from "@/components/ui/UpgradeModal";
 import { validateResumeCompletion } from "@/lib/resume-validation";
+import {
+  BUILDER_SECTION_OPTIONS,
+  createResumeSection,
+} from "@/lib/resume-section-templates";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 import toast from "react-hot-toast";
 
 const TEMPLATE_LABEL_MAP: Record<string, string> = {};
@@ -92,26 +110,33 @@ templateRegistry.forEach((t) => {
   TEMPLATE_LABEL_MAP[t.id] = t.name;
 });
 
-const SECTION_LABELS: Record<string, string> = {
-  personal: "Personal Info",
-  summary: "Professional Summary",
-  experience: "Work Experience",
-  education: "Education",
-  skills: "Skills",
-  projects: "Projects",
-  certifications: "Certifications",
-  languages: "Languages",
-  awards: "Awards",
-  volunteer: "Volunteer Experience",
-  interests: "Interests",
+const SECTION_LABELS: Record<string, string> = Object.fromEntries(
+  BUILDER_SECTION_OPTIONS.map((o) => [o.type, o.label])
+) as Record<string, string>;
+
+const SECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  personal: User,
+  summary: FileText,
+  experience: Briefcase,
+  education: GraduationCap,
+  skills: Tags,
+  projects: FolderKanban,
+  certifications: Award,
+  languages: LanguagesIcon,
+  awards: Trophy,
+  volunteer: HeartHandshake,
+  interests: Sparkles,
 };
 
-/** Editor sidebar display order only — does NOT affect template/PDF output order. */
+/**
+ * Editor sidebar display order only — does NOT affect template/PDF output order.
+ * Matches: Personal → Summary → Experience → Education → Skills → Projects → Certifications → Languages → …
+ */
 const EDITOR_DISPLAY_ORDER: string[] = [
   "personal",
-  "education",
-  "experience",
   "summary",
+  "experience",
+  "education",
   "skills",
   "projects",
   "certifications",
@@ -126,7 +151,8 @@ function sortSectionsForEditor(sections: ResumeSection[]): ResumeSection[] {
   return [...sections].sort((a, b) => {
     const ia = orderMap.get(a.type) ?? 999;
     const ib = orderMap.get(b.type) ?? 999;
-    return ia - ib;
+    if (ia !== ib) return ia - ib;
+    return (a.order ?? 0) - (b.order ?? 0);
   });
 }
 
@@ -139,6 +165,7 @@ function SortableSectionCard({
   onLimitReached,
   onImproveProLocked,
   onExportAiLocked,
+  onRemoveSection,
 }: {
   section: ResumeSection;
   resumeId?: string;
@@ -148,6 +175,8 @@ function SortableSectionCard({
   onLimitReached?: () => void;
   onImproveProLocked?: () => void;
   onExportAiLocked?: () => void;
+  /** Omit for sections that cannot be removed (e.g. personal) */
+  onRemoveSection?: () => void;
 }) {
   const {
     attributes,
@@ -199,6 +228,16 @@ function SortableSectionCard({
             <FileSearch className="h-3.5 w-3.5" />
             Tailor to Job
           </Button>
+        )}
+        {onRemoveSection && (
+          <button
+            type="button"
+            onClick={onRemoveSection}
+            className="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-red-500/10 hover:text-red-400"
+            aria-label={`Remove ${SECTION_LABELS[section.type] ?? section.type}`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
         )}
       </div>
       <div className="p-4">
@@ -253,7 +292,11 @@ function BuilderPage() {
     updateTemplate,
     updateColor,
     reorderSections,
+    addSection,
+    removeSection,
   } = useResumeStore();
+
+  const [addSectionPanelOpen, setAddSectionPanelOpen] = useState(false);
 
   const prevResumeRef = useRef<string>("");
   const { push, undo, redo, canUndo, canRedo } = useUndoRedo(resume, setResume);
@@ -271,6 +314,35 @@ function BuilderPage() {
   useAutosave();
 
   const sections = resume?.sections ?? [];
+
+  const existingSectionTypes = new Set(sections.map((s) => s.type));
+  const addableSectionOptions = BUILDER_SECTION_OPTIONS.filter(
+    (o) => !existingSectionTypes.has(o.type)
+  );
+
+  const handleAddSectionType = useCallback(
+    (type: string) => {
+      const maxOrder =
+        sections.length === 0 ? -1 : Math.max(...sections.map((s) => s.order));
+      addSection(createResumeSection(type, maxOrder + 1));
+      toast.success(`Added ${SECTION_LABELS[type] ?? type}`);
+      setAddSectionPanelOpen(false);
+    },
+    [sections, addSection]
+  );
+
+  const handleRemoveSection = useCallback(
+    (section: ResumeSection) => {
+      if (section.type === "personal") {
+        toast.error("Personal info can't be removed.");
+        return;
+      }
+      removeSection(section.id);
+      toast.success("Section removed");
+    },
+    [removeSection]
+  );
+
   const [loading, setLoading] = useState(true);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
@@ -531,6 +603,8 @@ function BuilderPage() {
 
         <div className="flex-1" />
 
+        <ThemeToggle variant="editor" />
+
         <Button
           size="sm"
           onClick={handleExportClick}
@@ -545,6 +619,56 @@ function BuilderPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: sections (~35%) */}
         <div className="editor-sidebar flex w-[35%] min-w-[280px] max-w-[420px] shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] bg-[#0a0a0b] p-5 scrollbar-thin transition-colors duration-200">
+          <div className="mx-auto mb-5 w-full space-y-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setAddSectionPanelOpen((o) => !o)}
+              className="w-full gap-2 border-white/[0.12] border-dashed text-slate-300 hover:bg-white/[0.06] hover:text-white"
+            >
+              <Plus className="h-4 w-4" />
+              {addSectionPanelOpen ? "Close" : "Add section"}
+            </Button>
+            {addSectionPanelOpen && (
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                  Choose a section
+                </p>
+                {addableSectionOptions.length === 0 ? (
+                  <p className="text-xs text-slate-500">
+                    All section types are already in this resume. Remove one to add it again.
+                  </p>
+                ) : (
+                  <ul className="grid max-h-[min(50vh,320px)] gap-2 overflow-y-auto pr-1 scrollbar-thin sm:grid-cols-1">
+                    {addableSectionOptions.map((opt) => {
+                      const Icon = SECTION_ICONS[opt.type] ?? FileText;
+                      return (
+                        <li key={opt.type}>
+                          <button
+                            type="button"
+                            onClick={() => handleAddSectionType(opt.type)}
+                            className="flex w-full items-start gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3 text-left transition-colors hover:border-brand-500/35 hover:bg-brand-500/5"
+                          >
+                            <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-400" />
+                            <span className="min-w-0">
+                              <span className="block text-sm font-medium text-white">
+                                {opt.label}
+                              </span>
+                              <span className="mt-0.5 block text-[11px] text-slate-500">
+                                {opt.description}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
+
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -582,6 +706,11 @@ function BuilderPage() {
                       setUpgradeModalReason("export_no_ai");
                       setUpgradeModalOpen(true);
                     }}
+                    onRemoveSection={
+                      section.type === "personal"
+                        ? undefined
+                        : () => handleRemoveSection(section)
+                    }
                   />
                 ))}
               </div>

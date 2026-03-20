@@ -9,7 +9,16 @@ import { Plus, X, Trash2, Sparkles, Loader2, AlertCircle, Crown, Wand2, Copy, Ba
 import { useTheme } from "@/components/theme-provider";
 import { v4 as uuid } from "uuid";
 import { useResumeStore } from "@/hooks/use-resume-store";
+import { CertificationsSection } from "@/components/resume/CertificationsSection";
+import { LanguagesSection } from "@/components/resume/LanguagesSection";
+import { ProjectsSection } from "@/components/resume/ProjectsSection";
 import { cn } from "@/lib/utils";
+import {
+  aiMicroImproveClassName,
+  aiMicroMetricsClassName,
+  aiPrimaryButtonClassName,
+  aiPrimaryIconClassName,
+} from "@/lib/editor-ai-styles";
 import toast from "react-hot-toast";
 
 interface SectionEditorProps {
@@ -88,13 +97,13 @@ export function SectionEditor({
         />
       );
     case "projects":
-      return <ProjectsEditor content={content} onChange={update} />;
+      return <ProjectsSection content={content} onChange={update} />;
     case "certifications":
-      return <CertificationsEditor content={content} onChange={update} />;
+      return <CertificationsSection content={content} onChange={update} />;
     case "languages":
-      return <LanguagesEditor content={content} onChange={update} />;
+      return <LanguagesSection content={content} onChange={update} />;
     case "awards":
-      return <CertificationsEditor content={content} onChange={update} awardMode />;
+      return <CertificationsSection content={content} onChange={update} awardMode />;
     case "volunteer":
       return <VolunteerEditor content={content} onChange={update} />;
     case "interests":
@@ -170,6 +179,8 @@ function useAIGenerate(canUseAI: boolean, onExportAiLocked?: () => void) {
 }
 
 function AIErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => void }) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   if (!error) return null;
   const isLimit = error.toLowerCase().includes("limit") || error.toLowerCase().includes("upgrade");
 
@@ -178,8 +189,12 @@ function AIErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => v
       className={cn(
         "flex items-center gap-2 rounded-xl border px-3 py-2 text-xs",
         isLimit
-          ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
-          : "border-red-500/30 bg-red-500/10 text-red-300"
+          ? isLight
+            ? "border-amber-200 bg-amber-50 text-amber-900"
+            : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+          : isLight
+            ? "border-red-200 bg-red-50 text-red-800"
+            : "border-red-500/30 bg-red-500/10 text-red-300"
       )}
     >
       {isLimit ? (
@@ -188,7 +203,15 @@ function AIErrorBanner({ error, onDismiss }: { error: string; onDismiss: () => v
         <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
       )}
       <span className="flex-1">{error}</span>
-      <button onClick={onDismiss} className="ml-1 rounded p-0.5 text-slate-400 transition-colors hover:bg-white/5 hover:text-white">
+      <button
+        onClick={onDismiss}
+        className={cn(
+          "ml-1 rounded p-0.5 transition-colors",
+          isLight
+            ? "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+            : "text-slate-400 hover:bg-white/5 hover:text-white"
+        )}
+      >
         <X className="h-3 w-3" />
       </button>
     </div>
@@ -200,24 +223,30 @@ function AIButton({
   loading,
   children,
   disabled,
+  title,
 }: {
   onClick: () => void;
   loading: boolean;
   children: React.ReactNode;
   disabled?: boolean;
+  /** Explains what the AI action does (tooltip + a11y) */
+  title?: string;
 }) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   return (
     <Button
       variant="outline"
       size="sm"
       onClick={onClick}
       disabled={loading || disabled}
-      className="editor-ai-btn group gap-1.5 border-violet-500/45 bg-gradient-to-br from-violet-500/15 to-purple-600/10 text-violet-200 shadow-sm shadow-violet-900/20 hover:border-violet-400/60 hover:from-violet-500/25 hover:to-purple-600/15 hover:text-white disabled:opacity-45"
+      title={title}
+      className={aiPrimaryButtonClassName(isLight)}
     >
       {loading ? (
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        <Loader2 className={cn("h-3.5 w-3.5 animate-spin", isLight ? "text-indigo-600" : "")} />
       ) : (
-        <Sparkles className="h-3.5 w-3.5 text-violet-400 group-hover:text-violet-200" />
+        <Sparkles className={aiPrimaryIconClassName(isLight)} />
       )}
       {loading ? "Generating…" : children}
     </Button>
@@ -388,7 +417,8 @@ function SummaryEditor({
   onExportAiLocked?: () => void;
 }) {
   const { theme } = useTheme();
-  const taVariant = theme === "light" ? "light" : "dark";
+  const isLight = theme === "light";
+  const taVariant = isLight ? "light" : "dark";
   const { generate, loading, error, clearError } = useAIGenerate(canUseAI, onExportAiLocked);
   const resume = useResumeStore((s) => s.resume);
   const [transformLoading, setTransformLoading] = useState<"improve" | "shorten" | null>(null);
@@ -490,13 +520,35 @@ function SummaryEditor({
           }}
           disabled={transformLoading !== null || !(content.text ?? "").trim() || !canUseAI}
           className={cn(
-            "gap-1.5 border-purple-500/40 text-purple-300 hover:border-purple-400/50",
-            isPro ? "bg-purple-500/10 hover:bg-purple-500/20" : "bg-amber-500/10 hover:bg-amber-500/20"
+            "gap-1.5 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2",
+            isLight
+              ? isPro
+                ? "border border-violet-200 bg-[#f5f3ff] text-[#4f46e5] shadow-sm hover:border-violet-300 hover:bg-[#ddd6fe] hover:text-[#4338ca] focus-visible:ring-[#4f46e5]/30"
+                : "border border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-300 hover:bg-amber-100 focus-visible:ring-amber-500/25"
+              : cn(
+                  "border-purple-500/40 text-purple-300 hover:border-purple-400/50",
+                  isPro ? "bg-purple-500/10 hover:bg-purple-500/20" : "bg-amber-500/10 hover:bg-amber-500/20"
+                )
           )}
         >
-          {transformLoading === "improve" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : !isPro ? <Lock className="h-3.5 w-3.5" /> : <span className="text-purple-400">✦</span>}
+          {transformLoading === "improve" ? (
+            <Loader2 className={cn("h-3.5 w-3.5 animate-spin", isLight ? "text-indigo-600" : "")} />
+          ) : !isPro ? (
+            <Lock className="h-3.5 w-3.5" />
+          ) : (
+            <span className={isLight ? "text-indigo-600" : "text-purple-400"}>✦</span>
+          )}
           Improve with AI PRO
-          {!isPro && <span className="ml-1 rounded bg-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold text-amber-300">Pro</span>}
+          {!isPro && (
+            <span
+              className={cn(
+                "ml-1 rounded px-1.5 py-0.5 text-[10px] font-semibold",
+                isLight ? "bg-amber-200/80 text-amber-900" : "bg-amber-500/30 text-amber-300"
+              )}
+            >
+              Pro
+            </span>
+          )}
         </Button>
         <Button
           variant="outline"
@@ -509,9 +561,18 @@ function SummaryEditor({
             handleTransform("shorten");
           }}
           disabled={transformLoading !== null || !(content.text ?? "").trim() || !canUseAI}
-          className="gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20"
+          className={cn(
+            "gap-1.5 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2",
+            isLight
+              ? "border border-violet-200 bg-[#f5f3ff] text-[#4f46e5] shadow-sm hover:border-violet-300 hover:bg-[#ddd6fe] hover:text-[#4338ca] focus-visible:ring-[#4f46e5]/30"
+              : "gap-1.5 border-purple-500/40 bg-purple-500/10 text-purple-300 hover:border-purple-400/50 hover:bg-purple-500/20"
+          )}
         >
-          {transformLoading === "shorten" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Minus className="h-3.5 w-3.5" />}
+          {transformLoading === "shorten" ? (
+            <Loader2 className={cn("h-3.5 w-3.5 animate-spin", isLight ? "text-indigo-600" : "")} />
+          ) : (
+            <Minus className={cn("h-3.5 w-3.5", isLight ? "text-indigo-600" : "")} />
+          )}
           Shorten
         </Button>
       </div>
@@ -519,10 +580,17 @@ function SummaryEditor({
       <AIErrorBanner error={error} onDismiss={clearError} />
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-300">
-          Professional Summary <span className="text-amber-400">*</span>
+        <label
+          className={cn(
+            "mb-1.5 block text-sm font-medium",
+            isLight ? "text-[#111827]" : "text-slate-300"
+          )}
+        >
+          Professional Summary <span className="text-amber-500">*</span>
         </label>
-        <p className="mb-2 text-xs text-slate-500">3–4 lines highlighting your experience, skills, and value. At least 20 characters.</p>
+        <p className={cn("mb-2 text-xs", isLight ? "text-[#6b7280]" : "text-slate-500")}>
+          3–4 lines highlighting your experience, skills, and value. At least 20 characters.
+        </p>
         <Textarea
           value={content.text ?? ""}
           onChange={(e) => onChange({ ...content, text: e.target.value })}
@@ -782,7 +850,8 @@ function ExperienceEditor({
   };
 
   const { theme } = useTheme();
-  const inputVariant = theme === "light" ? "light" : "dark";
+  const isLight = theme === "light";
+  const inputVariant = isLight ? "light" : "dark";
 
   return (
     <div className="space-y-6">
@@ -791,25 +860,33 @@ function ExperienceEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 shadow-sm"
+          className={cn(
+            "relative space-y-4 rounded-xl border p-5 shadow-sm transition-shadow duration-200",
+            isLight
+              ? "border-slate-200 bg-white hover:shadow-md"
+              : "border-white/[0.08] bg-white/[0.03]"
+          )}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            <span
+              className={cn(
+                "text-xs font-medium uppercase tracking-wider",
+                isLight ? "text-[#6b7280]" : "text-slate-500"
+              )}
+            >
               Position {idx + 1}
             </span>
             <div className="flex items-center gap-2">
-              <AIButton
-                onClick={() => handleGenerateBullets(idx)}
-                loading={loading && generatingIdx === idx}
-                disabled={!canUseAI}
-              >
-                Generate Bullets
-              </AIButton>
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => duplicateItem(idx)}
-                className="h-7 px-2 text-xs text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                className={cn(
+                  "h-7 px-2 text-xs",
+                  isLight
+                    ? "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                    : "text-slate-400 hover:bg-white/[0.06] hover:text-white"
+                )}
                 title="Duplicate job"
               >
                 <Copy className="mr-1 h-3 w-3" />
@@ -820,7 +897,12 @@ function ExperienceEditor({
                   variant="ghost"
                   size="sm"
                   onClick={() => removeItem(idx)}
-                  className="h-7 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+                  className={cn(
+                    "h-7 px-2 text-xs",
+                    isLight
+                      ? "text-slate-500 hover:bg-red-50 hover:text-red-600"
+                      : "text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+                  )}
                 >
                   <Trash2 className="mr-1 h-3 w-3" />
                   Remove
@@ -871,11 +953,30 @@ function ExperienceEditor({
           </div>
 
           {(item.title ?? "").trim() && (item.company ?? "").trim() && (
-            <div className="rounded-xl border border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-purple-600/5 px-4 py-3">
-              <p className="text-xs font-semibold text-violet-200/90">Suggested bullet angles</p>
-              <p className="mt-1.5 text-[11px] leading-relaxed text-slate-400">
+            <div
+              className={cn(
+                "rounded-xl border px-4 py-3",
+                isLight
+                  ? "border-violet-200 bg-gradient-to-br from-violet-50 to-indigo-50/90"
+                  : "border-violet-500/25 bg-gradient-to-br from-violet-500/10 to-purple-600/5"
+              )}
+            >
+              <p
+                className={cn(
+                  "text-xs font-semibold",
+                  isLight ? "text-violet-900" : "text-violet-200/90"
+                )}
+              >
+                Suggested bullet angles
+              </p>
+              <p
+                className={cn(
+                  "mt-1.5 text-[11px] leading-relaxed",
+                  isLight ? "text-[#374151]" : "text-slate-400"
+                )}
+              >
                 {!isPro && canUseAI
-                  ? "Try: quantified outcomes for this role, tech stack you used, leadership scope, and business impact. Use “Generate Bullets” to apply AI (free tier: 3 uses per resume)."
+                  ? "Try: quantified outcomes for this role, tech stack you used, leadership scope, and business impact. Use “Generate bullet suggestions” next to Bullet Points to apply AI (free tier: 3 uses per resume)."
                   : !canUseAI
                     ? "Upgrade to Pro to generate tailored bullets. Export Access includes exports only."
                     : "Led cross-functional initiatives that improved [metric] by [%]. Owned [system] serving [scale] users. Partnered with stakeholders to deliver [outcome]."}
@@ -883,21 +984,58 @@ function ExperienceEditor({
             </div>
           )}
 
-          <label className="flex items-center gap-2 text-sm text-slate-400">
+          <label
+            className={cn(
+              "flex items-center gap-2 text-sm",
+              isLight ? "text-[#374151]" : "text-slate-400"
+            )}
+          >
             <input
               type="checkbox"
               checked={item.current ?? false}
               onChange={(e) => updateItem(idx, "current", e.target.checked)}
-              className="h-4 w-4 rounded border-white/20 bg-white/5 text-brand-500 focus:ring-brand-500/50"
+              className={cn(
+                "h-4 w-4 rounded text-[#4f46e5] focus:ring-[#4f46e5]/30",
+                isLight ? "border-slate-300 bg-white" : "border-white/20 bg-white/5"
+              )}
             />
             I currently work here
           </label>
 
           <div className="space-y-3">
-            <span className="text-sm font-medium text-slate-300">
-              Bullet Points <span className="text-amber-400">*</span>
-            </span>
-            <p className="text-xs text-slate-500">Use action verbs and metrics. Start with strong verbs like Led, Achieved, Increased.</p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+              <div className="min-w-0 flex-1 space-y-1">
+                <span
+                  className={cn(
+                    "text-sm font-medium",
+                    isLight ? "text-[#111827]" : "text-slate-300"
+                  )}
+                >
+                  Bullet Points <span className="text-amber-500">*</span>
+                </span>
+                <p className={cn("text-xs", isLight ? "text-[#6b7280]" : "text-slate-500")}>
+                  Use action verbs and metrics. Start with strong verbs like Led, Achieved, Increased.
+                </p>
+              </div>
+              <div className="editor-ai-toolbar flex shrink-0 flex-col gap-1 sm:items-end">
+                <AIButton
+                  onClick={() => handleGenerateBullets(idx)}
+                  loading={loading && generatingIdx === idx}
+                  disabled={!canUseAI}
+                  title="Generate AI bullet suggestions from job title, company, dates, and any text already in your bullets"
+                >
+                  Generate bullet suggestions
+                </AIButton>
+                <p
+                  className={cn(
+                    "max-w-[220px] text-[10px] leading-snug sm:text-right",
+                    isLight ? "text-[#6b7280]" : "text-slate-500"
+                  )}
+                >
+                  AI fills bullet lines from this role—edit or add more below.
+                </p>
+              </div>
+            </div>
             {(item.bullets ?? []).map((bullet: string, bi: number) => {
               const bulletKey = `${idx}-${bi}`;
               const isImproving = improvingBullet === bulletKey;
@@ -910,7 +1048,7 @@ function ExperienceEditor({
                     onChange={(e) => updateBullet(idx, bi, e.target.value)}
                     placeholder="Led migration of monolith to microservices, reducing deploy times by 70%"
                     className="min-h-[60px]"
-                    variant="dark"
+                    variant={inputVariant}
                   />
                   <div className="mt-1 flex flex-col gap-1">
                     <button
@@ -918,22 +1056,30 @@ function ExperienceEditor({
                       disabled={isImproving || !bullet.trim()}
                       title={isPro ? "Improve with AI PRO" : "Improve with AI PRO — Upgrade to Pro"}
                       className={cn(
-                        "flex h-7 shrink-0 items-center gap-0.5 rounded-lg border px-1.5 transition-colors",
-                        isImproving
-                          ? "border-purple-500/40 bg-purple-500/20"
-                          : isPro
-                            ? "border-white/[0.1] text-purple-400 hover:border-purple-500/40 hover:bg-purple-500/10"
-                            : "border-amber-500/40 text-amber-400 hover:border-amber-500/50 hover:bg-amber-500/10"
+                        "flex h-7 shrink-0 items-center gap-0.5 rounded-lg border px-1.5 transition-colors duration-200",
+                        aiMicroImproveClassName(isLight, !!isPro, isImproving)
                       )}
                     >
                       {isImproving ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
+                        <Loader2
+                          className={cn(
+                            "h-3.5 w-3.5 animate-spin",
+                            isLight ? "text-indigo-600" : "text-purple-500"
+                          )}
+                        />
                       ) : isPro ? (
                         <Wand2 className="h-3.5 w-3.5" />
                       ) : (
                         <>
                           <Lock className="h-3 w-3" />
-                          <span className="text-[9px] font-semibold text-amber-300">Pro</span>
+                          <span
+                            className={cn(
+                              "text-[9px] font-semibold",
+                              isLight ? "text-amber-800" : "text-amber-300"
+                            )}
+                          >
+                            Pro
+                          </span>
                         </>
                       )}
                     </button>
@@ -942,14 +1088,17 @@ function ExperienceEditor({
                       disabled={isAddingMetrics || !bullet.trim()}
                       title="Add metrics with AI"
                       className={cn(
-                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors",
-                        isAddingMetrics
-                          ? "border-purple-500/40 bg-purple-500/20"
-                          : "border-white/[0.1] text-purple-400 hover:border-purple-500/40 hover:bg-purple-500/10"
+                        "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors duration-200",
+                        aiMicroMetricsClassName(isLight, isAddingMetrics)
                       )}
                     >
                       {isAddingMetrics ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
+                        <Loader2
+                          className={cn(
+                            "h-3.5 w-3.5 animate-spin",
+                            isLight ? "text-indigo-600" : "text-purple-500"
+                          )}
+                        />
                       ) : (
                         <BarChart2 className="h-3.5 w-3.5" />
                       )}
@@ -959,7 +1108,12 @@ function ExperienceEditor({
                         variant="ghost"
                         size="sm"
                         onClick={() => removeBullet(idx, bi)}
-                        className="h-7 w-7 shrink-0 p-0 text-slate-400 hover:text-red-500"
+                        className={cn(
+                          "h-7 w-7 shrink-0 p-0",
+                          isLight
+                            ? "text-slate-500 hover:bg-red-50 hover:text-red-600"
+                            : "text-slate-400 hover:text-red-500"
+                        )}
                       >
                         <X className="h-3.5 w-3.5" />
                       </Button>
@@ -972,7 +1126,12 @@ function ExperienceEditor({
               variant="ghost"
               size="sm"
               onClick={() => addBullet(idx)}
-              className="text-brand-400 hover:bg-brand-500/10 hover:text-brand-300"
+              className={cn(
+                "transition-colors duration-200",
+                isLight
+                  ? "text-[#4f46e5] hover:bg-violet-50 hover:text-[#4338ca]"
+                  : "text-brand-400 hover:bg-brand-500/10 hover:text-brand-300"
+              )}
             >
               <Plus className="mr-1 h-3.5 w-3.5" />
               Add Bullet
@@ -981,7 +1140,17 @@ function ExperienceEditor({
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem} className="w-full border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={addItem}
+        className={cn(
+          "w-full transition-all duration-200",
+          isLight
+            ? "border-slate-200 bg-white text-[#374151] hover:border-slate-300 hover:bg-slate-50"
+            : "border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+        )}
+      >
         <Plus className="mr-1.5 h-4 w-4" />
         Add Experience
       </Button>
@@ -998,6 +1167,9 @@ function EducationEditor({
   content: any;
   onChange: (c: any) => void;
 }) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+  const inputVariant = isLight ? "light" : "dark";
   const items: any[] = content.items ?? [];
 
   const updateItem = (index: number, field: string, value: string) => {
@@ -1035,10 +1207,20 @@ function EducationEditor({
       {items.map((item, idx) => (
         <div
           key={item.id}
-          className="relative space-y-4 rounded-xl border border-white/[0.08] bg-white/[0.03] p-5 shadow-sm"
+          className={cn(
+            "relative space-y-4 rounded-xl border p-5 shadow-sm transition-shadow duration-200",
+            isLight
+              ? "border-slate-200 bg-white hover:shadow-md"
+              : "border-white/[0.08] bg-white/[0.03]"
+          )}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            <span
+              className={cn(
+                "text-xs font-medium uppercase tracking-wider",
+                isLight ? "text-[#6b7280]" : "text-slate-500"
+              )}
+            >
               Education {idx + 1}
             </span>
             {items.length > 1 && (
@@ -1046,7 +1228,12 @@ function EducationEditor({
                 variant="ghost"
                 size="sm"
                 onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+                className={cn(
+                  "h-6 px-2 text-xs",
+                  isLight
+                    ? "text-slate-500 hover:bg-red-50 hover:text-red-600"
+                    : "text-slate-500 hover:bg-red-500/10 hover:text-red-400"
+                )}
               >
                 <Trash2 className="mr-1 h-3 w-3" />
                 Remove
@@ -1060,55 +1247,65 @@ function EducationEditor({
               value={item.degree ?? ""}
               onChange={(e) => updateItem(idx, "degree", e.target.value)}
               placeholder="B.S. Computer Science"
-              variant="dark"
+              variant={inputVariant}
             />
             <Input
               label="School *"
               value={item.school ?? ""}
               onChange={(e) => updateItem(idx, "school", e.target.value)}
               placeholder="MIT"
-              variant="dark"
+              variant={inputVariant}
             />
             <Input
               label="Field / Program"
               value={item.field ?? ""}
               onChange={(e) => updateItem(idx, "field", e.target.value)}
               placeholder="Software Engineering"
-              variant="dark"
+              variant={inputVariant}
             />
             <Input
               label="Location"
               value={item.location ?? ""}
               onChange={(e) => updateItem(idx, "location", e.target.value)}
               placeholder="Cambridge, MA"
-              variant="dark"
+              variant={inputVariant}
             />
             <Input
               label="GPA"
               value={item.gpa ?? ""}
               onChange={(e) => updateItem(idx, "gpa", e.target.value)}
               placeholder="3.8/4.0"
-              variant="dark"
+              variant={inputVariant}
             />
             <Input
               label="Start Date"
               value={item.startDate ?? ""}
               onChange={(e) => updateItem(idx, "startDate", e.target.value)}
               placeholder="Aug 2018"
-              variant="dark"
+              variant={inputVariant}
             />
             <Input
               label="End Date"
               value={item.endDate ?? ""}
               onChange={(e) => updateItem(idx, "endDate", e.target.value)}
               placeholder="May 2022"
-              variant="dark"
+              variant={inputVariant}
             />
           </div>
         </div>
       ))}
 
-      <Button variant="outline" size="sm" onClick={addItem} className="w-full border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={addItem}
+        className={cn(
+          "w-full transition-all duration-200",
+          isLight
+            ? "border-slate-200 bg-white text-[#374151] hover:border-slate-300 hover:bg-slate-50"
+            : "border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+        )}
+      >
         <Plus className="mr-1.5 h-4 w-4" />
         Add Education
       </Button>
@@ -1159,7 +1356,8 @@ function SkillsEditor({
   onExportAiLocked?: () => void;
 }) {
   const { theme } = useTheme();
-  const inputVariant = theme === "light" ? "light" : "dark";
+  const isLight = theme === "light";
+  const inputVariant = isLight ? "light" : "dark";
   const { generate, loading, error, clearError } = useAIGenerate(canUseAI, onExportAiLocked);
   const resume = useResumeStore((s) => s.resume);
 
@@ -1250,14 +1448,32 @@ function SkillsEditor({
           {isPro ? "AI: expand skills" : "AI: suggest skills"}
         </AIButton>
         {isPro && (
-          <span className="text-[10px] font-medium uppercase tracking-wide text-violet-400/80">Pro quality</span>
+          <span
+            className={cn(
+              "text-[10px] font-medium uppercase tracking-wide",
+              isLight ? "text-violet-600" : "text-violet-400/80"
+            )}
+          >
+            Pro quality
+          </span>
         )}
       </div>
 
       {(experience?.items?.[0]?.title ?? "").trim() && (
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-3 py-2.5">
-          <p className="text-[11px] text-slate-400">
-            <span className="font-medium text-emerald-400/90">Tip for {experience?.items?.[0]?.title}: </span>
+        <div
+          className={cn(
+            "rounded-xl border px-3 py-2.5",
+            isLight
+              ? "border-emerald-200 bg-emerald-50/80"
+              : "border-emerald-500/20 bg-emerald-500/5"
+          )}
+        >
+          <p className={cn("text-[11px]", isLight ? "text-[#374151]" : "text-slate-400")}>
+            <span
+              className={cn("font-medium", isLight ? "text-emerald-800" : "text-emerald-400/90")}
+            >
+              Tip for {experience?.items?.[0]?.title}:{" "}
+            </span>
             Add tools (e.g. AWS, Figma), methodologies (Agile, A/B tests), and soft skills recruiters search for.
             {!isPro && canUseAI && " Free: 3 AI uses per resume — generating merges suggestions into your list."}
           </p>
@@ -1267,10 +1483,17 @@ function SkillsEditor({
       <AIErrorBanner error={error} onDismiss={clearError} />
 
       <div>
-        <label className="mb-1.5 block text-sm font-medium text-slate-300">
-          Add skills <span className="text-amber-400">*</span>
+        <label
+          className={cn(
+            "mb-1.5 block text-sm font-medium",
+            isLight ? "text-[#111827]" : "text-slate-300"
+          )}
+        >
+          Add skills <span className="text-amber-500">*</span>
         </label>
-        <p className="mb-2 text-xs text-slate-500">At least 3 required. Type and press Enter, or click a suggestion.</p>
+        <p className={cn("mb-2 text-xs", isLight ? "text-[#6b7280]" : "text-slate-500")}>
+          At least 3 required. Type and press Enter, or click a suggestion.
+        </p>
         <div className="flex gap-2">
           <Input
             value={inputValue}
@@ -1280,7 +1503,17 @@ function SkillsEditor({
             variant={inputVariant}
             className="flex-1"
           />
-          <Button variant="outline" size="sm" onClick={addSkill} className="shrink-0 border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={addSkill}
+            className={cn(
+              "shrink-0 transition-colors duration-200",
+              isLight
+                ? "border-slate-200 bg-white text-[#374151] hover:border-slate-300 hover:bg-slate-50"
+                : "border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+            )}
+          >
             <Plus className="mr-1 h-3.5 w-3.5" />
             Add
           </Button>
@@ -1289,13 +1522,25 @@ function SkillsEditor({
 
       {availableSuggestions.length > 0 && (
         <div>
-          <p className="mb-2 text-xs font-medium text-slate-500">Suggestions</p>
+          <p
+            className={cn(
+              "mb-2 text-xs font-medium",
+              isLight ? "text-[#6b7280]" : "text-slate-500"
+            )}
+          >
+            Suggestions
+          </p>
           <div className="flex flex-wrap gap-2">
             {availableSuggestions.slice(0, 12).map((skill) => (
               <button
                 key={skill}
                 onClick={() => addSuggestion(skill)}
-                className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs text-slate-400 transition-colors hover:border-brand-500/30 hover:bg-brand-500/10 hover:text-brand-300"
+                className={cn(
+                  "rounded-lg border px-3 py-1.5 text-xs transition-colors duration-200",
+                  isLight
+                    ? "border-slate-200 bg-white text-[#374151] hover:border-violet-300 hover:bg-[#f5f3ff] hover:text-[#4f46e5]"
+                    : "border-white/[0.1] bg-white/[0.04] text-slate-400 hover:border-brand-500/30 hover:bg-brand-500/10 hover:text-brand-300"
+                )}
               >
                 + {skill}
               </button>
@@ -1306,16 +1551,34 @@ function SkillsEditor({
 
       {skills.length > 0 && (
         <div>
-          <p className="mb-2 text-xs font-medium text-slate-500">
+          <p
+            className={cn(
+              "mb-2 text-xs font-medium",
+              isLight ? "text-[#6b7280]" : "text-slate-500"
+            )}
+          >
             Your skills ({skills.length}/3 min)
           </p>
           <div className="flex flex-wrap gap-2">
             {skills.map((skill, idx) => (
-              <Badge key={idx} className="gap-1 border-white/[0.12] bg-white/[0.08] pr-1.5 py-1.5 text-slate-300">
+              <Badge
+                key={idx}
+                className={cn(
+                  "gap-1 pr-1.5 py-1.5 transition-shadow",
+                  isLight
+                    ? "border-slate-200 bg-slate-50 text-[#374151] hover:shadow-sm"
+                    : "border-white/[0.12] bg-white/[0.08] text-slate-300"
+                )}
+              >
                 {skill}
                 <button
                   onClick={() => removeSkill(idx)}
-                  className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                  className={cn(
+                    "ml-0.5 rounded-full p-0.5 transition-colors",
+                    isLight
+                      ? "hover:bg-red-100 hover:text-red-600"
+                      : "hover:bg-red-500/20 hover:text-red-400"
+                  )}
                   aria-label={`Remove ${skill}`}
                 >
                   <X className="h-3 w-3" />
@@ -1329,212 +1592,6 @@ function SkillsEditor({
   );
 }
 
-/* ─── Projects ─────────────────────────────────────────────────── */
-
-function ProjectsEditor({
-  content,
-  onChange,
-}: {
-  content: any;
-  onChange: (c: any) => void;
-}) {
-  const items: any[] = content.items ?? [];
-
-  const updateItem = (index: number, field: string, value: string) => {
-    const updated = items.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    );
-    onChange({ ...content, items: updated });
-  };
-
-  const addItem = () => {
-    onChange({
-      ...content,
-      items: [
-        ...items,
-        {
-          id: `proj-${uuid().slice(0, 8)}`,
-          name: "",
-          description: "",
-          technologies: "",
-          link: "",
-        },
-      ],
-    });
-  };
-
-  const removeItem = (index: number) => {
-    onChange({ ...content, items: items.filter((_, i) => i !== index) });
-  };
-
-  return (
-    <div className="space-y-6">
-      {items.map((item, idx) => (
-        <div
-          key={item.id}
-          className="relative space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">
-              Project {idx + 1}
-            </span>
-            {items.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
-              >
-                <Trash2 className="mr-1 h-3 w-3" />
-                Remove
-              </Button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Project Name"
-              value={item.name ?? ""}
-              onChange={(e) => updateItem(idx, "name", e.target.value)}
-              placeholder="My Awesome Project"
-              variant="dark"
-            />
-            <Input
-              label="Technologies"
-              value={item.technologies ?? ""}
-              onChange={(e) => updateItem(idx, "technologies", e.target.value)}
-              placeholder="React, Node.js, PostgreSQL"
-              variant="dark"
-            />
-            <div className="col-span-2">
-              <Textarea
-                label="Description"
-                value={item.description ?? ""}
-                onChange={(e) => updateItem(idx, "description", e.target.value)}
-                placeholder="Brief description of the project and your role…"
-                className="min-h-[70px]"
-                variant="dark"
-              />
-            </div>
-            <div className="col-span-2">
-              <Input
-                label="Link"
-                value={item.link ?? ""}
-                onChange={(e) => updateItem(idx, "link", e.target.value)}
-                placeholder="https://github.com/johndoe/project"
-                variant="dark"
-              />
-            </div>
-          </div>
-        </div>
-      ))}
-
-      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
-        <Plus className="mr-1.5 h-4 w-4" />
-        Add Project
-      </Button>
-    </div>
-  );
-}
-
-/* ─── Certifications ───────────────────────────────────────────── */
-
-function CertificationsEditor({
-  content,
-  onChange,
-  awardMode,
-}: {
-  content: any;
-  onChange: (c: any) => void;
-  /** Reuse form for Awards section */
-  awardMode?: boolean;
-}) {
-  const items: any[] = content.items ?? [];
-
-  const updateItem = (index: number, field: string, value: string) => {
-    const updated = items.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    );
-    onChange({ ...content, items: updated });
-  };
-
-  const addItem = () => {
-    onChange({
-      ...content,
-      items: [
-        ...items,
-        {
-          id: `${awardMode ? "award" : "cert"}-${uuid().slice(0, 8)}`,
-          name: "",
-          issuer: "",
-          date: "",
-        },
-      ],
-    });
-  };
-
-  const removeItem = (index: number) => {
-    onChange({ ...content, items: items.filter((_, i) => i !== index) });
-  };
-
-  return (
-    <div className="space-y-6">
-      {items.map((item, idx) => (
-        <div
-          key={item.id}
-          className="relative space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4"
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">
-              {awardMode ? "Award" : "Certification"} {idx + 1}
-            </span>
-            {items.length > 1 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeItem(idx)}
-                className="h-6 px-2 text-xs text-slate-500 hover:bg-red-500/10 hover:text-red-400"
-              >
-                <Trash2 className="mr-1 h-3 w-3" />
-                Remove
-              </Button>
-            )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-3">
-            <Input
-              label={awardMode ? "Award / honor" : "Certification Name"}
-              value={item.name ?? ""}
-              onChange={(e) => updateItem(idx, "name", e.target.value)}
-              placeholder={awardMode ? "Employee of the Year" : "AWS Solutions Architect"}
-              variant="dark"
-            />
-            <Input
-              label={awardMode ? "Organization" : "Issuer"}
-              value={item.issuer ?? ""}
-              onChange={(e) => updateItem(idx, "issuer", e.target.value)}
-              placeholder={awardMode ? "Acme Corp" : "Amazon Web Services"}
-              variant="dark"
-            />
-            <Input
-              label="Date"
-              value={item.date ?? ""}
-              onChange={(e) => updateItem(idx, "date", e.target.value)}
-              placeholder="Jun 2023"
-              variant="dark"
-            />
-          </div>
-        </div>
-      ))}
-
-      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
-        <Plus className="mr-1.5 h-4 w-4" />
-        {awardMode ? "Add Award" : "Add Certification"}
-      </Button>
-    </div>
-  );
-}
-
 function VolunteerEditor({
   content,
   onChange,
@@ -1542,6 +1599,9 @@ function VolunteerEditor({
   content: any;
   onChange: (c: any) => void;
 }) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+  const inputVariant = isLight ? "light" : "dark";
   const items: any[] = content.items ?? [];
   const updateItem = (index: number, field: string, value: any) => {
     const updated = items.map((item, i) => (i === index ? { ...item, [field]: value } : item));
@@ -1578,31 +1638,102 @@ function VolunteerEditor({
   return (
     <div className="space-y-6">
       {items.map((item, idx) => (
-        <div key={item.id} className="space-y-3 rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+        <div
+          key={item.id}
+          className={cn(
+            "space-y-3 rounded-xl border p-4",
+            isLight ? "border-slate-200 bg-white shadow-sm" : "border-white/[0.08] bg-white/[0.03]"
+          )}
+        >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-500">Volunteer role {idx + 1}</span>
+            <span
+              className={cn(
+                "text-xs font-medium",
+                isLight ? "text-[#6b7280]" : "text-slate-500"
+              )}
+            >
+              Volunteer role {idx + 1}
+            </span>
             {items.length > 1 && (
-              <Button variant="ghost" size="sm" onClick={() => removeItem(idx)} className="h-6 text-xs text-red-400">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => removeItem(idx)}
+                className={cn(
+                  "h-6 text-xs",
+                  isLight ? "text-red-600 hover:bg-red-50" : "text-red-400"
+                )}
+              >
                 Remove
               </Button>
             )}
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <Input label="Role" value={item.role ?? ""} onChange={(e) => updateItem(idx, "role", e.target.value)} variant="dark" />
-            <Input label="Organization" value={item.organization ?? ""} onChange={(e) => updateItem(idx, "organization", e.target.value)} variant="dark" />
-            <Input label="Start" value={item.startDate ?? ""} onChange={(e) => updateItem(idx, "startDate", e.target.value)} variant="dark" />
-            <Input label="End" value={item.current ? "Present" : item.endDate ?? ""} onChange={(e) => updateItem(idx, "endDate", e.target.value)} disabled={item.current} variant="dark" />
+            <Input
+              label="Role"
+              value={item.role ?? ""}
+              onChange={(e) => updateItem(idx, "role", e.target.value)}
+              variant={inputVariant}
+            />
+            <Input
+              label="Organization"
+              value={item.organization ?? ""}
+              onChange={(e) => updateItem(idx, "organization", e.target.value)}
+              variant={inputVariant}
+            />
+            <Input
+              label="Start"
+              value={item.startDate ?? ""}
+              onChange={(e) => updateItem(idx, "startDate", e.target.value)}
+              variant={inputVariant}
+            />
+            <Input
+              label="End"
+              value={item.current ? "Present" : item.endDate ?? ""}
+              onChange={(e) => updateItem(idx, "endDate", e.target.value)}
+              disabled={item.current}
+              variant={inputVariant}
+            />
           </div>
-          <label className="flex items-center gap-2 text-xs text-slate-400">
-            <input type="checkbox" checked={!!item.current} onChange={(e) => updateItem(idx, "current", e.target.checked)} className="h-4 w-4 rounded border-white/20" />
+          <label
+            className={cn(
+              "flex items-center gap-2 text-xs",
+              isLight ? "text-[#374151]" : "text-slate-400"
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={!!item.current}
+              onChange={(e) => updateItem(idx, "current", e.target.checked)}
+              className={cn(
+                "h-4 w-4 rounded",
+                isLight ? "border-slate-300" : "border-white/20"
+              )}
+            />
             Ongoing
           </label>
           {(item.bullets ?? [""]).map((b: string, bi: number) => (
-            <Textarea key={bi} value={b} onChange={(e) => updateBullet(idx, bi, e.target.value)} placeholder="Impact or scope…" className="min-h-[52px]" variant="dark" />
+            <Textarea
+              key={bi}
+              value={b}
+              onChange={(e) => updateBullet(idx, bi, e.target.value)}
+              placeholder="Impact or scope…"
+              className="min-h-[52px]"
+              variant={inputVariant}
+            />
           ))}
         </div>
       ))}
-      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={addItem}
+        className={cn(
+          isLight
+            ? "border-slate-200 text-[#374151] hover:bg-slate-50"
+            : "border-white/[0.12] text-slate-300"
+        )}
+      >
         <Plus className="mr-1 h-4 w-4" /> Add volunteer experience
       </Button>
     </div>
@@ -1617,11 +1748,19 @@ function InterestsEditor({
   onChange: (c: any) => void;
 }) {
   const { theme } = useTheme();
-  const v = theme === "light" ? "light" : "dark";
+  const isLight = theme === "light";
+  const v = isLight ? "light" : "dark";
   const text = (content.items ?? []).filter(Boolean).join(", ");
   return (
     <div>
-      <p className="mb-2 text-xs text-slate-500">Optional — comma-separated (e.g. Open source, Mentoring, Photography)</p>
+      <p
+        className={cn(
+          "mb-2 text-xs",
+          isLight ? "text-[#6b7280]" : "text-slate-500"
+        )}
+      >
+        Optional — comma-separated (e.g. Open source, Mentoring, Photography)
+      </p>
       <Textarea
         value={text}
         onChange={(e) =>
@@ -1640,96 +1779,3 @@ function InterestsEditor({
   );
 }
 
-/* ─── Languages ────────────────────────────────────────────────── */
-
-const proficiencyLevels = [
-  "Native",
-  "Fluent",
-  "Advanced",
-  "Intermediate",
-  "Basic",
-] as const;
-
-function LanguagesEditor({
-  content,
-  onChange,
-}: {
-  content: any;
-  onChange: (c: any) => void;
-}) {
-  const items: any[] = content.items ?? [];
-
-  const updateItem = (index: number, field: string, value: string) => {
-    const updated = items.map((item, i) =>
-      i === index ? { ...item, [field]: value } : item
-    );
-    onChange({ ...content, items: updated });
-  };
-
-  const addItem = () => {
-    onChange({
-      ...content,
-      items: [
-        ...items,
-        {
-          id: `lang-${uuid().slice(0, 8)}`,
-          language: "",
-          proficiency: "Native",
-        },
-      ],
-    });
-  };
-
-  const removeItem = (index: number) => {
-    onChange({ ...content, items: items.filter((_, i) => i !== index) });
-  };
-
-  return (
-    <div className="space-y-4">
-      {items.map((item, idx) => (
-        <div key={item.id} className="flex items-end gap-3">
-          <Input
-            label={idx === 0 ? "Language" : undefined}
-            value={item.language ?? ""}
-            onChange={(e) => updateItem(idx, "language", e.target.value)}
-            placeholder="Spanish"
-            variant="dark"
-          />
-          <div className="w-full">
-            {idx === 0 && (
-              <label className="mb-1.5 block text-sm font-medium text-slate-300">
-                Proficiency
-              </label>
-            )}
-            <select
-              value={item.proficiency ?? "Native"}
-              onChange={(e) => updateItem(idx, "proficiency", e.target.value)}
-              className="flex h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.05] px-3.5 py-2 text-sm text-white transition-colors focus:border-brand-500/50 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
-            >
-              {proficiencyLevels.map((level) => (
-                <option key={level} value={level} className="bg-dark-100 text-white">
-                  {level}
-                </option>
-              ))}
-            </select>
-          </div>
-          {items.length > 1 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => removeItem(idx)}
-              className="mb-0.5 h-8 w-8 shrink-0 p-0 text-slate-500 hover:bg-red-500/10 hover:text-red-400"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          )}
-        </div>
-      ))}
-
-      <Button variant="outline" size="sm" onClick={addItem} className="border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white">
-        <Plus className="mr-1.5 h-4 w-4" />
-        Add Language
-      </Button>
-    </div>
-  );
-}

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
 
 interface ModalProps {
   isOpen: boolean;
@@ -24,6 +25,9 @@ const SIZE_CLASSES = {
 };
 
 function Modal({ isOpen, onClose, title, children, className, size = "md" }: ModalProps) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
+
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -52,7 +56,10 @@ function Modal({ isOpen, onClose, title, children, className, size = "md" }: Mod
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-md"
+            className={cn(
+              "fixed inset-0 backdrop-blur-md",
+              isLight ? "bg-slate-900/40" : "bg-black/60"
+            )}
             onClick={onClose}
             aria-hidden="true"
           />
@@ -66,17 +73,32 @@ function Modal({ isOpen, onClose, title, children, className, size = "md" }: Mod
             aria-modal="true"
             aria-label={title}
             className={cn(
-              "site-modal relative z-10 w-full rounded-2xl border border-white/[0.08] bg-dark-50 p-6 shadow-glass-lg transition-colors duration-300",
+              "site-modal relative z-10 w-full rounded-2xl border p-6 shadow-xl transition-colors duration-300",
+              isLight
+                ? "border-slate-200 bg-white shadow-slate-900/10"
+                : "border-white/[0.08] bg-dark-50 shadow-glass-lg",
               SIZE_CLASSES[size],
               className
             )}
           >
             {title && (
               <div className="mb-5 flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">{title}</h2>
+                <h2
+                  className={cn(
+                    "text-lg font-semibold",
+                    isLight ? "text-slate-900" : "text-white"
+                  )}
+                >
+                  {title}
+                </h2>
                 <button
                   onClick={onClose}
-                  className="rounded-xl p-1.5 text-slate-500 transition-all hover:bg-white/5 hover:text-white"
+                  className={cn(
+                    "rounded-xl p-1.5 transition-all",
+                    isLight
+                      ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                      : "text-slate-500 hover:bg-white/5 hover:text-white"
+                  )}
                   aria-label="Close"
                 >
                   <X className="h-5 w-5" />
@@ -87,7 +109,12 @@ function Modal({ isOpen, onClose, title, children, className, size = "md" }: Mod
             {!title && (
               <button
                 onClick={onClose}
-                className="absolute right-4 top-4 rounded-xl p-1.5 text-slate-500 transition-all hover:bg-white/5 hover:text-white"
+                className={cn(
+                  "absolute right-4 top-4 rounded-xl p-1.5 transition-all",
+                  isLight
+                    ? "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                    : "text-slate-500 hover:bg-white/5 hover:text-white"
+                )}
                 aria-label="Close"
               >
                 <X className="h-5 w-5" />

@@ -63,6 +63,35 @@ const DEFAULT_SECTIONS = [
       items: [] as string[],
     },
   },
+  {
+    type: "projects",
+    order: 5,
+    content: {
+      items: [
+        {
+          id: "proj-1",
+          name: "",
+          description: "",
+          technologies: "",
+          link: "",
+        },
+      ],
+    },
+  },
+  {
+    type: "certifications",
+    order: 6,
+    content: {
+      items: [{ id: "cert-1", name: "", issuer: "", date: "" }],
+    },
+  },
+  {
+    type: "languages",
+    order: 7,
+    content: {
+      items: [{ id: "lang-1", language: "", proficiency: "Native" }],
+    },
+  },
 ];
 
 function getUserId(session: unknown): string | undefined {

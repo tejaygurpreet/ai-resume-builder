@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Modal } from "@/components/ui/modal";
 import { Check, X, ChevronDown, Sparkles, Zap, Star, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
 
 type ActivePlan =
   | "free"
@@ -66,13 +67,41 @@ const faqItems = [
 ];
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
+  const { theme } = useTheme();
+  const isLight = theme === "light";
   return (
-    <details className="group border-b border-white/[0.04] last:border-b-0">
-      <summary className="flex cursor-pointer items-center justify-between py-5 text-left text-base font-medium text-white transition-colors hover:text-brand-300 [&::-webkit-details-marker]:hidden">
+    <details
+      className={cn(
+        "group border-b last:border-b-0",
+        isLight ? "border-slate-200" : "border-white/[0.04]"
+      )}
+    >
+      <summary
+        className={cn(
+          "flex cursor-pointer items-center justify-between py-5 text-left text-base font-medium transition-colors [&::-webkit-details-marker]:hidden",
+          isLight
+            ? "text-slate-900 hover:text-brand-700"
+            : "text-white hover:text-brand-300"
+        )}
+      >
         {question}
-        <ChevronDown className="h-5 w-5 flex-shrink-0 text-slate-600 transition-transform duration-300 group-open:rotate-180 group-open:text-brand-400" />
+        <ChevronDown
+          className={cn(
+            "h-5 w-5 flex-shrink-0 transition-transform duration-300 group-open:rotate-180",
+            isLight
+              ? "text-slate-500 group-open:text-brand-600"
+              : "text-slate-600 group-open:text-brand-400"
+          )}
+        />
       </summary>
-      <div className="pb-5 pr-12 text-sm leading-relaxed text-slate-400">{answer}</div>
+      <div
+        className={cn(
+          "pb-5 pr-12 text-sm leading-relaxed",
+          isLight ? "text-slate-600" : "text-slate-400"
+        )}
+      >
+        {answer}
+      </div>
     </details>
   );
 }
@@ -114,6 +143,8 @@ export default function PricingPage() {
   } | null>(null);
   const isAuthenticated = status === "authenticated" && !!session?.user;
   const activePlan = deriveActivePlan(subscription);
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   const [exportWarningOpen, setExportWarningOpen] = useState(false);
   const [currentPlanModalOpen, setCurrentPlanModalOpen] = useState(false);
@@ -270,22 +301,38 @@ export default function PricingPage() {
   const canUpgradeOneTime = activePlan !== "one_time_export";
 
   return (
-    <div className="min-h-screen bg-[#010409]">
+    <div className={cn("min-h-screen", isLight ? "bg-slate-50" : "bg-[#010409]")}>
       <Navbar />
 
       <main className="relative overflow-hidden">
-        <div className="orb orb-cyan absolute right-1/4 top-0 h-[500px] w-[500px] animate-pulse-glow" />
-        <div className="orb orb-violet absolute left-0 top-1/2 h-[400px] w-[400px] animate-pulse-glow [animation-delay:2s]" />
+        {!isLight && (
+          <>
+            <div className="orb orb-cyan absolute right-1/4 top-0 h-[500px] w-[500px] animate-pulse-glow" />
+            <div className="orb orb-violet absolute left-0 top-1/2 h-[400px] w-[400px] animate-pulse-glow [animation-delay:2s]" />
+          </>
+        )}
 
         <section className="relative px-4 pt-20 pb-12 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-300">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold",
+                isLight
+                  ? "border-violet-200 bg-violet-50 text-violet-800"
+                  : "border-brand-500/20 bg-brand-500/10 text-brand-300"
+              )}
+            >
               <Sparkles className="h-3.5 w-3.5" /> Simple pricing
             </span>
-            <h1 className="mt-5 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
+            <h1
+              className={cn(
+                "mt-5 text-4xl font-extrabold tracking-tight sm:text-5xl",
+                isLight ? "text-[#111827]" : "text-white"
+              )}
+            >
               Choose Your Plan
             </h1>
-            <p className="mt-4 text-lg text-slate-400">
+            <p className={cn("mt-4 text-lg", isLight ? "text-[#374151]" : "text-slate-400")}>
               Start free and upgrade when you need more power
             </p>
           </div>
@@ -294,16 +341,35 @@ export default function PricingPage() {
         <section className="relative px-4 pb-16 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-6xl flex-col items-stretch justify-center gap-8 lg:flex-row lg:items-start">
             {/* Free */}
-            <div className="flex w-full max-w-md flex-col rounded-2xl border border-white/[0.06] bg-white/[0.03] p-8 backdrop-blur-sm transition-all duration-300 hover:border-white/[0.12] hover:bg-white/[0.05] lg:max-w-[340px]">
-              <h3 className="text-xl font-semibold text-white">Free</h3>
-              <p className="mt-1 text-sm text-slate-500">Perfect for getting started</p>
+            <div
+              className={cn(
+                "flex w-full max-w-md flex-col rounded-2xl border p-8 backdrop-blur-sm transition-all duration-300 lg:max-w-[340px]",
+                isLight
+                  ? "border-slate-200 bg-white shadow-sm hover:border-slate-300 hover:shadow-md"
+                  : "border-white/[0.06] bg-white/[0.03] hover:border-white/[0.12] hover:bg-white/[0.05]"
+              )}
+            >
+              <h3 className={cn("text-xl font-semibold", isLight ? "text-[#111827]" : "text-white")}>
+                Free
+              </h3>
+              <p className={cn("mt-1 text-sm", isLight ? "text-[#6b7280]" : "text-slate-500")}>
+                Perfect for getting started
+              </p>
               <p className="mt-6">
-                <span className="text-4xl font-extrabold text-white">$0</span>
-                <span className="ml-1 text-slate-500">/month</span>
+                <span className={cn("text-4xl font-extrabold", isLight ? "text-[#111827]" : "text-white")}>
+                  $0
+                </span>
+                <span className={cn("ml-1", isLight ? "text-[#6b7280]" : "text-slate-500")}>/month</span>
               </p>
               <ul className="mt-8 flex-1 space-y-4">
                 {freeFeatures.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-slate-400">
+                  <li
+                    key={f}
+                    className={cn(
+                      "flex items-center gap-3 text-sm",
+                      isLight ? "text-[#374151]" : "text-slate-400"
+                    )}
+                  >
                     <Check className="h-5 w-5 flex-shrink-0 text-emerald-500" />
                     {f}
                   </li>
@@ -312,7 +378,12 @@ export default function PricingPage() {
               <Link href={isAuthenticated ? "/dashboard" : "/signup"} className="mt-8 block">
                 <Button
                   variant="outline"
-                  className="w-full border-white/[0.15] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                  className={cn(
+                    "w-full transition-all duration-200",
+                    isLight
+                      ? "border-slate-200 bg-white text-[#374151] hover:border-slate-300 hover:bg-slate-50 hover:shadow-sm"
+                      : "border-white/[0.15] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+                  )}
                   size="lg"
                 >
                   {isAuthenticated ? "Go to Dashboard" : "Get Started Free"}
@@ -321,33 +392,72 @@ export default function PricingPage() {
             </div>
 
             {/* Pro - elevated, larger */}
-            <div className="relative flex w-full max-w-md flex-col rounded-[1.25rem] border-2 border-purple-500/30 bg-gradient-to-b from-purple-500/10 to-dark-50 p-8 shadow-[0_0_40px_-12px_rgba(139,92,246,0.25)] transition-all duration-300 hover:border-purple-500/50 hover:shadow-[0_0_50px_-12px_rgba(139,92,246,0.35)] lg:-mt-2 lg:max-w-[380px] lg:scale-[1.02]">
-              <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-purple-600 to-violet-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-purple-500/30">
+            <div
+              className={cn(
+                "relative flex w-full max-w-md flex-col rounded-[1.25rem] border-2 p-8 transition-all duration-300 lg:-mt-2 lg:max-w-[380px] lg:scale-[1.02]",
+                isLight
+                  ? "border-violet-200 bg-gradient-to-b from-violet-50 via-white to-indigo-50/95 shadow-[0_8px_40px_-12px_rgba(79,70,229,0.18)] hover:border-violet-300 hover:shadow-[0_12px_48px_-12px_rgba(79,70,229,0.22)]"
+                  : "border-purple-500/30 bg-gradient-to-b from-purple-500/10 to-dark-50 shadow-[0_0_40px_-12px_rgba(139,92,246,0.25)] hover:border-purple-500/50 hover:shadow-[0_0_50px_-12px_rgba(139,92,246,0.35)]"
+              )}
+            >
+              <span
+                className={cn(
+                  "absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-purple-600 to-violet-500 px-4 py-1.5 text-xs font-semibold text-white shadow-lg shadow-purple-500/30",
+                  isLight && "[text-shadow:0_1px_2px_rgba(0,0,0,0.25)]"
+                )}
+              >
                 Most Popular
               </span>
               {activePlan === "pro_monthly" && (
-                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
+                <div
+                  className={cn(
+                    "mb-3 rounded-xl border px-3 py-2 text-xs font-medium",
+                    isLight
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  )}
+                >
                   You are currently on Pro Monthly
                 </div>
               )}
               {activePlan === "pro_annual" && (
-                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
+                <div
+                  className={cn(
+                    "mb-3 rounded-xl border px-3 py-2 text-xs font-medium",
+                    isLight
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  )}
+                >
                   You are currently on Pro Annual
                 </div>
               )}
               {activePlan === "pro_lifetime" && (
-                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-300">
+                <div
+                  className={cn(
+                    "mb-3 rounded-xl border px-3 py-2 text-sm font-medium",
+                    isLight
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  )}
+                >
                   You are all set for Lifetime. No need to worry about plans.
                 </div>
               )}
               <div className="mt-1 flex items-center gap-2">
-                <h3 className="text-xl font-semibold text-white">Pro</h3>
+                <h3 className={cn("text-xl font-semibold", isLight ? "text-[#111827]" : "text-white")}>
+                  Pro
+                </h3>
                 <Star className="h-4 w-4 text-amber-400 fill-amber-400" />
               </div>
-              <p className="mt-1 text-sm text-slate-400">Everything you need to land the job</p>
+              <p className={cn("mt-1 text-sm", isLight ? "text-[#374151]" : "text-slate-400")}>
+                Everything you need to land the job
+              </p>
               <p className="mt-6">
-                <span className="text-4xl font-extrabold text-white">$7.99</span>
-                <span className="ml-1 text-slate-500">/month</span>
+                <span className={cn("text-4xl font-extrabold", isLight ? "text-[#111827]" : "text-white")}>
+                  $7.99
+                </span>
+                <span className={cn("ml-1", isLight ? "text-[#6b7280]" : "text-slate-500")}>/month</span>
               </p>
               <div className="mt-4 space-y-2">
                 {proOptions.map((opt) => {
@@ -360,17 +470,33 @@ export default function PricingPage() {
                       onClick={() => !isLifetimeLocked && canSelect && setProInterval(opt.id)}
                       disabled={isCurrent || isLifetimeLocked}
                       className={cn(
-                        "flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-left text-sm transition-all",
+                        "flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-left text-sm transition-all duration-200",
                         isCurrent
-                          ? "cursor-default border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                          ? isLight
+                            ? "cursor-default border-emerald-200 bg-emerald-50 text-emerald-800"
+                            : "cursor-default border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
                           : proInterval === opt.id
-                            ? "border-purple-500/50 bg-purple-500/20 text-white"
-                            : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/[0.15] hover:text-slate-300"
+                            ? isLight
+                              ? "border-violet-300 bg-[#f5f3ff] text-[#111827]"
+                              : "border-purple-500/50 bg-purple-500/20 text-white"
+                            : isLight
+                              ? "border-slate-200 bg-white text-[#374151] hover:border-slate-300"
+                              : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/[0.15] hover:text-slate-300"
                       )}
                     >
                       <span>
                         {isCurrent ? (
-                          <>Current Plan — <span className="font-semibold text-emerald-300">{opt.price}</span></>
+                          <>
+                            Current Plan —{" "}
+                            <span
+                              className={cn(
+                                "font-semibold",
+                                isLight ? "text-emerald-900" : "text-emerald-300"
+                              )}
+                            >
+                              {opt.price}
+                            </span>
+                          </>
                         ) : (
                           <>
                             {opt.id === "annual" && activePlan === "pro_monthly"
@@ -381,12 +507,26 @@ export default function PricingPage() {
                                   ? "Upgrade to Lifetime"
                                   : opt.label}
                             {" — "}
-                            <span className="font-semibold text-white">{opt.price}</span>
+                            <span
+                              className={cn(
+                                "font-semibold",
+                                isLight ? "text-[#111827]" : "text-white"
+                              )}
+                            >
+                              {opt.price}
+                            </span>
                           </>
                         )}
                       </span>
                       {opt.badge && !isCurrent && (
-                        <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-medium",
+                            isLight
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-emerald-500/20 text-emerald-400"
+                          )}
+                        >
                           {opt.badge}
                         </span>
                       )}
@@ -396,7 +536,13 @@ export default function PricingPage() {
               </div>
               <ul className="mt-8 flex-1 space-y-4">
                 {proFeatures.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-slate-300">
+                  <li
+                    key={f}
+                    className={cn(
+                      "flex items-center gap-3 text-sm",
+                      isLight ? "text-[#374151]" : "text-slate-300"
+                    )}
+                  >
                     <Check className="h-5 w-5 flex-shrink-0 text-emerald-500" />
                     {f}
                   </li>
@@ -404,7 +550,12 @@ export default function PricingPage() {
               </ul>
               {activePlan === "pro_lifetime" ? (
                 <Button
-                  className="mt-8 w-full cursor-not-allowed bg-slate-600/50 text-base font-bold text-slate-400"
+                  className={cn(
+                    "mt-8 w-full cursor-not-allowed text-base font-bold",
+                    isLight
+                      ? "bg-slate-200 text-slate-500"
+                      : "bg-slate-600/50 text-slate-400"
+                  )}
                   size="lg"
                   disabled
                 >
@@ -412,7 +563,12 @@ export default function PricingPage() {
                 </Button>
               ) : (
                 <Button
-                  className="mt-8 w-full bg-gradient-to-r from-purple-600 to-violet-600 text-base font-bold shadow-lg shadow-purple-500/25 hover:from-purple-500 hover:to-violet-500 hover:shadow-purple-500/30"
+                  className={cn(
+                    "mt-8 w-full text-base font-bold transition-all duration-200",
+                    isLight
+                      ? "bg-gradient-to-r from-[#4f46e5] to-violet-600 text-white shadow-md shadow-indigo-500/20 hover:scale-[1.01] hover:from-[#4338ca] hover:to-violet-700 hover:shadow-lg"
+                      : "bg-gradient-to-r from-purple-600 to-violet-600 shadow-lg shadow-purple-500/25 hover:from-purple-500 hover:to-violet-500 hover:shadow-purple-500/30"
+                  )}
                   size="lg"
                   loading={isLoading === "pro"}
                   disabled={false}
@@ -433,36 +589,72 @@ export default function PricingPage() {
             </div>
 
             {/* One-Time Export */}
-            <div className="flex w-full max-w-md flex-col rounded-2xl border border-amber-500/20 bg-amber-500/5 p-8 backdrop-blur-sm transition-all duration-300 hover:border-amber-500/30 hover:bg-amber-500/[0.08] lg:max-w-[340px]">
+            <div
+              className={cn(
+                "flex w-full max-w-md flex-col rounded-2xl border p-8 backdrop-blur-sm transition-all duration-300 lg:max-w-[340px]",
+                isLight
+                  ? "border-amber-200 bg-amber-50/90 shadow-sm hover:border-amber-300 hover:shadow-md"
+                  : "border-amber-500/20 bg-amber-500/5 hover:border-amber-500/30 hover:bg-amber-500/[0.08]"
+              )}
+            >
               {activePlan === "one_time_export" && (
-                <div className="mb-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-xs font-medium text-emerald-300">
+                <div
+                  className={cn(
+                    "mb-3 rounded-xl border px-3 py-2 text-xs font-medium",
+                    isLight
+                      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                  )}
+                >
                   You already have Export Access
                 </div>
               )}
               <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-400" />
-                <h3 className="text-xl font-semibold text-white">One-Time Export</h3>
+                <Zap className="h-5 w-5 text-amber-500" />
+                <h3 className={cn("text-xl font-semibold", isLight ? "text-[#111827]" : "text-white")}>
+                  One-Time Export
+                </h3>
               </div>
-              <p className="mt-1 text-sm text-slate-500">$19.99 one-time – unlimited exports forever, no ads, all formats</p>
+              <p className={cn("mt-1 text-sm", isLight ? "text-[#374151]" : "text-slate-500")}>
+                $19.99 one-time – unlimited exports forever, no ads, all formats
+              </p>
               <p className="mt-6">
-                <span className="text-4xl font-extrabold text-white">$19.99</span>
-                <span className="ml-1 text-slate-500">one-time</span>
+                <span className={cn("text-4xl font-extrabold", isLight ? "text-[#111827]" : "text-white")}>
+                  $19.99
+                </span>
+                <span className={cn("ml-1", isLight ? "text-[#6b7280]" : "text-slate-500")}>one-time</span>
               </p>
               <ul className="mt-8 flex-1 space-y-4">
                 {oneTimeFeatures.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-sm text-slate-400">
+                  <li
+                    key={f}
+                    className={cn(
+                      "flex items-center gap-3 text-sm",
+                      isLight ? "text-[#374151]" : "text-slate-400"
+                    )}
+                  >
                     <Check className="h-5 w-5 flex-shrink-0 text-emerald-500" />
                     {f}
                   </li>
                 ))}
-                <li className="flex items-center gap-3 text-sm text-slate-500">
+                <li
+                  className={cn(
+                    "flex items-center gap-3 text-sm",
+                    isLight ? "text-[#6b7280]" : "text-slate-500"
+                  )}
+                >
                   <X className="h-5 w-5 flex-shrink-0 text-red-500" />
                   No Pro AI features (tailoring, cover letter, ATS)
                 </li>
               </ul>
               <Button
                 variant="outline"
-                className="mt-8 w-full border-amber-500/40 text-amber-300 hover:bg-amber-500/15 hover:border-amber-500/50 hover:text-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
+                className={cn(
+                  "mt-8 w-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60",
+                  isLight
+                    ? "border-amber-300 bg-white text-amber-900 hover:scale-[1.02] hover:border-amber-400 hover:bg-amber-100 hover:shadow-md"
+                    : "border-amber-500/40 text-amber-300 hover:border-amber-500/50 hover:bg-amber-900/30 hover:text-amber-100"
+                )}
                 size="lg"
                 loading={isLoading === "one-time"}
                 disabled={activePlan === "pro_lifetime"}
@@ -475,22 +667,59 @@ export default function PricingPage() {
         </section>
 
         {/* Competitor comparison */}
-        <section className="relative border-t border-white/[0.04] px-4 py-16 sm:px-6 lg:px-8">
+        <section
+          className={cn(
+            "relative border-t px-4 py-16 sm:px-6 lg:px-8",
+            isLight ? "border-slate-200" : "border-white/[0.04]"
+          )}
+        >
           <div className="mx-auto max-w-2xl">
-            <h2 className="text-center text-xl font-bold tracking-tight text-white sm:text-2xl">
+            <h2
+              className={cn(
+                "text-center text-xl font-bold tracking-tight sm:text-2xl",
+                isLight ? "text-[#111827]" : "text-white"
+              )}
+            >
               Compare Our Price
             </h2>
-            <p className="mx-auto mt-2 max-w-md text-center text-sm text-slate-500">
+            <p
+              className={cn(
+                "mx-auto mt-2 max-w-md text-center text-sm",
+                isLight ? "text-[#6b7280]" : "text-slate-500"
+              )}
+            >
               Professional resume builders at a fraction of the cost
             </p>
-            <div className="mt-8 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+            <div
+              className={cn(
+                "mt-8 overflow-hidden rounded-2xl border",
+                isLight
+                  ? "border-slate-200 bg-white shadow-sm"
+                  : "border-white/[0.06] bg-white/[0.02]"
+              )}
+            >
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/[0.06] bg-white/[0.03]">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-400">
+                  <tr
+                    className={cn(
+                      "border-b",
+                      isLight ? "border-slate-200 bg-slate-50" : "border-white/[0.06] bg-white/[0.03]"
+                    )}
+                  >
+                    <th
+                      className={cn(
+                        "px-6 py-4 text-left text-sm font-semibold",
+                        isLight ? "text-[#374151]" : "text-slate-400"
+                      )}
+                    >
                       Resume Builder
                     </th>
-                    <th className="px-6 py-4 text-right text-sm font-semibold text-slate-400">
+                    <th
+                      className={cn(
+                        "px-6 py-4 text-right text-sm font-semibold",
+                        isLight ? "text-[#374151]" : "text-slate-400"
+                      )}
+                    >
                       Price
                     </th>
                   </tr>
@@ -500,20 +729,34 @@ export default function PricingPage() {
                     <tr
                       key={row.name}
                       className={cn(
-                        "border-b border-white/[0.04] last:border-b-0",
-                        row.highlight && "bg-brand-500/10"
+                        "border-b last:border-b-0",
+                        isLight ? "border-slate-100" : "border-white/[0.04]",
+                        row.highlight && (isLight ? "bg-violet-50/80" : "bg-brand-500/10")
                       )}
                     >
                       <td className="px-6 py-4">
                         <span
                           className={cn(
                             "font-medium",
-                            row.highlight ? "text-brand-300" : "text-slate-300"
+                            row.highlight
+                              ? isLight
+                                ? "text-[#4f46e5]"
+                                : "text-brand-300"
+                              : isLight
+                                ? "text-[#374151]"
+                                : "text-slate-300"
                           )}
                         >
                           {row.name}
                           {row.highlight && (
-                            <span className="ml-2 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+                            <span
+                              className={cn(
+                                "ml-2 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                                isLight
+                                  ? "bg-emerald-100 text-emerald-800"
+                                  : "bg-emerald-500/20 text-emerald-400"
+                              )}
+                            >
                               You
                             </span>
                           )}
@@ -523,7 +766,13 @@ export default function PricingPage() {
                         <span
                           className={cn(
                             "font-semibold",
-                            row.highlight ? "text-emerald-400" : "text-slate-400"
+                            row.highlight
+                              ? isLight
+                                ? "text-emerald-700"
+                                : "text-emerald-400"
+                              : isLight
+                                ? "text-[#6b7280]"
+                                : "text-slate-400"
                           )}
                         >
                           {row.price}
@@ -540,13 +789,30 @@ export default function PricingPage() {
         {/* FAQ */}
         <section className="relative px-4 py-20 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
-            <h2 className="text-center text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            <h2
+              className={cn(
+                "text-center text-2xl font-bold tracking-tight sm:text-3xl",
+                isLight ? "text-[#111827]" : "text-white"
+              )}
+            >
               Pricing FAQ
             </h2>
-            <p className="mx-auto mt-2 max-w-xl text-center text-slate-500">
+            <p
+              className={cn(
+                "mx-auto mt-2 max-w-xl text-center",
+                isLight ? "text-[#6b7280]" : "text-slate-500"
+              )}
+            >
               Common questions about billing and plans
             </p>
-            <div className="mt-12 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-6">
+            <div
+              className={cn(
+                "mt-12 rounded-2xl border px-6",
+                isLight
+                  ? "border-slate-200 bg-white shadow-sm"
+                  : "border-white/[0.06] bg-white/[0.02]"
+              )}
+            >
               {faqItems.map((item) => (
                 <FAQItem key={item.question} question={item.question} answer={item.answer} />
               ))}

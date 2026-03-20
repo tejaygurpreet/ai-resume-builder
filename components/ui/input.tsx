@@ -39,10 +39,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             "focus:outline-none focus:ring-2 focus:ring-offset-0",
             isLight
               ? cn(
-                  "bg-white border-[#cbd5e1] text-[#0f172a] placeholder:text-slate-400",
+                  "bg-white border-[#d1d5db] text-[#111827] placeholder:text-slate-500",
                   error
                     ? "border-red-300 focus:border-red-400 focus:ring-red-500/20"
-                    : "hover:border-slate-400 focus:border-violet-600 focus:ring-violet-600/20"
+                    : "hover:border-slate-400 focus:border-[#4f46e5] focus:ring-[#4f46e5]/20"
                 )
               : cn(
                   "bg-white/[0.05] border-white/[0.08] text-white placeholder:text-slate-500",

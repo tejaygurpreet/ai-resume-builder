@@ -310,11 +310,46 @@
 /* ═══ LIGHT MODE THEME — Polished 2026 palette ═══ */
 [data-theme="light"] {
   color-scheme: light;
+  /* Professional light palette — WCAG-friendly */
+  --optima-bg-page: #f9fafb;
+  --optima-bg-elevated: #ffffff;
+  --optima-text-primary: #111827;
+  --optima-text-secondary: #4b5563;
+  --optima-text-muted: #6b7280;
+  --optima-text-placeholder: #9ca3af;
+  --optima-border: #e5e7eb;
+  --optima-border-subtle: #f3f4f6;
+  --optima-accent: #4f46e5;
+  --optima-accent-hover: #4338ca;
+  --optima-success: #059669;
+  --optima-success-bg: #ecfdf5;
+  --optima-warning: #d97706;
+  --optima-warning-bg: #fffbeb;
+  --optima-error: #dc2626;
+  --optima-error-bg: #fef2f2;
+  --optima-ring: rgba(79, 70, 229, 0.35);
 }
 
 [data-theme="light"] body {
-  background: #f8fafc !important;
-  color: #334155 !important;
+  background: var(--optima-bg-page) !important;
+  color: var(--optima-text-primary) !important;
+}
+
+[data-theme="light"] ::selection {
+  background: rgba(79, 70, 229, 0.2);
+  color: #111827;
+}
+
+/* Inline links on marketing pages — indigo-600 / 700 for 4.5:1+ on white */
+[data-theme="light"] .min-h-screen a.text-brand-400,
+[data-theme="light"] .min-h-screen a.text-brand-300 {
+  color: #4f46e5 !important;
+}
+[data-theme="light"] .min-h-screen a.text-brand-400:hover,
+[data-theme="light"] .min-h-screen a.text-brand-300:hover {
+  color: #4338ca !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 [data-theme="light"] .theme-toggle-btn {
@@ -801,17 +836,17 @@
   background: rgba(15, 23, 42, 0.08) !important;
 }
 
-/* AI toolbar buttons — light mode editor sidebar */
+/* AI toolbar buttons — light mode editor sidebar (matches #f5f3ff / #4f46e5 / #ddd6fe) */
 [data-theme="light"] .editor-ai-toolbar .editor-ai-btn {
-  border-color: rgba(124, 58, 237, 0.35) !important;
-  background: linear-gradient(135deg, rgba(245, 243, 255, 0.95) 0%, rgba(237, 233, 254, 0.85) 100%) !important;
-  color: #5b21b6 !important;
-  box-shadow: 0 1px 3px rgba(91, 33, 182, 0.12) !important;
+  border-color: #ddd6fe !important;
+  background: #f5f3ff !important;
+  color: #4f46e5 !important;
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.12) !important;
 }
 [data-theme="light"] .editor-ai-toolbar .editor-ai-btn:hover:not(:disabled) {
-  border-color: rgba(124, 58, 237, 0.5) !important;
-  background: linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%) !important;
-  color: #4c1d95 !important;
+  border-color: #c4b5fd !important;
+  background: #ddd6fe !important;
+  color: #4338ca !important;
 }
 [data-theme="light"] .editor-ai-toolbar .editor-ai-btn:disabled {
   opacity: 0.45 !important;

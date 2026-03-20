@@ -13,12 +13,10 @@ import {
   User,
   LayoutDashboard,
   ChevronDown,
-  Sun,
-  Moon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useTheme } from "@/components/theme-provider";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navLinks = [
   { href: "/templates", label: "Templates" },
@@ -37,7 +35,6 @@ function isActivePath(pathname: string, href: string): boolean {
 export function Navbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
-  const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -105,13 +102,7 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <button
-            onClick={toggleTheme}
-            className="theme-toggle-btn flex h-9 w-9 items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] text-slate-400 transition-all duration-200 hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/30"
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </button>
+          <ThemeToggle variant="navbar" />
           {isAuthenticated ? (
             <>
               <Link href="/dashboard">
@@ -226,13 +217,10 @@ export function Navbar() {
                 );
               })}
               <div className="my-3 border-t border-white/[0.06]" />
-              <button
-                onClick={() => { toggleTheme(); setMobileOpen(false); }}
-                className="theme-toggle-btn-mobile flex w-full items-center gap-2.5 rounded-xl px-4 py-3 text-left text-[15px] font-medium text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-white"
-              >
-                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                {theme === "dark" ? "Light mode" : "Dark mode"}
-              </button>
+              <ThemeToggle
+                variant="nav-mobile"
+                onAfterToggle={() => setMobileOpen(false)}
+              />
               {isAuthenticated ? (
                 <>
                   <Link

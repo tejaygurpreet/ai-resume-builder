@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import { isValidPhoneDigits, normalizePhoneDigits } from "@/lib/phone";
+import { AuthThemeCorner } from "@/components/auth-theme-corner";
 
 function SignupForm() {
   const router = useRouter();
@@ -100,7 +101,8 @@ function SignupForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-dark px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-dark px-4">
+      <AuthThemeCorner />
       <div className="absolute inset-0 bg-grid-dark bg-grid opacity-50" />
       <div className="orb orb-violet absolute top-1/4 right-1/3 h-[500px] w-[500px] animate-pulse-glow" />
       <div className="orb orb-cyan absolute bottom-1/3 left-1/4 h-[400px] w-[400px] animate-pulse-glow [animation-delay:2s]" />

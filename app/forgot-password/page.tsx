@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
 import toast from "react-hot-toast";
+import { AuthThemeCorner } from "@/components/auth-theme-corner";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -36,7 +37,8 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-dark px-4">
+    <div className="relative flex min-h-screen items-center justify-center bg-dark px-4">
+      <AuthThemeCorner />
       <div className="absolute inset-0 bg-grid-dark bg-grid opacity-50" />
       <div className="relative w-full max-w-md">
         <Link href="/" className="mb-8 flex items-center justify-center gap-2.5">
