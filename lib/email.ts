@@ -23,14 +23,14 @@ export type SendEmailParams = {
 
 /**
  * Default "from" for Resend:
- * - Use RESEND_FROM when set (your verified domain).
- * - Fallback to onboarding@resend.dev so local/dev works without domain verification.
- *   (Resend allows sending to your own account email in dev; verify domain for production.)
+ * - Prefer RESEND_FROM when set (any verified sender in Resend).
+ * - Default: verified production domain (avoid onboarding@resend.dev — Resend test-mode limits).
+ * - For local testing without your domain, set RESEND_FROM="OptimaCV <onboarding@resend.dev>".
  */
 export function getDefaultFromAddress(): string {
   return (
     process.env.RESEND_FROM?.trim() ||
-    "OptimaCV <onboarding@resend.dev>"
+    "OptimaCV <support@optimacv.io>"
   );
 }
 
