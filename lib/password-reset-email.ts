@@ -1,16 +1,13 @@
-import { Resend } from "resend";
-
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+import { sendEmail, getDefaultFromAddress } from "@/lib/email";
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string): Promise<void> {
-  if (!resend) {
-    console.warn("[password-reset] RESEND_API_KEY not set; email not sent.");
-    throw new Error("Email is not configured.");
-  }
-  const from =
-    process.env.RESEND_FROM ?? "OptimaCV <support@optimacv.io>";
-  await resend.emails.send({
-    from,
+  console.log("[password-reset] sendPasswordResetEmail called", {
+    to,
+    resetUrlPreview: resetUrl.slice(0, 80) + (resetUrl.length > 80 ? "…" : ""),
+    from: getDefaultFromAddress(),
+  });
+
+  await sendEmail({
     to,
     subject: "Reset your OptimaCV password",
     html: `
