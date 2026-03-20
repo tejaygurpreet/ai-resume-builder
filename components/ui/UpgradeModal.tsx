@@ -65,9 +65,9 @@ const REASON_CONFIG: Record<
     icon: Crown,
   },
   export_no_ai: {
-    title: "AI Requires Pro",
+    title: "AI features require Pro",
     message:
-      "Export Access includes unlimited exports in all formats. AI writing, tailoring, and ATS analysis require Pro — upgrade to unlock.",
+      "AI features require Pro plan. Upgrade to access AI bullet generation, optimization, tailoring, ATS analysis, and more. Export Access includes unlimited exports in all formats.",
     icon: Sparkles,
   },
 };
@@ -131,14 +131,23 @@ export function UpgradeModal({
             <Crown className="mr-2 h-4 w-4" />
             Upgrade to Pro — $7.99/month
           </Button>
-          <Link href="/pricing" onClick={onClose}>
+          <Link href="/pricing" onClick={onClose} className="block">
             <Button
+              type="button"
               variant="outline"
               className="w-full border-white/[0.12] text-slate-300 hover:bg-white/[0.06]"
             >
               View all plans ($69.99/year or $129.99 lifetime)
             </Button>
           </Link>
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full text-slate-500 hover:bg-white/[0.04] hover:text-slate-300"
+            onClick={onClose}
+          >
+            Maybe later
+          </Button>
         </div>
       </div>
     </Modal>

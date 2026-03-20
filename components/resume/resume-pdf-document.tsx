@@ -11,12 +11,9 @@ import {
 import { getFullName, filterValidSkills } from "@/lib/template-utils";
 import type { ResumeSection } from "@/hooks/use-resume-store";
 
-const A4_WIDTH = 595.28;
-const A4_HEIGHT = 841.89;
 const PADDING_TOP = 40;
 const PADDING_BOTTOM = 40;
 const PADDING_H = 48;
-const CONTENT_HEIGHT = A4_HEIGHT - PADDING_TOP - PADDING_BOTTOM;
 
 const styles = StyleSheet.create({
   page: {
@@ -25,10 +22,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: PADDING_H,
     fontFamily: "Helvetica",
     fontSize: 11,
-  },
-  contentWrapper: {
-    maxHeight: CONTENT_HEIGHT,
-    overflow: "hidden",
   },
   header: {
     textAlign: "center",
@@ -101,9 +94,10 @@ const styles = StyleSheet.create({
   },
   bulletItem: {
     fontSize: 10,
-    lineHeight: 1.5,
+    lineHeight: 1.45,
     color: "#333",
-    marginBottom: 3,
+    marginBottom: 2,
+    textAlign: "left",
   },
   skillsRow: {
     flexDirection: "row",
@@ -158,8 +152,7 @@ export function ResumePDFDocument({ sections, color = "#1a1a1a" }: ResumePDFDocu
 
   return (
     <Document>
-      <Page size="A4" style={styles.page} wrap={false}>
-        <View style={styles.contentWrapper} wrap={false}>
+      <Page size="A4" style={styles.page}>
         {personal && hasContent(personal) && (
           <View style={styles.header}>
             <Text style={styles.name}>{getFullName(personal.content)}</Text>
@@ -384,7 +377,6 @@ export function ResumePDFDocument({ sections, color = "#1a1a1a" }: ResumePDFDocu
             </View>
           );
         })}
-        </View>
       </Page>
     </Document>
   );

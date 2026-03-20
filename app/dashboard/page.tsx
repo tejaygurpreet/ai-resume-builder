@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Modal } from "@/components/ui/modal";
-import { formatDate } from "@/lib/utils";
+import { formatDate, cn } from "@/lib/utils";
 import { templateRegistry } from "@/components/resume/templates";
 import { PLANS } from "@/lib/stripe";
 import { validateResumeCompletion } from "@/lib/resume-validation";
@@ -214,14 +214,21 @@ export default function DashboardPage() {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold text-white sm:text-3xl">My Resumes</h1>
               <Badge
-                variant={isPro ? "success" : isExportOnly ? "default" : "default"}
-                className={
-                  isPro
-                    ? "dashboard-badge-plan dashboard-badge-plan-pro"
-                    : isExportOnly
-                      ? "border-amber-500/40 bg-amber-500/15 text-amber-200"
-                      : "dashboard-badge-plan"
-                }
+                variant="default"
+                className={cn(
+                  "shrink-0 border font-medium transition-colors",
+                  isExportOnly &&
+                    "dashboard-badge-export-access border-amber-500/40 bg-amber-500/15 text-amber-200",
+                  !isPro &&
+                    !isExportOnly &&
+                    "dashboard-badge-plan border-white/[0.1] bg-white/[0.06] text-slate-300",
+                  isPro &&
+                    !isLifetimePro &&
+                    "dashboard-badge-plan-pro border-emerald-500/35 bg-emerald-500/10 text-emerald-300",
+                  isPro &&
+                    isLifetimePro &&
+                    "dashboard-badge-plan-lifetime border-amber-500/50 bg-gradient-to-r from-amber-500/25 via-yellow-500/15 to-amber-600/20 text-amber-100 shadow-sm"
+                )}
               >
                 {proBadgeLabel}
               </Badge>

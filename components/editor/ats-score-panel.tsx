@@ -29,6 +29,8 @@ interface ATSScorePanelProps {
   sections: ResumeSection[];
   /** Export-only users cannot use AI-powered ATS analysis */
   canUseAI?: boolean;
+  /** Shown when Export Access user taps Analyze (upgrade upsell) */
+  onExportAiLocked?: () => void;
 }
 
 function resumeToPlainText(sections: ResumeSection[]): string {
@@ -170,7 +172,11 @@ function BreakdownBar({
   );
 }
 
-export function ATSScorePanel({ sections, canUseAI = true }: ATSScorePanelProps) {
+export function ATSScorePanel({
+  sections,
+  canUseAI = true,
+  onExportAiLocked,
+}: ATSScorePanelProps) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ATSScoreResult | null>(null);
   const [error, setError] = useState("");
@@ -178,7 +184,7 @@ export function ATSScorePanel({ sections, canUseAI = true }: ATSScorePanelProps)
 
   const analyze = useCallback(async () => {
     if (!canUseAI) {
-      setError("ATS analysis uses AI. Upgrade to Pro — Export Access includes exports only.");
+      onExportAiLocked?.();
       return;
     }
     const text = resumeToPlainText(sections);
@@ -210,7 +216,7 @@ export function ATSScorePanel({ sections, canUseAI = true }: ATSScorePanelProps)
     } finally {
       setLoading(false);
     }
-  }, [sections, canUseAI]);
+  }, [sections, canUseAI, onExportAiLocked]);
 
   const SuggestionIcon = ({ suggestion }: { suggestion: string }) => {
     const lower = suggestion.toLowerCase();
@@ -270,8 +276,7 @@ export function ATSScorePanel({ sections, canUseAI = true }: ATSScorePanelProps)
               <Button
                 size="sm"
                 onClick={analyze}
-                disabled={!canUseAI}
-                className="gap-1.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+                className="gap-1.5 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500"
               >
                 <Target className="h-3.5 w-3.5" />
                 Analyze Resume

@@ -501,7 +501,7 @@ function SummaryEditor({
   return (
     <div className="space-y-4">
       <div className="editor-ai-toolbar flex flex-wrap items-center gap-2">
-        <AIButton onClick={handleGenerate} loading={loading} disabled={!canUseAI}>
+        <AIButton onClick={handleGenerate} loading={loading}>
           Generate Summary
         </AIButton>
         <Button
@@ -518,7 +518,7 @@ function SummaryEditor({
             }
             handleTransform("improve");
           }}
-          disabled={transformLoading !== null || !(content.text ?? "").trim() || !canUseAI}
+          disabled={transformLoading !== null || !(content.text ?? "").trim()}
           className={cn(
             "gap-1.5 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2",
             isLight
@@ -560,7 +560,7 @@ function SummaryEditor({
             }
             handleTransform("shorten");
           }}
-          disabled={transformLoading !== null || !(content.text ?? "").trim() || !canUseAI}
+          disabled={transformLoading !== null || !(content.text ?? "").trim()}
           className={cn(
             "gap-1.5 text-sm transition-all duration-200 focus-visible:outline-none focus-visible:ring-2",
             isLight
@@ -1021,7 +1021,6 @@ function ExperienceEditor({
                 <AIButton
                   onClick={() => handleGenerateBullets(idx)}
                   loading={loading && generatingIdx === idx}
-                  disabled={!canUseAI}
                   title="Generate AI bullet suggestions from job title, company, dates, and any text already in your bullets"
                 >
                   Generate bullet suggestions
@@ -1444,7 +1443,7 @@ function SkillsEditor({
   return (
     <div className="space-y-4">
       <div className="editor-ai-toolbar flex flex-wrap items-center gap-2">
-        <AIButton onClick={handleGenerateSkills} loading={loading} disabled={!canUseAI}>
+        <AIButton onClick={handleGenerateSkills} loading={loading}>
           {isPro ? "AI: expand skills" : "AI: suggest skills"}
         </AIButton>
         {isPro && (

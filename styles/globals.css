@@ -995,6 +995,18 @@
   border-color: rgba(16, 185, 129, 0.25) !important;
 }
 
+[data-theme="light"] .dashboard-page .dashboard-badge-export-access {
+  background: #fffbeb !important;
+  color: #92400e !important;
+  border-color: #fbbf24 !important;
+}
+
+[data-theme="light"] .dashboard-page .dashboard-badge-plan-lifetime {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  color: #78350f !important;
+  border-color: #d97706 !important;
+}
+
 [data-theme="light"] .dashboard-page .dashboard-badge-template {
   background: #f1f5f9 !important;
   color: #334155 !important;

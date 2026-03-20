@@ -103,7 +103,28 @@ import {
 } from "@/lib/resume-section-templates";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { useTheme } from "@/components/theme-provider";
 import toast from "react-hot-toast";
+
+/** Tailor / secondary AI actions — matches #f5f3ff AI pattern in light mode */
+function builderVioletActionClass(isLight: boolean) {
+  return cn(
+    "border font-medium transition-colors duration-200",
+    isLight
+      ? "border-violet-200 bg-[#f5f3ff] text-[#4f46e5] shadow-sm hover:border-violet-300 hover:bg-[#ede9fe] hover:text-[#4338ca] focus-visible:ring-2 focus-visible:ring-[#4f46e5]/25"
+      : "border-violet-500/35 bg-violet-500/[0.12] text-violet-200 hover:border-violet-400/50 hover:bg-violet-500/20 hover:text-white"
+  );
+}
+
+/** Dashed “Add section” — high contrast in light mode */
+function builderAddSectionButtonClass(isLight: boolean) {
+  return cn(
+    "w-full gap-2 border-2 border-dashed font-medium transition-colors duration-200",
+    isLight
+      ? "border-violet-300 bg-[#f5f3ff] text-[#4f46e5] shadow-sm hover:border-violet-400 hover:bg-[#ede9fe] hover:text-[#4338ca] focus-visible:ring-2 focus-visible:ring-[#4f46e5]/25"
+      : "border-white/[0.12] text-slate-300 hover:bg-white/[0.06] hover:text-white"
+  );
+}
 
 const TEMPLATE_LABEL_MAP: Record<string, string> = {};
 templateRegistry.forEach((t) => {
@@ -161,6 +182,7 @@ function SortableSectionCard({
   resumeId,
   isPro,
   canUseAI,
+  isLight,
   onTailor,
   onLimitReached,
   onImproveProLocked,
@@ -171,6 +193,7 @@ function SortableSectionCard({
   resumeId?: string;
   isPro?: boolean;
   canUseAI?: boolean;
+  isLight?: boolean;
   onTailor: () => void;
   onLimitReached?: () => void;
   onImproveProLocked?: () => void;
@@ -220,12 +243,15 @@ function SortableSectionCard({
         </span>
         {showTailor && (
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={onTailor}
-            className="h-7 gap-1.5 text-xs text-purple-400 hover:bg-purple-500/10 hover:text-purple-300"
+            className={cn(
+              "h-7 shrink-0 gap-1.5 px-2.5 text-xs",
+              builderVioletActionClass(!!isLight)
+            )}
           >
-            <FileSearch className="h-3.5 w-3.5" />
+            <FileSearch className="h-3.5 w-3.5 shrink-0" />
             Tailor to Job
           </Button>
         )}
@@ -297,6 +323,9 @@ function BuilderPage() {
   } = useResumeStore();
 
   const [addSectionPanelOpen, setAddSectionPanelOpen] = useState(false);
+
+  const { theme } = useTheme();
+  const isLight = theme === "light";
 
   const prevResumeRef = useRef<string>("");
   const { push, undo, redo, canUndo, canRedo } = useUndoRedo(resume, setResume);
@@ -619,56 +648,6 @@ function BuilderPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: sections (~35%) */}
         <div className="editor-sidebar flex w-[35%] min-w-[280px] max-w-[420px] shrink-0 flex-col overflow-y-auto border-r border-white/[0.06] bg-[#0a0a0b] p-5 scrollbar-thin transition-colors duration-200">
-          <div className="mx-auto mb-5 w-full space-y-3">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setAddSectionPanelOpen((o) => !o)}
-              className="w-full gap-2 border-white/[0.12] border-dashed text-slate-300 hover:bg-white/[0.06] hover:text-white"
-            >
-              <Plus className="h-4 w-4" />
-              {addSectionPanelOpen ? "Close" : "Add section"}
-            </Button>
-            {addSectionPanelOpen && (
-              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-slate-500">
-                  Choose a section
-                </p>
-                {addableSectionOptions.length === 0 ? (
-                  <p className="text-xs text-slate-500">
-                    All section types are already in this resume. Remove one to add it again.
-                  </p>
-                ) : (
-                  <ul className="grid max-h-[min(50vh,320px)] gap-2 overflow-y-auto pr-1 scrollbar-thin sm:grid-cols-1">
-                    {addableSectionOptions.map((opt) => {
-                      const Icon = SECTION_ICONS[opt.type] ?? FileText;
-                      return (
-                        <li key={opt.type}>
-                          <button
-                            type="button"
-                            onClick={() => handleAddSectionType(opt.type)}
-                            className="flex w-full items-start gap-3 rounded-lg border border-white/[0.06] bg-white/[0.03] p-3 text-left transition-colors hover:border-brand-500/35 hover:bg-brand-500/5"
-                          >
-                            <Icon className="mt-0.5 h-5 w-5 shrink-0 text-brand-400" />
-                            <span className="min-w-0">
-                              <span className="block text-sm font-medium text-white">
-                                {opt.label}
-                              </span>
-                              <span className="mt-0.5 block text-[11px] text-slate-500">
-                                {opt.description}
-                              </span>
-                            </span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -686,6 +665,7 @@ function BuilderPage() {
                     resumeId={resume.id}
                     isPro={userPlan === "pro"}
                     canUseAI={!isExportOnly}
+                    isLight={isLight}
                     onTailor={() => {
                       if (isExportOnly) {
                         setUpgradeModalReason("export_no_ai");
@@ -716,6 +696,93 @@ function BuilderPage() {
               </div>
             </SortableContext>
           </DndContext>
+
+          <div
+            className={cn(
+              "mx-auto mt-6 w-full space-y-3 border-t pt-5",
+              isLight ? "border-slate-200" : "border-white/[0.08]"
+            )}
+          >
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setAddSectionPanelOpen((o) => !o)}
+              className={cn("text-sm", builderAddSectionButtonClass(isLight))}
+            >
+              <Plus className="h-4 w-4 shrink-0" />
+              {addSectionPanelOpen ? "Close" : "Add section"}
+            </Button>
+            {addSectionPanelOpen && (
+              <div
+                className={cn(
+                  "rounded-xl border p-3",
+                  isLight
+                    ? "border-slate-200 bg-white shadow-sm"
+                    : "border-white/[0.08] bg-white/[0.02]"
+                )}
+              >
+                <p
+                  className={cn(
+                    "mb-2 text-[11px] font-medium uppercase tracking-wide",
+                    isLight ? "text-slate-500" : "text-slate-500"
+                  )}
+                >
+                  Choose a section
+                </p>
+                {addableSectionOptions.length === 0 ? (
+                  <p className={cn("text-xs", isLight ? "text-slate-600" : "text-slate-500")}>
+                    All section types are already in this resume. Remove one to add it again.
+                  </p>
+                ) : (
+                  <ul className="grid max-h-[min(50vh,320px)] gap-2 overflow-y-auto pr-1 scrollbar-thin sm:grid-cols-1">
+                    {addableSectionOptions.map((opt) => {
+                      const Icon = SECTION_ICONS[opt.type] ?? FileText;
+                      return (
+                        <li key={opt.type}>
+                          <button
+                            type="button"
+                            onClick={() => handleAddSectionType(opt.type)}
+                            className={cn(
+                              "flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors",
+                              isLight
+                                ? "border-slate-200 bg-slate-50 hover:border-violet-300 hover:bg-[#f5f3ff]"
+                                : "border-white/[0.06] bg-white/[0.03] hover:border-brand-500/35 hover:bg-brand-500/5"
+                            )}
+                          >
+                            <Icon
+                              className={cn(
+                                "mt-0.5 h-5 w-5 shrink-0",
+                                isLight ? "text-[#4f46e5]" : "text-brand-400"
+                              )}
+                            />
+                            <span className="min-w-0">
+                              <span
+                                className={cn(
+                                  "block text-sm font-medium",
+                                  isLight ? "text-[#1f2937]" : "text-white"
+                                )}
+                              >
+                                {opt.label}
+                              </span>
+                              <span
+                                className={cn(
+                                  "mt-0.5 block text-[11px]",
+                                  isLight ? "text-slate-600" : "text-slate-500"
+                                )}
+                              >
+                                {opt.description}
+                              </span>
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Center: live preview (~45–50%) — clean HTML/DOM, no PDF toolbar, scrollable */}
@@ -762,7 +829,14 @@ function BuilderPage() {
                   <span className="text-xs text-slate-500">{resume.color}</span>
                 </div>
               </div>
-              <ATSScorePanel sections={sections} canUseAI={!isExportOnly} />
+              <ATSScorePanel
+                sections={sections}
+                canUseAI={!isExportOnly}
+                onExportAiLocked={() => {
+                  setUpgradeModalReason("export_no_ai");
+                  setUpgradeModalOpen(true);
+                }}
+              />
               <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
                 <h4 className="mb-2 text-sm font-medium text-white">Job Matcher</h4>
                 <p className="mb-3 text-xs text-slate-500">
@@ -779,9 +853,9 @@ function BuilderPage() {
                     }
                     setTailorOpen(true);
                   }}
-                  className="w-full gap-2 border-white/[0.12] text-slate-300"
+                  className={cn("w-full gap-2 text-sm", builderVioletActionClass(isLight))}
                 >
-                  <FileSearch className="h-4 w-4" />
+                  <FileSearch className="h-4 w-4 shrink-0" />
                   Tailor to Job
                 </Button>
               </div>

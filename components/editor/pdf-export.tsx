@@ -67,11 +67,25 @@ export async function exportToPdfFromElement(
   }
 }
 
+const TXT_SECTION_TITLES: Record<string, string> = {
+  personal: "CONTACT",
+  summary: "PROFESSIONAL SUMMARY",
+  experience: "EXPERIENCE",
+  education: "EDUCATION",
+  skills: "SKILLS",
+  projects: "PROJECTS",
+  certifications: "CERTIFICATIONS",
+  languages: "LANGUAGES",
+  awards: "AWARDS",
+  volunteer: "VOLUNTEER EXPERIENCE",
+  interests: "INTERESTS",
+};
+
 function sectionsToPlainText(
   sections: ResumeSection[],
   title: string
 ): string {
-  const lines: string[] = [title, "=".repeat(title.length), ""];
+  const lines: string[] = [title, "=".repeat(Math.min(title.length, 72)), "", ""];
 
   const sorted = [...sections].sort((a, b) => a.order - b.order);
 
@@ -79,9 +93,12 @@ function sectionsToPlainText(
     const c = section.content;
     if (!c) continue;
 
-    const heading = section.type.charAt(0).toUpperCase() + section.type.slice(1);
-    lines.push(heading.toUpperCase());
-    lines.push("-".repeat(heading.length));
+    const heading =
+      TXT_SECTION_TITLES[section.type] ??
+      section.type.replace(/-/g, " ").toUpperCase();
+    lines.push(heading);
+    lines.push("-".repeat(Math.min(heading.length, 72)));
+    lines.push("");
 
     switch (section.type) {
       case "personal": {
@@ -137,13 +154,29 @@ function sectionsToPlainText(
       case "certifications":
       case "awards":
         for (const item of c.items ?? []) {
-          lines.push(`${item.name} - ${item.issuer} (${item.date})`);
+          const parts = [item.name, item.issuer, item.date].filter(Boolean);
+          lines.push(parts.join(" — "));
         }
         break;
       case "languages":
         for (const item of c.items ?? []) {
           lines.push(`${item.language}: ${item.proficiency}`);
         }
+        break;
+      case "volunteer":
+        for (const item of c.items ?? []) {
+          const dr = item.current
+            ? `${item.startDate ?? ""} - Present`
+            : `${item.startDate ?? ""} - ${item.endDate ?? ""}`;
+          lines.push(`${item.role ?? ""} — ${item.organization ?? ""} (${dr})`);
+          for (const bullet of item.bullets ?? []) {
+            if (bullet?.trim()) lines.push(`  • ${bullet.trim()}`);
+          }
+          lines.push("");
+        }
+        break;
+      case "interests":
+        lines.push((c.items ?? []).filter(Boolean).join(" · "));
         break;
       default:
         lines.push(JSON.stringify(c, null, 2));
@@ -152,7 +185,7 @@ function sectionsToPlainText(
     lines.push("");
   }
 
-  return lines.join("\n");
+  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trim() + "\n";
 }
 
 export function exportToTxt(
@@ -450,17 +483,17 @@ export async function exportToDocx(
               })
             );
             for (const bullet of item.bullets ?? []) {
-              if (bullet) {
+              if (bullet?.trim()) {
                 children.push(
                   new Paragraph({
+                    bullet: { level: 0 },
                     children: [
                       new TextRun({
-                        text: `• ${bullet}`,
+                        text: bullet.trim(),
                         size: 22,
                       }),
                     ],
-                    indent: { left: convertInchesToTwip(0.25) },
-                    spacing: { after: 60 },
+                    spacing: { after: 40 },
                   })
                 );
               }
@@ -633,13 +666,102 @@ export async function exportToDocx(
             })
           );
           break;
+        case "volunteer":
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: heading,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { before: 200, after: 80 },
+            })
+          );
+          for (const item of c.items ?? []) {
+            const dateRange = item.current
+              ? `${item.startDate ?? ""} - Present`
+              : `${item.startDate ?? ""} - ${item.endDate ?? ""}`;
+            children.push(
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${item.role ?? ""}`,
+                    bold: true,
+                    size: 22,
+                  }),
+                ],
+                spacing: { before: 120 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: `${item.organization ?? ""} | ${dateRange}`,
+                    italics: true,
+                    size: 20,
+                  }),
+                ],
+                spacing: { after: 80 },
+              })
+            );
+            for (const bullet of item.bullets ?? []) {
+              if (bullet?.trim()) {
+                children.push(
+                  new Paragraph({
+                    bullet: { level: 0 },
+                    children: [
+                      new TextRun({
+                        text: bullet.trim(),
+                        size: 22,
+                      }),
+                    ],
+                    spacing: { after: 40 },
+                  })
+                );
+              }
+            }
+          }
+          break;
+        case "interests":
+          children.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: heading,
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { before: 200, after: 80 },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: (c.items ?? []).filter(Boolean).join(" · "),
+                  size: 22,
+                }),
+              ],
+              spacing: { after: 200 },
+            })
+          );
+          break;
       }
     }
 
     const doc = new Document({
       sections: [
         {
-          properties: {},
+          properties: {
+            page: {
+              margin: {
+                top: convertInchesToTwip(0.65),
+                right: convertInchesToTwip(0.75),
+                bottom: convertInchesToTwip(0.65),
+                left: convertInchesToTwip(0.75),
+              },
+            },
+          },
           children: children.length ? children : [
             new Paragraph({
               children: [new TextRun({ text: "Empty resume" })],
