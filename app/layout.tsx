@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
-import { GoogleAdSenseScript } from "@/components/google-adsense-script";
 import "@/styles/globals.css";
+
+/** AdSense loader URL — must stay in server-rendered <head> so “View Page Source” and crawlers see it. */
+const ADSENSE_SCRIPT_SRC =
+  "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7184226380752555";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -52,8 +55,8 @@ export default function RootLayout({
             __html: `(function(){var t=localStorage.getItem("resumeai-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);})();`,
           }}
         />
-        {/* AdSense: production only; async via next/script — load errors are caught and do not break the app */}
-        <GoogleAdSenseScript />
+        {/* Google AdSense: plain async script in initial HTML (not a client-only next/script) so verification & View Source work. Async = non-blocking if load fails. After AdSense approves the site, you can wrap this tag with {process.env.NODE_ENV === "production" && (...)} to skip local dev. */}
+        <script async src={ADSENSE_SCRIPT_SRC} crossOrigin="anonymous" />
       </head>
       <body className="font-sans antialiased transition-all duration-300 ease-out">
         <Providers>{children}</Providers>
