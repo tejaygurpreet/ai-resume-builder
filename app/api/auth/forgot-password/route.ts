@@ -3,6 +3,8 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendPasswordResetEmail } from "@/lib/password-reset-email";
 import { isEmailConfigured } from "@/lib/email";
+import { getSiteBaseUrl } from "@/lib/site-url";
+import { getPasswordResetExpiryMs } from "@/lib/password-reset-config";
 
 export async function POST(req: Request) {
   try {
@@ -37,7 +39,8 @@ export async function POST(req: Request) {
     console.log("[forgot-password] user found, id:", user.id);
 
     const token = crypto.randomBytes(32).toString("hex");
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+    const expiresInMs = getPasswordResetExpiryMs();
+    const expiresAt = new Date(Date.now() + expiresInMs);
 
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
     await prisma.passwordResetToken.create({
@@ -49,15 +52,16 @@ export async function POST(req: Request) {
     });
     console.log("[forgot-password] token stored, expires:", expiresAt.toISOString());
 
-    const baseUrl =
-      process.env.NEXTAUTH_URL ||
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-      "http://localhost:3000";
-    const resetUrl = `${baseUrl.replace(/\/$/, "")}/reset-password?token=${token}`;
+    const baseUrl = getSiteBaseUrl();
+    const resetUrl = `${baseUrl.replace(/\/$/, "")}/reset-password?token=${encodeURIComponent(token)}`;
     console.log("[forgot-password] reset URL base:", baseUrl);
 
+    if (process.env.NODE_ENV === "development") {
+      console.log("[forgot-password] DEV — full reset link (check terminal only; never logged in production):\n", resetUrl);
+    }
+
     try {
-      await sendPasswordResetEmail(user.email, resetUrl);
+      await sendPasswordResetEmail(user.email, resetUrl, { expiresInMs });
     } catch (e) {
       console.error("[forgot-password] sendPasswordResetEmail failed:", e);
       return NextResponse.json(
