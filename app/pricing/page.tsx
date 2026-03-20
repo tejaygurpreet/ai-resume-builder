@@ -288,7 +288,10 @@ export default function PricingPage() {
     const res = await fetch("/api/stripe/create-upgrade-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ interval: switchInterval }),
+      body: JSON.stringify({
+        planType: switchInterval,
+        interval: switchInterval,
+      }),
     });
     const data = await res.json();
     if (data.url) {
@@ -296,6 +299,9 @@ export default function PricingPage() {
       return;
     }
     if (res.ok && data.success) {
+      if (data.message) {
+        alert(data.message);
+      }
       await fetchSubscription();
       return;
     }
@@ -331,19 +337,38 @@ export default function PricingPage() {
       return;
     }
 
-    const endpoint = plan === "pro" ? "/api/stripe/checkout" : "/api/stripe/one-time-export";
-    const bodyPayload = plan === "pro" ? { plan: "pro", interval } : {};
-    const res = await fetch(endpoint, {
+    if (plan === "one-time") {
+      const res = await fetch("/api/stripe/one-time-export", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error(data.error || "Failed");
+    }
+
+    const planType =
+      interval === "monthly"
+        ? "monthly"
+        : interval === "annual"
+          ? "annual"
+          : "lifetime";
+    const res = await fetch("/api/stripe/create-upgrade-session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bodyPayload),
+      body: JSON.stringify({ planType }),
     });
     const data = await res.json();
     if (data.url) {
       window.location.href = data.url;
-    } else {
-      throw new Error(data.error || "Failed");
+      return;
     }
+    if (res.ok && data.success && data.message) {
+      alert(data.message);
+      await fetchSubscription();
+      return;
+    }
+    throw new Error(data.error || "Failed");
   };
 
   const handleCheckout = async (plan: "pro" | "one-time") => {

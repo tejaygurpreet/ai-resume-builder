@@ -10,7 +10,7 @@ export type StripeMode = "test" | "live";
  */
 export function stripeModeFromSecretKey(key: string): StripeMode {
   const k = key.trim();
-  if (k.startsWith("sk_test_")) return "test";
+  if (k.startsWith("sk_test") || k.startsWith("rk_test")) return "test";
   return "live";
 }
 
@@ -23,22 +23,22 @@ function newStripe(secret: string): Stripe {
 
 /**
  * Keys used to probe which Stripe account owns a subscription (upgrades / cross-mode DB).
- * Order: test, live, then legacy STRIPE_SECRET_KEY if distinct.
+ * Order: STRIPE_SECRET_KEY first (common single-key setups), then explicit test/live keys.
  * Independent of NODE_ENV so production can still update a test-mode sub if both keys are set.
  */
 function collectStripeSecretsForProbe(): string[] {
+  const legacy = process.env.STRIPE_SECRET_KEY?.trim();
   const test =
     process.env.STRIPE_TEST_SECRET_KEY?.trim() ||
     process.env.STRIPE_SECRET_KEY_TEST?.trim();
   const live =
     process.env.STRIPE_LIVE_SECRET_KEY?.trim() ||
     process.env.STRIPE_SECRET_KEY_LIVE?.trim();
-  const legacy = process.env.STRIPE_SECRET_KEY?.trim();
 
   const keys: string[] = [];
-  if (test) keys.push(test);
-  if (live) keys.push(live);
-  if (legacy && !keys.includes(legacy)) keys.push(legacy);
+  if (legacy) keys.push(legacy);
+  if (test && test !== legacy) keys.push(test);
+  if (live && live !== legacy && live !== test) keys.push(live);
 
   return Array.from(new Set(keys));
 }

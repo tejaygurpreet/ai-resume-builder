@@ -53,40 +53,50 @@ export function getProAnnualPriceId(): string | null {
   return getProAnnualPriceIdForStripeMode(getRuntimeStripeMode());
 }
 
-export function getProLifetimePriceId(): string | null {
-  if (isStripeLiveRuntime()) {
+/** Lifetime price for a given Stripe account mode (subscription probe or NODE_ENV). */
+export function getProLifetimePriceIdForStripeMode(mode: StripeMode): string | null {
+  if (mode === "test") {
     return (
-      process.env.STRIPE_LIVE_PRO_LIFETIME_PRICE_ID?.trim() ||
-      process.env.STRIPE_LIVE_LIFETIME_PRICE_ID?.trim() ||
+      process.env.STRIPE_TEST_PRO_LIFETIME_PRICE_ID?.trim() ||
+      process.env.STRIPE_TEST_LIFETIME_PRICE_ID?.trim() ||
       process.env.STRIPE_LIFETIME_PRICE_ID?.trim() ||
       process.env.STRIPE_PRO_LIFETIME_PRICE_ID?.trim() ||
       null
     );
   }
   return (
-    process.env.STRIPE_TEST_PRO_LIFETIME_PRICE_ID?.trim() ||
-    process.env.STRIPE_TEST_LIFETIME_PRICE_ID?.trim() ||
+    process.env.STRIPE_LIVE_PRO_LIFETIME_PRICE_ID?.trim() ||
+    process.env.STRIPE_LIVE_LIFETIME_PRICE_ID?.trim() ||
     process.env.STRIPE_LIFETIME_PRICE_ID?.trim() ||
     process.env.STRIPE_PRO_LIFETIME_PRICE_ID?.trim() ||
     null
   );
 }
 
-export function getExportPriceId(): string | null {
-  if (isStripeLiveRuntime()) {
+export function getProLifetimePriceId(): string | null {
+  return getProLifetimePriceIdForStripeMode(getRuntimeStripeMode());
+}
+
+/** One-time export price for a given Stripe account mode. */
+export function getExportPriceIdForStripeMode(mode: StripeMode): string | null {
+  if (mode === "test") {
     return (
-      process.env.STRIPE_LIVE_EXPORT_PRICE_ID?.trim() ||
+      process.env.STRIPE_TEST_EXPORT_PRICE_ID?.trim() ||
       process.env.STRIPE_EXPORT_PRICE_ID?.trim() ||
       process.env.STRIPE_ONE_TIME_PRICE_ID?.trim() ||
       null
     );
   }
   return (
-    process.env.STRIPE_TEST_EXPORT_PRICE_ID?.trim() ||
+    process.env.STRIPE_LIVE_EXPORT_PRICE_ID?.trim() ||
     process.env.STRIPE_EXPORT_PRICE_ID?.trim() ||
     process.env.STRIPE_ONE_TIME_PRICE_ID?.trim() ||
     null
   );
+}
+
+export function getExportPriceId(): string | null {
+  return getExportPriceIdForStripeMode(getRuntimeStripeMode());
 }
 
 /** All configured annual price IDs (for webhooks / cross-mode rows). */

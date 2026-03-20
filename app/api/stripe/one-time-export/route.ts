@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getStripeOrNull } from "@/lib/stripe";
-import { getExportPriceId } from "@/lib/stripe-prices";
 import { prisma } from "@/lib/prisma";
+import {
+  getExportPriceIdForStripeMode,
+  getRuntimeStripeMode,
+} from "@/lib/stripe-prices";
+import {
+  getStripeClientForMode,
+  resolveStripeForSubscriptionId,
+} from "@/lib/stripe-config";
+import type { StripeMode } from "@/lib/stripe-subscription-mode";
 
 export async function POST() {
   try {
-    const stripe = getStripeOrNull();
-    if (!stripe) {
-      return NextResponse.json(
-        { error: "Payment system is not configured. Please contact support." },
-        { status: 503 }
-      );
-    }
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
@@ -32,8 +32,31 @@ export async function POST() {
 
     const sub = await prisma.subscription.findUnique({
       where: { userId },
-      select: { plan: true, planInterval: true, stripeSubscriptionId: true },
+      select: {
+        plan: true,
+        planInterval: true,
+        stripeSubscriptionId: true,
+      },
     });
+
+    let mode: StripeMode = getRuntimeStripeMode();
+    if (sub?.stripeSubscriptionId) {
+      const resolved = await resolveStripeForSubscriptionId(
+        sub.stripeSubscriptionId
+      );
+      if (resolved) mode = resolved.mode;
+    }
+
+    let stripe;
+    try {
+      stripe = getStripeClientForMode(mode);
+    } catch {
+      return NextResponse.json(
+        { error: "Payment system is not configured. Please contact support." },
+        { status: 503 }
+      );
+    }
+
     if (sub?.plan === "pro" && !sub.stripeSubscriptionId) {
       return NextResponse.json(
         { error: "Lifetime Pro users cannot purchase other plans." },
@@ -47,10 +70,16 @@ export async function POST() {
       );
     }
 
-    const priceId = getExportPriceId();
+    const priceId = getExportPriceIdForStripeMode(mode);
     if (!priceId) {
       return NextResponse.json(
-        { error: "One-time export is not configured" },
+        {
+          error: "One-time export is not configured",
+          hint:
+            mode === "test"
+              ? "Set STRIPE_TEST_EXPORT_PRICE_ID or STRIPE_EXPORT_PRICE_ID / STRIPE_ONE_TIME_PRICE_ID."
+              : "Set STRIPE_LIVE_EXPORT_PRICE_ID or STRIPE_EXPORT_PRICE_ID / STRIPE_ONE_TIME_PRICE_ID.",
+        },
         { status: 500 }
       );
     }
@@ -66,6 +95,7 @@ export async function POST() {
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: "payment",
+      payment_method_types: ["card"],
       line_items: [{ price: priceId as string, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,

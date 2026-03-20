@@ -97,14 +97,16 @@ export function UpgradeModal({
     setLoading(true);
     trackEvent("upgrade_checkout_start", { reason });
     try {
-      const res = await fetch("/api/stripe/checkout", {
+      const res = await fetch("/api/stripe/create-upgrade-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "pro", interval: "monthly" }),
+        body: JSON.stringify({ planType: "monthly" }),
       });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else if (data.success && data.message) {
+        alert(data.message);
       } else {
         window.location.href = "/pricing";
       }

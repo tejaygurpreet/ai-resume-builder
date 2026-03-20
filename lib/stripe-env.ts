@@ -6,9 +6,36 @@
  * Legacy fallbacks: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
  */
 
+import type { StripeMode } from "@/lib/stripe-subscription-mode";
+
 /** True when running a production Next.js build (NODE_ENV === "production"). */
 export function isStripeLiveRuntime(): boolean {
   return process.env.NODE_ENV === "production";
+}
+
+/**
+ * Secret key for a specific Stripe **account mode** (test vs live), independent of NODE_ENV.
+ * Use when creating Checkout sessions or API calls that must match subscription/price mode.
+ *
+ * - Prefers STRIPE_TEST_SECRET_KEY / STRIPE_LIVE_SECRET_KEY when set.
+ * - Falls back to STRIPE_SECRET_KEY when it looks like the right mode (sk_test… / sk_live…).
+ * - Last resort: returns legacy key so single-key setups still work (may mismatch wrong mode).
+ */
+export function getStripeSecretKeyForStripeAccountMode(
+  mode: StripeMode
+): string | null {
+  const test = process.env.STRIPE_TEST_SECRET_KEY?.trim();
+  const live = process.env.STRIPE_LIVE_SECRET_KEY?.trim();
+  const legacy = process.env.STRIPE_SECRET_KEY?.trim();
+
+  if (mode === "test") {
+    if (test) return test;
+    if (legacy?.startsWith("sk_test")) return legacy;
+    return legacy || null;
+  }
+  if (live) return live;
+  if (legacy?.startsWith("sk_live")) return legacy;
+  return legacy || null;
 }
 
 /** Secret API key for this deployment’s Stripe mode (test vs live). */

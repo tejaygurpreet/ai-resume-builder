@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getStripeOrNull } from "@/lib/stripe";
 import {
   getExportPriceId,
   getProAnnualPriceId,
   getProLifetimePriceId,
   getProMonthlyPriceId,
+  getRuntimeStripeMode,
 } from "@/lib/stripe-prices";
+import { getStripeClientForMode } from "@/lib/stripe-config";
 import { prisma } from "@/lib/prisma";
 
 type PlanTypeKey = "monthly" | "annual" | "export" | "lifetime";
@@ -29,8 +30,11 @@ const PLAN_MAP: Record<
  */
 export async function POST(req: Request) {
   try {
-    const stripe = getStripeOrNull();
-    if (!stripe) {
+    const mode = getRuntimeStripeMode();
+    let stripe;
+    try {
+      stripe = getStripeClientForMode(mode);
+    } catch {
       return NextResponse.json(
         { error: "Payment system is not configured. Please contact support." },
         { status: 503 }
