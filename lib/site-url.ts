@@ -39,3 +39,8 @@ function isLocalhostUrl(url: string): boolean {
     return false;
   }
 }
+
+/** Public page linked from email footers (preferences, List-Unsubscribe). */
+export function getEmailPreferencesUrl(): string {
+  return `${getSiteBaseUrl().replace(/\/$/, "")}/email-preferences`;
+}

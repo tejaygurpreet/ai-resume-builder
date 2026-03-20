@@ -19,6 +19,8 @@ export type SendEmailParams = {
   html: string;
   text?: string;
   replyTo?: string;
+  /** Custom headers (e.g. List-Unsubscribe). Resend passes these to the MTA. */
+  headers?: Record<string, string>;
 };
 
 /**
@@ -52,6 +54,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
     subject: params.subject,
     from,
     hasReplyTo: !!params.replyTo,
+    headerKeys: params.headers ? Object.keys(params.headers) : [],
   });
 
   try {
@@ -62,6 +65,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
       html: params.html,
       text: params.text,
       replyTo: params.replyTo,
+      headers: params.headers,
     });
 
     if (error) {
