@@ -4,24 +4,22 @@ import { authOptions } from "@/lib/auth";
 import { runSubscriptionIntervalScheduleUpgrade } from "@/lib/stripe-plan-interval-upgrade";
 
 /**
- * Schedule a subscription price change at the end of the current billing period.
- * Uses the Stripe account (test vs live) that owns the subscription id.
+ * Pro Monthly ↔ Pro Annual schedule upgrade using the correct Stripe mode (test vs live)
+ * for the user’s existing subscription. Same behavior as POST /api/stripe/change-plan.
+ *
+ * Stripe subscription ids use `sub_…` in both test and live; mode is resolved by probing
+ * STRIPE_SECRET_KEY_TEST / STRIPE_SECRET_KEY_LIVE / STRIPE_SECRET_KEY.
+ *
+ * This route does not create a new Checkout subscription — it updates the subscription
+ * schedule. Returns JSON (no hosted checkout URL) unless we add invoice collection later.
  */
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json(
-        { error: "You must be logged in to change your plan" },
+        { error: "You must be logged in to upgrade" },
         { status: 401 }
-      );
-    }
-
-    const { interval } = await req.json();
-    if (interval !== "annual" && interval !== "monthly" && interval !== "lifetime") {
-      return NextResponse.json(
-        { error: "Invalid interval. Use 'annual', 'monthly', or 'lifetime'." },
-        { status: 400 }
       );
     }
 
@@ -33,14 +31,14 @@ export async function POST(req: Request) {
       );
     }
 
-    if (interval === "lifetime") {
-      return NextResponse.json(
-        {
-          error: "Use the pricing page to purchase Lifetime. It will replace your current plan.",
-          useCheckout: true,
-        },
-        { status: 400 }
-      );
+    let interval: "annual" | "monthly" = "annual";
+    try {
+      const body = await req.json();
+      if (body?.interval === "monthly" || body?.interval === "annual") {
+        interval = body.interval;
+      }
+    } catch {
+      /* empty body → default annual */
     }
 
     const result = await runSubscriptionIntervalScheduleUpgrade({
@@ -54,14 +52,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
+      url: null as string | null,
+      scheduled: true,
       message: result.message,
       stripeMode: result.stripeMode,
       currentPeriodEnd: result.currentPeriodEnd,
     });
   } catch (err) {
-    console.error("Stripe change-plan error:", err);
+    console.error("create-upgrade-session error:", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to change plan" },
+      { error: err instanceof Error ? err.message : "Upgrade failed" },
       { status: 500 }
     );
   }
