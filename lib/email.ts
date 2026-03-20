@@ -18,6 +18,8 @@ export type SendEmailParams = {
   subject: string;
   html: string;
   text?: string;
+  /** Overrides getDefaultFromAddress() for this send (e.g. contact form branding). */
+  from?: string;
   replyTo?: string;
   /** Custom headers (e.g. List-Unsubscribe). Resend passes these to the MTA. */
   headers?: Record<string, string>;
@@ -47,7 +49,7 @@ export async function sendEmail(params: SendEmailParams): Promise<{ id: string |
     throw new Error(msg);
   }
 
-  const from = getDefaultFromAddress();
+  const from = params.from?.trim() || getDefaultFromAddress();
 
   console.log("[email] send start", {
     to: params.to,

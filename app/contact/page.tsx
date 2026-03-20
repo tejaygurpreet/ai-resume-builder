@@ -11,22 +11,65 @@ export default function ContactPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [successDetail, setSuccessDetail] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setSuccessDetail("");
     setSending(true);
     try {
-      const res = await fetch("/api/contact", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: name.trim(), email: email.trim(), message: message.trim() }) });
-      const data = await res.json();
-      if (!res.ok) { setError(data.error || "Failed to send message."); return; }
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim(), email: email.trim(), message: message.trim() }),
+      });
+
+      let data: { error?: string; message?: string } = {};
+      try {
+        data = await res.json();
+      } catch {
+        setError("We couldn’t read the server response. Please try again.");
+        return;
+      }
+
+      if (!res.ok) {
+        if (res.status === 503) {
+          setError(
+            data.error ||
+              "Our message system is temporarily unavailable. Please try again later or email support@optimacv.io."
+          );
+        } else if (res.status === 400) {
+          setError(data.error || "Please check your details and try again.");
+        } else {
+          setError(data.error || "We couldn’t send your message. Please try again in a moment.");
+        }
+        return;
+      }
+
+      setSuccessDetail(
+        typeof data.message === "string" && data.message.trim() ?
+          data.message.trim()
+        : "We’ve received your message and sent a confirmation to your email. We’ll get back to you within 24 hours."
+      );
       setSubmitted(true);
-    } catch { setError("Something went wrong. Please try again."); } finally { setSending(false); }
+    } catch {
+      setError("Network error. Check your connection and try again.");
+    } finally {
+      setSending(false);
+    }
   }
 
-  function handleReset() { setName(""); setEmail(""); setMessage(""); setSubmitted(false); setError(""); }
+  function handleReset() {
+    setName("");
+    setEmail("");
+    setMessage("");
+    setSubmitted(false);
+    setSuccessDetail("");
+    setError("");
+  }
 
   return (
     <div className="min-h-screen bg-dark">
@@ -46,8 +89,8 @@ export default function ContactPage() {
             {submitted ? (
               <div className="flex flex-col items-center rounded-2xl border border-emerald-500/20 bg-emerald-500/5 px-8 py-16 text-center backdrop-blur-sm">
                 <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400"><CheckCircle2 className="h-8 w-8" /></div>
-                <h2 className="text-2xl font-bold text-white">Thank You!</h2>
-                <p className="mt-2 max-w-sm text-base text-slate-400">We&apos;ve received your message and will get back to you within 24 hours.</p>
+                <h2 className="text-2xl font-bold text-white">Message sent</h2>
+                <p className="mt-2 max-w-md text-base text-slate-400">{successDetail}</p>
                 <button onClick={handleReset} className="mt-8 inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-6 text-sm font-semibold text-white transition-colors hover:bg-white/[0.08]"><Send className="h-4 w-4" /> Send Another Message</button>
               </div>
             ) : (
@@ -81,7 +124,7 @@ export default function ContactPage() {
               <div className="mt-8 space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400"><Mail className="h-5 w-5" /></div>
-                  <div><p className="text-sm font-medium text-white">Email</p><a href="mailto:support@optimacv.com" className="text-sm text-brand-400 hover:underline">support@optimacv.com</a></div>
+                  <div><p className="text-sm font-medium text-white">Email</p><a href="mailto:support@optimacv.io" className="text-sm text-brand-400 hover:underline">support@optimacv.io</a></div>
                 </div>
                 <div className="flex items-start gap-4">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400"><Clock className="h-5 w-5" /></div>
