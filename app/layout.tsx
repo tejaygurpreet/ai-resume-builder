@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { GoogleAdSenseScript } from "@/components/google-adsense-script";
 import "@/styles/globals.css";
 
 const inter = Inter({
@@ -51,6 +52,8 @@ export default function RootLayout({
             __html: `(function(){var t=localStorage.getItem("resumeai-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);})();`,
           }}
         />
+        {/* AdSense: production only; async via next/script — load errors are caught and do not break the app */}
+        <GoogleAdSenseScript />
       </head>
       <body className="font-sans antialiased transition-all duration-300 ease-out">
         <Providers>{children}</Providers>
