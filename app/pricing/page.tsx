@@ -19,6 +19,7 @@ import {
 } from "@/lib/plans";
 import { trackEvent } from "@/lib/analytics";
 import { getMembershipDisplay } from "@/lib/membership";
+import { getStripePublishableKeyForRuntime } from "@/lib/stripe-publishable";
 
 type ActivePlan =
   | "free"
@@ -207,6 +208,8 @@ export default function PricingPage() {
   const activePlan = deriveActivePlan(subscription);
   const { theme } = useTheme();
   const isLight = theme === "light";
+  /** NODE_ENV-scoped pk_test / pk_live for Stripe.js / Elements (`loadStripe(stripePublishableKey)`). */
+  const stripePublishableKey = getStripePublishableKeyForRuntime();
 
   const [exportWarningOpen, setExportWarningOpen] = useState(false);
   const [currentPlanModalOpen, setCurrentPlanModalOpen] = useState(false);
@@ -280,45 +283,47 @@ export default function PricingPage() {
   /** True when user has Export, any active Pro tier, or Lifetime (anything but Free). */
   const isPayingCustomer = activePlan !== "free";
 
-  /** Stripe checkout or change-plan — no modals (caller handles UX). */
-  const executeCheckout = async (plan: "pro" | "one-time", interval: ProInterval) => {
-    // Existing subscriber: Monthly → Annual at end of period (not Checkout — no duplicate sub)
-    if (plan === "pro" && interval === "annual" && activePlan === "pro_monthly") {
-      const res = await fetch("/api/stripe/change-plan", {
+  /** Pro Monthly ↔ Annual: proration + correct Stripe mode via create-upgrade-session. */
+  const runProIntervalSwitch = async (switchInterval: "annual" | "monthly") => {
+    const res = await fetch("/api/stripe/create-upgrade-session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ interval: switchInterval }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+      return;
+    }
+    if (res.ok && data.success) {
+      await fetchSubscription();
+      return;
+    }
+    if (data.fallbackNewSubscription && switchInterval) {
+      const cr = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interval: "annual" }),
+        body: JSON.stringify({ plan: "pro", interval: switchInterval }),
       });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        alert(
-          data.message ||
-            "Your plan will switch to Annual at the end of your current billing period."
-        );
-        await fetchSubscription();
-      } else {
-        throw new Error(data.error || "Failed");
+      const checkoutData = await cr.json();
+      if (checkoutData.url) {
+        window.location.href = checkoutData.url;
+        return;
       }
+      throw new Error(checkoutData.error || "Failed to start checkout");
+    }
+    throw new Error(data.error || "Failed");
+  };
+
+  /** Stripe checkout or plan switch — no duplicate modals (caller handles UX). */
+  const executeCheckout = async (plan: "pro" | "one-time", interval: ProInterval) => {
+    if (plan === "pro" && interval === "annual" && activePlan === "pro_monthly") {
+      await runProIntervalSwitch("annual");
       return;
     }
 
-    // Existing subscriber: Annual → Monthly at end of period
     if (plan === "pro" && interval === "monthly" && activePlan === "pro_annual") {
-      const res = await fetch("/api/stripe/change-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ interval: "monthly" }),
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        alert(
-          data.message ||
-            "Your plan will switch to Monthly at the end of your current billing period."
-        );
-        await fetchSubscription();
-      } else {
-        throw new Error(data.error || "Failed");
-      }
+      await runProIntervalSwitch("monthly");
       return;
     }
 
@@ -465,7 +470,10 @@ export default function PricingPage() {
   const canUpgradeOneTime = activePlan !== "one_time_export";
 
   return (
-    <div className={cn("min-h-screen", isLight ? "bg-slate-50" : "bg-[#010409]")}>
+    <div
+      className={cn("min-h-screen", isLight ? "bg-slate-50" : "bg-[#010409]")}
+      data-stripe-publishable-ready={stripePublishableKey ? "true" : "false"}
+    >
       <Navbar />
 
       <main className="relative overflow-hidden">

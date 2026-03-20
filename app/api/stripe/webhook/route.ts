@@ -2,12 +2,14 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
+import { getStripeWebhookSecretForNodeEnv } from "@/lib/stripe-env";
 import { prisma } from "@/lib/prisma";
 import {
   getExportPriceId,
   getProAnnualPriceId,
   getProLifetimePriceId,
   getProMonthlyPriceId,
+  planIntervalFromProPriceId,
 } from "@/lib/stripe-prices";
 
 export const dynamic = "force-dynamic";
@@ -59,7 +61,8 @@ export async function POST(req: Request) {
     const headersList = await headers();
     const signature = headersList.get("stripe-signature");
 
-    if (!signature || !process.env.STRIPE_WEBHOOK_SECRET) {
+    const webhookSecret = getStripeWebhookSecretForNodeEnv();
+    if (!signature || !webhookSecret) {
       return NextResponse.json(
         { error: "Missing webhook signature or secret" },
         { status: 400 }
@@ -71,7 +74,7 @@ export async function POST(req: Request) {
       event = getStripe().webhooks.constructEvent(
         body,
         signature,
-        process.env.STRIPE_WEBHOOK_SECRET
+        webhookSecret
       );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -336,14 +339,7 @@ export async function POST(req: Request) {
             : typeof line?.price === "string"
               ? line.price
               : null;
-        const annualPriceId = getProAnnualPriceId();
-        const monthlyPriceId = getProMonthlyPriceId();
-        let planInterval: string | null = null;
-        if (priceId && annualPriceId && priceId === annualPriceId) {
-          planInterval = "annual";
-        } else if (priceId && monthlyPriceId && priceId === monthlyPriceId) {
-          planInterval = "monthly";
-        }
+        const planInterval = planIntervalFromProPriceId(priceId);
         await prisma.subscription.updateMany({
           where: { stripeSubscriptionId: subscriptionId },
           data: {
@@ -365,14 +361,7 @@ export async function POST(req: Request) {
             : typeof item?.price === "string"
               ? item.price
               : null;
-        const annualPriceId = getProAnnualPriceId();
-        const monthlyPriceId = getProMonthlyPriceId();
-        let planInterval: string | null = null;
-        if (priceId && annualPriceId && priceId === annualPriceId) {
-          planInterval = "annual";
-        } else if (priceId && monthlyPriceId && priceId === monthlyPriceId) {
-          planInterval = "monthly";
-        }
+        const planInterval = planIntervalFromProPriceId(priceId);
         await prisma.subscription.updateMany({
           where: { stripeSubscriptionId: subscription.id },
           data: {

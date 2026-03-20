@@ -4,8 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { runSubscriptionIntervalScheduleUpgrade } from "@/lib/stripe-plan-interval-upgrade";
 
 /**
- * Schedule a subscription price change at the end of the current billing period.
- * Uses the Stripe account (test vs live) that owns the subscription id.
+ * Pro Monthly ↔ Annual: prorated subscription item update on the correct Stripe account (test vs live).
+ * May return `url` (hosted invoice) when Stripe requires payment to finalize the change.
  */
 export async function POST(req: Request) {
   try {
@@ -49,11 +49,20 @@ export async function POST(req: Request) {
     });
 
     if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
+      return NextResponse.json(
+        {
+          error: result.error,
+          ...(result.fallbackNewSubscription && {
+            fallbackNewSubscription: true,
+          }),
+        },
+        { status: result.status }
+      );
     }
 
     return NextResponse.json({
       success: true,
+      url: result.url,
       message: result.message,
       stripeMode: result.stripeMode,
       currentPeriodEnd: result.currentPeriodEnd,

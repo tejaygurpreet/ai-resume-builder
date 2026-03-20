@@ -1,19 +1,34 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 import { runSubscriptionIntervalScheduleUpgrade } from "@/lib/stripe-plan-interval-upgrade";
 
+function intervalFromBody(
+  interval: unknown,
+  targetPlan: unknown
+): "annual" | "monthly" | null {
+  if (interval === "annual" || interval === "monthly") return interval;
+  if (targetPlan === "ANNUAL") return "annual";
+  if (targetPlan === "MONTHLY") return "monthly";
+  return null;
+}
+
 /**
- * Pro Monthly ↔ Pro Annual schedule upgrade using the correct Stripe mode (test vs live)
- * for the user’s existing subscription. Same behavior as POST /api/stripe/change-plan.
+ * Pro Monthly ↔ Pro Annual upgrade/downgrade.
  *
- * Stripe subscription ids use `sub_…` in both test and live; mode is resolved by probing
- * STRIPE_SECRET_KEY_TEST / STRIPE_SECRET_KEY_LIVE / STRIPE_SECRET_KEY.
+ * **Mode detection (not NODE_ENV):** `resolveStripeForSubscriptionId` in lib/stripe-subscription-mode.ts
+ * tries STRIPE_TEST_SECRET_KEY then STRIPE_LIVE_SECRET_KEY (then STRIPE_SECRET_KEY) until
+ * `subscriptions.retrieve` succeeds, then uses STRIPE_TEST_* / STRIPE_LIVE_* price IDs for that mode.
  *
- * This route does not create a new Checkout subscription — it updates the subscription
- * schedule. Returns JSON (no hosted checkout URL) unless we add invoice collection later.
+ * New checkout & webhooks use NODE_ENV via lib/stripe-env.ts + lib/stripe-prices.ts.
+ *
+ * Body: `{ "interval": "annual" | "monthly" }` or `{ "targetPlan": "ANNUAL" | "MONTHLY" }`
  */
 export async function POST(req: Request) {
+  let userId: string | undefined;
+  let stripeSubscriptionId: string | null | undefined;
+
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
@@ -23,7 +38,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const userId = (session.user as { id?: string }).id;
+    userId = (session.user as { id?: string }).id;
     if (!userId) {
       return NextResponse.json(
         { error: "Session missing user id. Please sign in again." },
@@ -31,15 +46,20 @@ export async function POST(req: Request) {
       );
     }
 
-    let interval: "annual" | "monthly" = "annual";
+    let body: Record<string, unknown> = {};
     try {
-      const body = await req.json();
-      if (body?.interval === "monthly" || body?.interval === "annual") {
-        interval = body.interval;
-      }
+      body = await req.json();
     } catch {
-      /* empty body → default annual */
+      /* default annual */
     }
+
+    const interval = intervalFromBody(body.interval, body.targetPlan) ?? "annual";
+
+    const subRow = await prisma.subscription.findUnique({
+      where: { userId },
+      select: { stripeSubscriptionId: true, plan: true, planInterval: true },
+    });
+    stripeSubscriptionId = subRow?.stripeSubscriptionId ?? undefined;
 
     const result = await runSubscriptionIntervalScheduleUpgrade({
       userId,
@@ -47,22 +67,45 @@ export async function POST(req: Request) {
     });
 
     if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
+      console.error("[create-upgrade-session] failed", {
+        userId,
+        stripeSubscriptionId,
+        interval,
+        error: result.error,
+        fallbackNewSubscription: result.fallbackNewSubscription,
+      });
+      return NextResponse.json(
+        {
+          success: false,
+          error: result.error,
+          ...(result.fallbackNewSubscription && {
+            fallbackNewSubscription: true,
+            interval,
+          }),
+        },
+        { status: result.status }
+      );
     }
 
     return NextResponse.json({
       success: true,
-      url: null as string | null,
-      scheduled: true,
+      url: result.url,
+      scheduled: false,
+      proration: true,
       message: result.message,
       stripeMode: result.stripeMode,
       currentPeriodEnd: result.currentPeriodEnd,
+      metadata: {
+        targetTier: interval === "annual" ? "PRO_ANNUAL" : "PRO_MONTHLY",
+      },
     });
   } catch (err) {
-    console.error("create-upgrade-session error:", err);
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Upgrade failed" },
-      { status: 500 }
-    );
+    const message = err instanceof Error ? err.message : "Upgrade failed";
+    console.error("[create-upgrade-session] exception", {
+      userId,
+      stripeSubscriptionId,
+      error: message,
+    });
+    return NextResponse.json({ success: false, error: message }, { status: 500 });
   }
 }

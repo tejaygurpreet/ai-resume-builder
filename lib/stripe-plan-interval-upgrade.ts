@@ -3,7 +3,7 @@ import {
   getProAnnualPriceIdForStripeMode,
   getProMonthlyPriceIdForStripeMode,
 } from "@/lib/stripe-prices";
-import { applySubscriptionScheduleIntervalChange } from "@/lib/stripe-schedule-interval-change";
+import { applySubscriptionProrationPriceChange } from "@/lib/stripe-subscription-proration-upgrade";
 import {
   resolveStripeForSubscriptionId,
   type StripeMode,
@@ -15,12 +15,30 @@ export type IntervalUpgradeResult =
       message: string;
       stripeMode: StripeMode;
       currentPeriodEnd: string;
+      /** Stripe hosted invoice URL when proration requires payment; otherwise null. */
+      url: string | null;
     }
-  | { ok: false; status: number; error: string };
+  | {
+      ok: false;
+      status: number;
+      error: string;
+      /** Client should open new-subscription checkout for this interval. */
+      fallbackNewSubscription?: boolean;
+    };
+
+function dualKeysConfigured(): boolean {
+  const test =
+    process.env.STRIPE_TEST_SECRET_KEY?.trim() ||
+    process.env.STRIPE_SECRET_KEY_TEST?.trim();
+  const live =
+    process.env.STRIPE_LIVE_SECRET_KEY?.trim() ||
+    process.env.STRIPE_SECRET_KEY_LIVE?.trim();
+  return !!(test && live);
+}
 
 /**
- * Validates DB state and schedules monthly↔annual change on the Stripe account
- * that owns the subscription (test vs live).
+ * Pro Monthly ↔ Pro Annual on the Stripe account (test vs live) that owns the subscription.
+ * Uses subscription.update + proration; returns a payment URL when Stripe leaves an open invoice.
  */
 export async function runSubscriptionIntervalScheduleUpgrade(params: {
   userId: string;
@@ -32,11 +50,29 @@ export async function runSubscriptionIntervalScheduleUpgrade(params: {
     where: { userId },
   });
 
-  if (!subscription?.stripeSubscriptionId || subscription.plan !== "pro") {
+  if (!subscription) {
+    return {
+      ok: false,
+      status: 400,
+      error: "No subscription record found.",
+    };
+  }
+
+  if (subscription.plan !== "pro") {
     return {
       ok: false,
       status: 400,
       error: "No active Pro subscription found to change.",
+    };
+  }
+
+  if (!subscription.stripeSubscriptionId) {
+    return {
+      ok: false,
+      status: 400,
+      error:
+        "No Stripe subscription on file. Use checkout to subscribe or upgrade from Free/Export.",
+      fallbackNewSubscription: true,
     };
   }
 
@@ -83,15 +119,12 @@ export async function runSubscriptionIntervalScheduleUpgrade(params: {
   );
 
   if (!resolved) {
-    const hasDual =
-      !!process.env.STRIPE_SECRET_KEY_TEST?.trim() &&
-      !!process.env.STRIPE_SECRET_KEY_LIVE?.trim();
     return {
       ok: false,
       status: 400,
-      error: hasDual
+      error: dualKeysConfigured()
         ? "Could not load this subscription in Stripe. Check that the subscription id matches your test or live account."
-        : "Subscription not found with the configured Stripe key. If this user subscribed in the other mode, set STRIPE_SECRET_KEY_TEST and STRIPE_SECRET_KEY_LIVE (and matching price IDs) so both can be tried.",
+        : "Subscription not found with the configured Stripe keys. Set STRIPE_TEST_SECRET_KEY and STRIPE_LIVE_SECRET_KEY (plus STRIPE_TEST_* / STRIPE_LIVE_* price IDs) if subscriptions may exist in either account.",
     };
   }
 
@@ -106,34 +139,41 @@ export async function runSubscriptionIntervalScheduleUpgrade(params: {
       status: 500,
       error:
         interval === "annual"
-          ? `Annual plan is not configured for ${resolved.mode} mode (set STRIPE_${resolved.mode === "test" ? "TEST" : "LIVE"}_PRO_ANNUAL_PRICE_ID or STRIPE_PRO_ANNUAL_PRICE_ID).`
-          : `Monthly plan is not configured for ${resolved.mode} mode.`,
+          ? `Annual price not configured for ${resolved.mode} mode (STRIPE_${resolved.mode === "test" ? "TEST" : "LIVE"}_PRO_ANNUAL_PRICE_ID or STRIPE_PRO_ANNUAL_PRICE_ID).`
+          : `Monthly price not configured for ${resolved.mode} mode.`,
     };
   }
 
   try {
-    const { currentPeriodEnd } = await applySubscriptionScheduleIntervalChange(
-      resolved.stripe,
-      subscription.stripeSubscriptionId,
-      targetPriceId
-    );
-
-    const message =
-      interval === "annual"
-        ? "Your plan will switch to Annual at the end of your current billing period."
-        : "Your plan will switch to Monthly at the end of your current billing period.";
+    const { subscription: updated, paymentUrl, message } =
+      await applySubscriptionProrationPriceChange(
+        resolved.stripe,
+        subscription.stripeSubscriptionId,
+        targetPriceId
+      );
 
     return {
       ok: true,
       message,
       stripeMode: resolved.mode,
-      currentPeriodEnd: new Date(currentPeriodEnd * 1000).toISOString(),
+      currentPeriodEnd: new Date(
+        updated.current_period_end * 1000
+      ).toISOString(),
+      url: paymentUrl,
     };
   } catch (e) {
+    const msg = e instanceof Error ? e.message : "Failed to change plan";
+    console.error("[runSubscriptionIntervalScheduleUpgrade]", {
+      userId,
+      stripeSubscriptionId: subscription.stripeSubscriptionId,
+      stripeMode: resolved.mode,
+      interval,
+      error: msg,
+    });
     return {
       ok: false,
       status: 500,
-      error: e instanceof Error ? e.message : "Failed to change plan",
+      error: msg,
     };
   }
 }

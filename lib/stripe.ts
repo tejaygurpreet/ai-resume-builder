@@ -4,41 +4,54 @@ import {
   FREE_EXPORTS_PER_MONTH,
   PRICING,
 } from "@/lib/plans";
+import { getStripeSecretKeyForNodeEnv } from "@/lib/stripe-env";
+
+const API_VERSION = "2025-02-24.acacia" as const;
 
 let _stripe: Stripe | null = null;
+let _cachedSecretKey: string | null = null;
 
-/** Returns Stripe client. Throws only when actually used for API calls if key is missing. */
+function createStripeClient(secretKey: string): Stripe {
+  return new Stripe(secretKey, {
+    apiVersion: API_VERSION,
+    typescript: true,
+  });
+}
+
+/**
+ * Stripe client for this process: STRIPE_LIVE_SECRET_KEY in production,
+ * STRIPE_TEST_SECRET_KEY otherwise. Falls back to STRIPE_SECRET_KEY.
+ */
 export function getStripe(): Stripe {
-  if (!_stripe) {
-    const key = process.env.STRIPE_SECRET_KEY;
-    if (!key) {
-      throw new Error(
-        "STRIPE_SECRET_KEY is not set. Add it to your environment variables."
-      );
-    }
-    _stripe = new Stripe(key, {
-      apiVersion: "2025-02-24.acacia",
-      typescript: true,
-    });
+  const key = getStripeSecretKeyForNodeEnv();
+  if (!key) {
+    throw new Error(
+      "Stripe is not configured. Set STRIPE_TEST_SECRET_KEY for development or STRIPE_LIVE_SECRET_KEY for production (or STRIPE_SECRET_KEY as fallback)."
+    );
   }
+  if (_stripe && _cachedSecretKey === key) {
+    return _stripe;
+  }
+  _stripe = createStripeClient(key);
+  _cachedSecretKey = key;
   return _stripe;
 }
 
-/** Safe check: returns null if Stripe is not configured (e.g. during build). */
+/** Safe check: returns null if no secret key for current NODE_ENV. */
 export function getStripeOrNull(): Stripe | null {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = getStripeSecretKeyForNodeEnv();
   if (!key) return null;
-  if (!_stripe)
-    _stripe = new Stripe(key, {
-      apiVersion: "2025-02-24.acacia",
-      typescript: true,
-    });
+  if (_stripe && _cachedSecretKey === key) {
+    return _stripe;
+  }
+  _stripe = createStripeClient(key);
+  _cachedSecretKey = key;
   return _stripe;
 }
 
 /**
  * Plan metadata for limits & UI. Stripe Price IDs live in `lib/stripe-prices.ts`
- * (use STRIPE_PRO_MONTHLY_PRICE_ID, STRIPE_EXPORT_PRICE_ID, etc.).
+ * (NODE_ENV selects STRIPE_TEST_* vs STRIPE_LIVE_*).
  */
 export const PLANS = {
   free: {

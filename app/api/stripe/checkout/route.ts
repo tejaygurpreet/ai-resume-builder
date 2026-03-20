@@ -9,6 +9,7 @@ import {
 } from "@/lib/stripe-prices";
 import { prisma } from "@/lib/prisma";
 
+/** New Pro checkout. Same handler as POST /api/stripe/create-checkout-session. Uses NODE_ENV + lib/stripe-env. */
 export async function POST(req: Request) {
   try {
     const stripe = getStripeOrNull();

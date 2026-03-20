@@ -5,8 +5,8 @@ const API_VERSION = "2025-02-24.acacia" as const;
 export type StripeMode = "test" | "live";
 
 /**
- * Stripe uses the same `sub_…` id shape in test and live; mode is determined by which
- * secret key can retrieve the subscription — never by a `sub_test_` prefix (not used by Stripe).
+ * Stripe uses the same `sub_…` id in test and live. Mode is determined by which secret key
+ * successfully retrieves the subscription (never from the id string).
  */
 export function stripeModeFromSecretKey(key: string): StripeMode {
   const k = key.trim();
@@ -22,20 +22,23 @@ function newStripe(secret: string): Stripe {
 }
 
 /**
- * Collect distinct API keys to probe. Order: explicit test, explicit live, then primary.
- * Use STRIPE_SECRET_KEY_TEST + STRIPE_SECRET_KEY_LIVE when one deployment must upgrade
- * subscriptions created under either mode.
+ * Keys used to probe which Stripe account owns a subscription (upgrades / cross-mode DB).
+ * Order: test, live, then legacy STRIPE_SECRET_KEY if distinct.
+ * Independent of NODE_ENV so production can still update a test-mode sub if both keys are set.
  */
-function collectStripeSecrets(): string[] {
-  const test = process.env.STRIPE_SECRET_KEY_TEST?.trim();
-  const live = process.env.STRIPE_SECRET_KEY_LIVE?.trim();
-  const primary = process.env.STRIPE_SECRET_KEY?.trim();
+function collectStripeSecretsForProbe(): string[] {
+  const test =
+    process.env.STRIPE_TEST_SECRET_KEY?.trim() ||
+    process.env.STRIPE_SECRET_KEY_TEST?.trim();
+  const live =
+    process.env.STRIPE_LIVE_SECRET_KEY?.trim() ||
+    process.env.STRIPE_SECRET_KEY_LIVE?.trim();
+  const legacy = process.env.STRIPE_SECRET_KEY?.trim();
 
   const keys: string[] = [];
   if (test) keys.push(test);
   if (live) keys.push(live);
-  if (!test && !live && primary) keys.push(primary);
-  if ((test || live) && primary && !keys.includes(primary)) keys.push(primary);
+  if (legacy && !keys.includes(legacy)) keys.push(legacy);
 
   return Array.from(new Set(keys));
 }
@@ -57,7 +60,7 @@ function isMissingSubscriptionError(err: unknown): boolean {
 export async function resolveStripeForSubscriptionId(
   subscriptionId: string
 ): Promise<{ stripe: Stripe; mode: StripeMode } | null> {
-  const secrets = collectStripeSecrets();
+  const secrets = collectStripeSecretsForProbe();
   if (secrets.length === 0) return null;
 
   for (const secret of secrets) {
