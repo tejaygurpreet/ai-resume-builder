@@ -2,8 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { hasUnlimitedExports } from "@/lib/membership";
+import { PLANS } from "@/lib/stripe";
 
-const MAX_EXPORTS_FREE = 5;
+const MAX_EXPORTS_FREE = PLANS.free.maxExportsPerMonth;
 
 function getUserId(session: unknown): string | undefined {
   const s = session as { user?: { id?: string } } | null;
@@ -35,13 +37,14 @@ export async function POST() {
       return NextResponse.json({ exportsUsed: 1, success: true });
     }
 
-    if (subscription.plan === "pro" || subscription.oneTimeExport) {
+    if (hasUnlimitedExports(subscription)) {
       return NextResponse.json({ exportsUsed: subscription.exportsUsed, success: true });
     }
 
     const now = new Date();
     const resetAt = subscription.exportsResetAt ?? now;
-    const isNewMonth = resetAt.getMonth() !== now.getMonth() || resetAt.getFullYear() !== now.getFullYear();
+    const isNewMonth =
+      resetAt.getMonth() !== now.getMonth() || resetAt.getFullYear() !== now.getFullYear();
     const currentUsed = isNewMonth ? 0 : (subscription.exportsUsed ?? 0);
     if (currentUsed >= MAX_EXPORTS_FREE) {
       return NextResponse.json(

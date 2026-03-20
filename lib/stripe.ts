@@ -1,4 +1,9 @@
 import Stripe from "stripe";
+import {
+  FREE_AI_GENERATIONS_PER_RESUME,
+  FREE_EXPORTS_PER_MONTH,
+  PRICING,
+} from "@/lib/plans";
 
 let _stripe: Stripe | null = null;
 
@@ -31,34 +36,31 @@ export function getStripeOrNull(): Stripe | null {
   return _stripe;
 }
 
+/**
+ * Plan metadata for limits & UI. Stripe Price IDs live in `lib/stripe-prices.ts`
+ * (use STRIPE_PRO_MONTHLY_PRICE_ID, STRIPE_EXPORT_PRICE_ID, etc.).
+ */
 export const PLANS = {
   free: {
     name: "Free",
     price: 0,
     templates: 10,
-    maxExportsPerMonth: 5,
-    aiGenerationsPerResume: 3,
-    aiFeatures: true,
-    adsBeforeExport: 0,
-    stripePriceId: null,
+    maxExportsPerMonth: FREE_EXPORTS_PER_MONTH,
+    aiGenerationsPerResume: FREE_AI_GENERATIONS_PER_RESUME,
+    adsBeforeExport: true,
   },
   pro: {
     name: "Pro",
-    price: 7.99,
-    priceAnnual: 69.99,
-    priceLifetime: 129.99,
-    templates: Infinity,
-    maxExportsPerMonth: Infinity,
-    aiGenerationsPerResume: Infinity,
-    aiFeatures: true,
-    adsBeforeExport: 0,
-    stripePriceId: process.env.STRIPE_PRO_PRICE_ID ?? null,
-    stripeAnnualPriceId: process.env.STRIPE_PRO_ANNUAL_PRICE_ID ?? null,
-    stripeLifetimePriceId: process.env.STRIPE_PRO_LIFETIME_PRICE_ID ?? null,
+    price: PRICING.proMonthly,
+    priceAnnual: PRICING.proAnnual,
+    priceLifetime: PRICING.proLifetime,
+    templates: Number.POSITIVE_INFINITY,
+    maxExportsPerMonth: Number.POSITIVE_INFINITY,
+    aiGenerationsPerResume: Number.POSITIVE_INFINITY,
+    adsBeforeExport: false,
   },
   oneTimeExport: {
-    name: "One-Time Export",
-    price: 19.99,
-    stripePriceId: process.env.STRIPE_ONE_TIME_PRICE_ID ?? null,
+    name: "Export Access",
+    price: PRICING.exportOneTime,
   },
 } as const;

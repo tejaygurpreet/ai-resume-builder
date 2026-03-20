@@ -6,21 +6,50 @@ import type { Subscription } from "@prisma/client";
 export function isActiveProSubscription(
   sub: Pick<
     Subscription,
-    "plan" | "status" | "stripeSubscriptionId" | "currentPeriodEnd"
+    | "plan"
+    | "status"
+    | "stripeSubscriptionId"
+    | "currentPeriodEnd"
+    | "planInterval"
   > | null
 ): boolean {
   if (!sub || sub.plan !== "pro") return false;
   if (!sub.stripeSubscriptionId) return true; // Lifetime
-  if (sub.status !== "active") return false;
-  if (!sub.currentPeriodEnd) return true;
-  return sub.currentPeriodEnd > new Date();
+  const st = (sub.status ?? "").toLowerCase();
+  if (st !== "active" && st !== "trialing") return false;
+
+  if (sub.currentPeriodEnd) {
+    const end =
+      sub.currentPeriodEnd instanceof Date
+        ? sub.currentPeriodEnd
+        : new Date(sub.currentPeriodEnd);
+    if (!Number.isNaN(end.getTime()) && end > new Date()) return true;
+    // Expired period → not active (unless interval fallback below)
+    if (!Number.isNaN(end.getTime()) && end <= new Date()) return false;
+  }
+
+  // Recurring Pro with interval set but period end missing / invalid (webhook ordering, clock skew).
+  // Avoid treating arbitrary `plan=pro` rows without interval as active (reduces “ghost Pro”).
+  const pi = (sub.planInterval ?? "").toLowerCase();
+  return pi === "monthly" || pi === "annual" || pi === "yearly";
 }
 
-/** Export Access: paid one-time export, not Pro — unlimited export, no AI. */
+/** Export Access: `plan === "export"` (new) or legacy `oneTimeExport` on free plan. */
 export function isExportOnlyAccess(
   sub: Pick<Subscription, "plan" | "oneTimeExport"> | null
 ): boolean {
-  return !!(sub?.oneTimeExport && sub.plan !== "pro");
+  if (!sub) return false;
+  if (sub.plan === "export") return true;
+  return !!(sub.oneTimeExport && sub.plan !== "pro");
+}
+
+/** Unlimited exports: Pro or Export Access (including legacy one-time flag). */
+export function hasUnlimitedExports(
+  sub: Pick<Subscription, "plan" | "oneTimeExport"> | null
+): boolean {
+  if (!sub) return false;
+  if (sub.plan === "pro") return true;
+  return isExportOnlyAccess(sub);
 }
 
 /**

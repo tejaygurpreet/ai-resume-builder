@@ -81,8 +81,10 @@ model Subscription {
   stripeCustomerId      String?   @unique
   stripePriceId         String?
   stripeSubscriptionId  String?   @unique
+  /// free | export | pro  (export = paid Export Access; pro + planInterval = monthly|annual|lifetime)
   plan                  String    @default("free")
-  planInterval          String?   // "monthly" | "annual" | "lifetime" — for Pro plans
+  /// "monthly" | "annual" | "lifetime" — only for plan=pro recurring or lifetime
+  planInterval          String?
   status                String    @default("active")
   currentPeriodEnd      DateTime?
   exportsUsed           Int       @default(0)

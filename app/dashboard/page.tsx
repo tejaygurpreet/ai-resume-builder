@@ -96,19 +96,22 @@ export default function DashboardPage() {
   }
 
   const isPro = subscription?.plan === "pro";
-  const hasOneTimeExport = !!subscription?.oneTimeExport;
-  const isExportOnly = hasOneTimeExport && !isPro;
+  const hasExportAccess =
+    subscription?.plan === "export" ||
+    !!(subscription?.oneTimeExport && subscription?.plan !== "pro");
+  const hasOneTimeExport = hasExportAccess;
+  const isExportOnly = hasExportAccess && !isPro;
   const isLifetimePro = isPro && !subscription?.stripeSubscriptionId;
   const planInterval = subscription?.planInterval ?? "monthly";
   const proBadgeLabel = isExportOnly
     ? "Export Access"
     : !isPro
-      ? "Free — 5 exports/mo"
+      ? `Free — ${PLANS.free.maxExportsPerMonth} exports/mo`
       : isLifetimePro
         ? "Pro — Lifetime"
         : planInterval === "annual" || planInterval === "yearly"
-          ? "Pro — $69.99/yr"
-          : "Pro — $7.99/mo";
+          ? `Pro — $${PLANS.pro.priceAnnual}/yr`
+          : `Pro — $${PLANS.pro.price}/mo`;
   const exportsUsed = subscription?.exportsUsed ?? 0;
   const maxExports = PLANS.free.maxExportsPerMonth;
   const canExport = isPro || hasOneTimeExport || exportsUsed < maxExports;
@@ -151,12 +154,12 @@ export default function DashboardPage() {
           exportToMarkdown(sections, name);
           break;
       }
-      if (!isPro && !hasOneTimeExport) {
+      if (!isPro && !hasExportAccess) {
         const incRes = await fetch("/api/resumes/increment-export", { method: "POST" });
         if (incRes.ok) await fetchResumes();
       }
     },
-    [exportResume, isPro, hasOneTimeExport, fetchResumes]
+    [exportResume, isPro, hasExportAccess, fetchResumes]
   );
 
 
@@ -320,6 +323,7 @@ export default function DashboardPage() {
         hasOneTimeExport={hasOneTimeExport}
         exportsUsed={exportsUsed}
         maxExports={maxExports}
+        showAdGate
         onExport={handleDashboardExport}
         onAfterExport={fetchResumes}
         resumeTitle={exportResume?.title ?? "Resume"}

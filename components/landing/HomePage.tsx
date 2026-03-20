@@ -31,6 +31,7 @@ import { TemplatePreviewCard } from "@/components/landing/template-preview-card"
 import { TemplatePreviewModal } from "@/components/landing/template-preview-modal";
 import { templateRegistry } from "@/components/resume/templates";
 import { cn } from "@/lib/utils";
+import { PLANS_COPY, PRICING } from "@/lib/plans";
 
 const features = [
   { Icon: Sparkles, title: "AI-Powered Writing", description: "AI crafts compelling bullet points and summaries tailored to your experience and target role.", color: "from-blue-500 to-cyan-400" },
@@ -49,7 +50,10 @@ const testimonials = [
 
 const faqItems = [
   { question: "What is OptimaCV?", answer: "OptimaCV is an AI-powered resume builder that helps you create professional, ATS-optimized resumes in minutes using advanced language models." },
-  { question: "Is it free to use?", answer: "Yes! Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $69.99/year or $129.99 lifetime – unlimited AI, all 50+ templates, job tailoring, cover letter, ATS score, unlimited exports." },
+  {
+    question: "Is it free to use?",
+    answer: `Yes! Free: $0/month – ${PLANS_COPY.free.features.slice(0, 4).join(", ")}. Pro: $${PRICING.proMonthly}/month or $${PRICING.proAnnual}/year or $${PRICING.proLifetime} lifetime – unlimited AI, all templates, tailoring, cover letter, ATS. Export Access: $${PRICING.exportOneTime} one-time – unlimited exports, no AI.`,
+  },
   { question: "Are the resumes ATS-compatible?", answer: "Absolutely. Every template uses clean formatting, standard section headings, and proper document structure to pass ATS systems." },
   { question: "How do you handle my data?", answer: "Your privacy is our top priority. All data is encrypted. We never sell your information. Delete your account and data at any time." },
   { question: "Can I cancel anytime?", answer: "Yes. Cancel your Pro subscription at any time. Keep access until the end of your billing period." },
@@ -58,8 +62,8 @@ const faqItems = [
 /** 6 featured templates for homepage - one per major category */
 const FEATURED_TEMPLATE_IDS = ["modern", "professional", "minimal", "tech", "creative", "executive"] as const;
 
-const freePlanFeatures = ["$0/month", "5 exports/month", "10 basic templates", "3 AI generations per resume", "No ads", "All export formats"];
-const proPlanFeatures = ["Unlimited AI generations", "All 50+ premium templates", "Job tailoring", "Cover letter generator", "ATS score analysis", "Unlimited clean exports", "Priority support"];
+const freePlanFeatures = ["$0/month", ...PLANS_COPY.free.features];
+const proPlanFeatures = [...PLANS_COPY.pro.features];
 
 const stats = [
   { value: 50, suffix: "K+", label: "Resumes Created", icon: FileText },
@@ -319,7 +323,7 @@ export default function HomePage() {
                 <h3 className="text-2xl font-bold text-slate-900">Pro</h3>
                 <p className="mt-2 text-base text-slate-500">Everything you need to land the job</p>
                 <p className="mt-8">
-                  <span className="text-6xl font-black text-slate-900">$7.99</span>
+                  <span className="text-6xl font-black text-slate-900">${PRICING.proMonthly}</span>
                   <span className="ml-2 text-base text-slate-500">/month</span>
                 </p>
                 <ul className="mt-10 space-y-4">

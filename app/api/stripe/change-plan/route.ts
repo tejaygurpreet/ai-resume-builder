@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getStripeOrNull, PLANS } from "@/lib/stripe";
+import { getStripeOrNull } from "@/lib/stripe";
+import { getProAnnualPriceId, getProMonthlyPriceId } from "@/lib/stripe-prices";
 import { prisma } from "@/lib/prisma";
 
 /**
- * Schedule a subscription upgrade to take effect at the end of the current billing period.
- * Supports: monthly -> annual
+ * Schedule a subscription price change at the end of the current billing period.
+ * Supports: monthly → annual, annual → monthly
  * Does NOT create overlapping subscriptions. Uses Stripe subscription schedules.
  */
 export async function POST(req: Request) {
@@ -27,9 +28,9 @@ export async function POST(req: Request) {
     }
 
     const { interval } = await req.json();
-    if (interval !== "annual" && interval !== "lifetime") {
+    if (interval !== "annual" && interval !== "monthly" && interval !== "lifetime") {
       return NextResponse.json(
-        { error: "Invalid interval. Use 'annual' or 'lifetime'." },
+        { error: "Invalid interval. Use 'annual', 'monthly', or 'lifetime'." },
         { status: 400 }
       );
     }
@@ -60,11 +61,33 @@ export async function POST(req: Request) {
       );
     }
 
-    if (interval === "annual" && subscription.planInterval === "annual") {
-      return NextResponse.json(
-        { error: "You are already on the Annual plan." },
-        { status: 400 }
-      );
+    const planInt = (subscription.planInterval ?? "").toLowerCase();
+
+    if (interval === "annual") {
+      if (planInt === "annual" || planInt === "yearly") {
+        return NextResponse.json(
+          { error: "You are already on the Annual plan." },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (interval === "monthly") {
+      if (planInt === "monthly") {
+        return NextResponse.json(
+          { error: "You are already on the Monthly plan." },
+          { status: 400 }
+        );
+      }
+      if (planInt !== "annual" && planInt !== "yearly") {
+        return NextResponse.json(
+          {
+            error:
+              "You can only switch to Monthly billing from an Annual subscription.",
+          },
+          { status: 400 }
+        );
+      }
     }
 
     if (interval === "lifetime") {
@@ -77,10 +100,16 @@ export async function POST(req: Request) {
       );
     }
 
-    const annualPriceId = PLANS.pro.stripeAnnualPriceId;
-    if (!annualPriceId) {
+    const targetPriceId =
+      interval === "annual" ? getProAnnualPriceId() : getProMonthlyPriceId();
+    if (!targetPriceId) {
       return NextResponse.json(
-        { error: "Annual plan is not configured." },
+        {
+          error:
+            interval === "annual"
+              ? "Annual plan is not configured."
+              : "Monthly plan is not configured.",
+        },
         { status: 500 }
       );
     }
@@ -91,7 +120,6 @@ export async function POST(req: Request) {
     );
 
     const currentPeriodEnd = stripeSubscription.current_period_end;
-    const now = Math.floor(Date.now() / 1000);
 
     let scheduleId: string | null = null;
 
@@ -135,15 +163,20 @@ export async function POST(req: Request) {
           end_date: currentPeriodEnd,
         },
         {
-          items: [{ price: annualPriceId, quantity: 1 }],
+          items: [{ price: targetPriceId, quantity: 1 }],
           start_date: currentPeriodEnd,
         },
       ],
     });
 
+    const message =
+      interval === "annual"
+        ? "Your plan will switch to Annual at the end of your current billing period."
+        : "Your plan will switch to Monthly at the end of your current billing period.";
+
     return NextResponse.json({
       success: true,
-      message: "Your plan will switch to Annual at the end of your current billing period.",
+      message,
       currentPeriodEnd: new Date(currentPeriodEnd * 1000).toISOString(),
     });
   } catch (err) {

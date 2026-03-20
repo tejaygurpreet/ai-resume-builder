@@ -3,14 +3,21 @@ import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ChevronDown, Sparkles, ArrowRight } from "lucide-react";
+import { PLANS_COPY, PRICING } from "@/lib/plans";
 
 export const metadata: Metadata = { title: "FAQ | OptimaCV", description: "Frequently asked questions about OptimaCV's AI resume builder, pricing, exports, and data privacy." };
 
 const faqItems = [
   { question: "How does the AI resume builder work?", answer: "Getting started is simple. First, choose from one of our 50+ professionally designed templates. Then enter your information — work experience, education, skills, and more. As you type, our AI suggests compelling bullet points, rewrites summaries, and optimizes your wording for impact. When you're happy with the result, export your resume as a PDF, DOCX, TXT, or JSON file. The entire process takes just minutes, not hours." },
-  { question: "Is OptimaCV free to use?", answer: "Yes! Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $69.99/year (best value) or $129.99 lifetime – unlimited AI, all 50+ premium templates, job tailoring, cover letter, ATS score, unlimited exports. One-Time Export: $19.99 – unlimited exports forever, no ads, all formats." },
-  { question: "What export formats are available?", answer: "OptimaCV supports four export formats: PDF (the standard format for job applications), DOCX (for editing in Microsoft Word or Google Docs), TXT (plain text for online application forms that strip formatting), and JSON (a structured data format useful for developers or programmatic workflows). All formats are available on both the Free and Pro plans." },
-  { question: "How do subscriptions work?", answer: "Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $69.99/year (best value) or $129.99 lifetime – unlimited AI, all 50+ templates, job tailoring, cover letter, ATS score, unlimited exports. One-Time Export: $19.99 one-time – unlimited exports forever, no ads, all formats (no Pro AI features). Cancel Pro anytime." },
+  {
+    question: "Is OptimaCV free to use?",
+    answer: `Yes! Free: $0/month – ${PLANS_COPY.free.features.join("; ")}. Pro: $${PRICING.proMonthly}/month or $${PRICING.proAnnual}/year or $${PRICING.proLifetime} lifetime – unlimited AI and ad-free exports. Export Access: $${PRICING.exportOneTime} one-time – unlimited exports, no ads, no AI.`,
+  },
+  { question: "What export formats are available?", answer: "OptimaCV supports PDF, DOCX, TXT, JSON, and Markdown exports. All formats are available on Free (with fair-use limits), Export Access, and Pro." },
+  {
+    question: "How do subscriptions work?",
+    answer: `Free includes basic AI and a sponsor step before export. Pro is $${PRICING.proMonthly}/mo, $${PRICING.proAnnual}/yr, or $${PRICING.proLifetime} lifetime. Export Access is $${PRICING.exportOneTime} one-time (exports only). Cancel Pro anytime.`,
+  },
   { question: "Is my resume data private?", answer: "Absolutely. Privacy is a core value at OptimaCV. All data is encrypted both in transit (TLS) and at rest. We never sell your personal information or share it with third parties. Our AI processing is stateless — your resume content is not used to train or fine-tune any models. You can delete your account and all associated data at any time from your dashboard." },
   { question: "Can I use OptimaCV for multiple resumes?", answer: "Yes! You can create and manage as many resumes as you need from your dashboard. This is especially useful if you're applying to different types of roles and want to tailor each resume to a specific job description. Each resume can use a different template and have its own customized content." },
   { question: "Are the templates ATS-friendly?", answer: "Yes, all 50+ of our templates are designed for Applicant Tracking Systems (ATS). We use clean formatting, standard section headings, proper document structure, and avoid elements that confuse ATS parsers like tables, columns embedded in text boxes, or unusual fonts." },

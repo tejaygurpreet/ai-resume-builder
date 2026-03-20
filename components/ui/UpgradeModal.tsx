@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Crown, Zap, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import {
+  FREE_AI_GENERATIONS_PER_RESUME,
+  FREE_EXPORTS_PER_MONTH,
+  PRICING,
+} from "@/lib/plans";
+import { trackEvent } from "@/lib/analytics";
 
 export type UpgradeReason =
   | "ai_limit"
@@ -30,26 +36,22 @@ const REASON_CONFIG: Record<
 > = {
   ai_limit: {
     title: "AI Limit Reached",
-    message:
-      "You've used all 3 free AI generations. Upgrade to Pro for unlimited AI tailoring & rewriting – only $7.99/month",
+    message: `You've used all ${FREE_AI_GENERATIONS_PER_RESUME} free AI generations on this resume. Upgrade to Pro for unlimited AI — $${PRICING.proMonthly}/month.`,
     icon: Sparkles,
   },
   export_limit: {
     title: "Export Limit Reached",
-    message:
-      "You've reached your 5 free exports this month. Upgrade to Pro for unlimited exports + premium features",
+    message: `You've used your ${FREE_EXPORTS_PER_MONTH} free exports this month. Upgrade to Pro for unlimited ad-free exports, or get Export Access ($${PRICING.exportOneTime} one-time).`,
     icon: Zap,
   },
   template_lock: {
     title: "Premium Template",
-    message:
-      "Unlock all 50+ premium templates with Pro – only $7.99/month",
+    message: `Unlock all 50+ premium templates with Pro — $${PRICING.proMonthly}/month`,
     icon: Crown,
   },
   pro_feature: {
     title: "Pro Feature",
-    message:
-      "Upgrade to Pro for unlimited AI generations, all templates, job tailoring, cover letters, ATS score – only $7.99/month",
+    message: `Upgrade to Pro for unlimited AI, all templates, job tailoring, cover letters, ATS — $${PRICING.proMonthly}/month`,
     icon: Crown,
   },
   improve_pro: {
@@ -66,8 +68,7 @@ const REASON_CONFIG: Record<
   },
   export_no_ai: {
     title: "AI features require Pro",
-    message:
-      "AI features require Pro plan. Upgrade to access AI bullet generation, optimization, tailoring, ATS analysis, and more. Export Access includes unlimited exports in all formats.",
+    message: `Your Export Access plan includes unlimited exports only (no AI). Upgrade to Pro for tailoring, cover letters, ATS, and unlimited AI — from $${PRICING.proMonthly}/month.`,
     icon: Sparkles,
   },
 };
@@ -83,9 +84,10 @@ export function UpgradeModal({
   const config = REASON_CONFIG[reason];
   const Icon = config.icon;
 
-  const message = templateName && reason === "template_lock"
-    ? `Unlock "${templateName}" and all 50+ premium templates with Pro – only $7.99/month`
-    : config.message;
+  const message =
+    templateName && reason === "template_lock"
+      ? `Unlock "${templateName}" and all 50+ premium templates with Pro — $${PRICING.proMonthly}/month`
+      : config.message;
 
   const handleUpgrade = async () => {
     if (status !== "authenticated") {
@@ -93,6 +95,7 @@ export function UpgradeModal({
       return;
     }
     setLoading(true);
+    trackEvent("upgrade_checkout_start", { reason });
     try {
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
@@ -129,7 +132,7 @@ export function UpgradeModal({
             className="w-full bg-gradient-to-r from-purple-600 to-violet-600 font-semibold hover:from-purple-500 hover:to-violet-500"
           >
             <Crown className="mr-2 h-4 w-4" />
-            Upgrade to Pro — $7.99/month
+            {`Upgrade to Pro — $${PRICING.proMonthly}/month`}
           </Button>
           <Link href="/pricing" onClick={onClose} className="block">
             <Button
@@ -137,7 +140,7 @@ export function UpgradeModal({
               variant="outline"
               className="w-full border-white/[0.12] text-slate-300 hover:bg-white/[0.06]"
             >
-              View all plans ($69.99/year or $129.99 lifetime)
+              {`View all plans ($${PRICING.proAnnual}/yr or $${PRICING.proLifetime} lifetime)`}
             </Button>
           </Link>
           <Button

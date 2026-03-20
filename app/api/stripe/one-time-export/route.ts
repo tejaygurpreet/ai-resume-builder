@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getStripeOrNull, PLANS } from "@/lib/stripe";
+import { getStripeOrNull } from "@/lib/stripe";
+import { getExportPriceId } from "@/lib/stripe-prices";
 import { prisma } from "@/lib/prisma";
 
 export async function POST() {
@@ -39,8 +40,14 @@ export async function POST() {
         { status: 400 }
       );
     }
+    if (sub?.plan === "export") {
+      return NextResponse.json(
+        { error: "You already have Export Access." },
+        { status: 400 }
+      );
+    }
 
-    const priceId = PLANS.oneTimeExport.stripePriceId;
+    const priceId = getExportPriceId();
     if (!priceId) {
       return NextResponse.json(
         { error: "One-time export is not configured" },

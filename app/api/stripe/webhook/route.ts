@@ -3,6 +3,12 @@ import { headers } from "next/headers";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+import {
+  getExportPriceId,
+  getProAnnualPriceId,
+  getProLifetimePriceId,
+  getProMonthlyPriceId,
+} from "@/lib/stripe-prices";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -172,14 +178,14 @@ export async function POST(req: Request) {
               create: {
                 userId: user.id,
                 stripeCustomerId,
-                plan: "free",
+                plan: "export",
                 planInterval: null,
                 status: "active",
                 oneTimeExport: true,
               },
               update: {
                 stripeCustomerId,
-                plan: "free",
+                plan: "export",
                 planInterval: null,
                 oneTimeExport: true,
                 stripeSubscriptionId: existingSub?.stripeSubscriptionId ?? undefined,
@@ -190,8 +196,8 @@ export async function POST(req: Request) {
               userEmail: user.email,
             });
           } else {
-            const lifetimePriceId = process.env.STRIPE_PRO_LIFETIME_PRICE_ID;
-            const oneTimePriceId = process.env.STRIPE_ONE_TIME_PRICE_ID;
+            const lifetimePriceId = getProLifetimePriceId();
+            const oneTimePriceId = getExportPriceId();
             let priceId: string | undefined;
             if (session.line_items?.data?.[0]?.price) {
               const p = session.line_items.data[0].price;
@@ -254,13 +260,13 @@ export async function POST(req: Request) {
                 create: {
                   userId: user.id,
                   stripeCustomerId,
-                  plan: "free",
+                  plan: "export",
                   status: "active",
                   oneTimeExport: true,
                 },
                 update: {
                   stripeCustomerId,
-                  plan: "free",
+                  plan: "export",
                   planInterval: null,
                   oneTimeExport: true,
                 },
@@ -330,8 +336,8 @@ export async function POST(req: Request) {
             : typeof line?.price === "string"
               ? line.price
               : null;
-        const annualPriceId = process.env.STRIPE_PRO_ANNUAL_PRICE_ID;
-        const monthlyPriceId = process.env.STRIPE_PRO_PRICE_ID;
+        const annualPriceId = getProAnnualPriceId();
+        const monthlyPriceId = getProMonthlyPriceId();
         let planInterval: string | null = null;
         if (priceId && annualPriceId && priceId === annualPriceId) {
           planInterval = "annual";
@@ -359,8 +365,8 @@ export async function POST(req: Request) {
             : typeof item?.price === "string"
               ? item.price
               : null;
-        const annualPriceId = process.env.STRIPE_PRO_ANNUAL_PRICE_ID;
-        const monthlyPriceId = process.env.STRIPE_PRO_PRICE_ID;
+        const annualPriceId = getProAnnualPriceId();
+        const monthlyPriceId = getProMonthlyPriceId();
         let planInterval: string | null = null;
         if (priceId && annualPriceId && priceId === annualPriceId) {
           planInterval = "annual";

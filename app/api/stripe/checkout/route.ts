@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { getStripeOrNull, PLANS } from "@/lib/stripe";
+import { getStripeOrNull } from "@/lib/stripe";
+import {
+  getProAnnualPriceId,
+  getProLifetimePriceId,
+  getProMonthlyPriceId,
+} from "@/lib/stripe-prices";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
@@ -30,11 +35,11 @@ export async function POST(req: Request) {
     }
 
     const priceId =
-      interval === "annual" && PLANS.pro.stripeAnnualPriceId
-        ? PLANS.pro.stripeAnnualPriceId
-        : interval === "lifetime" && PLANS.pro.stripeLifetimePriceId
-          ? PLANS.pro.stripeLifetimePriceId
-          : PLANS.pro.stripePriceId;
+      interval === "annual"
+        ? getProAnnualPriceId()
+        : interval === "lifetime"
+          ? getProLifetimePriceId()
+          : getProMonthlyPriceId();
     if (!priceId) {
       return NextResponse.json(
         { error: "Pro plan is not configured" },

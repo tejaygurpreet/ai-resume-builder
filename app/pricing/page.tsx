@@ -11,6 +11,14 @@ import { Modal } from "@/components/ui/modal";
 import { Check, X, ChevronDown, Sparkles, Zap, Star, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme-provider";
+import {
+  ANNUAL_SAVE_VS_MONTHLY_DOLLARS,
+  LIFETIME_VS_MONTHLY_TAGLINE,
+  PLANS_COPY,
+  PRICING,
+} from "@/lib/plans";
+import { trackEvent } from "@/lib/analytics";
+import { getMembershipDisplay } from "@/lib/membership";
 
 type ActivePlan =
   | "free"
@@ -19,51 +27,62 @@ type ActivePlan =
   | "pro_lifetime"
   | "one_time_export";
 
-const freeFeatures = [
-  "5 exports/month",
-  "10 basic templates",
-  "3 AI generations per resume",
-  "No ads",
-  "PDF, DOCX, TXT, JSON, Markdown export",
-];
+const freeFeatures = PLANS_COPY.free.features;
 
-const proFeatures = [
-  "Unlimited AI generations",
-  "All 50+ premium templates",
-  "Job tailoring",
-  "Cover letter generator",
-  "ATS score analysis",
-  "Unlimited clean exports",
-  "Priority support",
-];
+const proFeatures = PLANS_COPY.pro.features;
 
-const oneTimeFeatures = [
-  "Unlimited exports forever",
-  "No ads",
-  "All formats (PDF, DOCX, TXT, JSON, MD)",
-];
+const oneTimeFeatures = PLANS_COPY.export.features.filter(
+  (f) => !f.toLowerCase().includes("no ai")
+);
 
 type ProInterval = "monthly" | "annual" | "lifetime";
 
 const proOptions: { id: ProInterval; label: string; price: string; badge?: string }[] = [
-  { id: "monthly", label: "Monthly", price: "$7.99/month" },
-  { id: "annual", label: "Annual", price: "$69.99/year", badge: "Best value" },
-  { id: "lifetime", label: "Lifetime", price: "$129.99 one-time" },
+  { id: "monthly", label: "Monthly", price: `$${PRICING.proMonthly}/month` },
+  {
+    id: "annual",
+    label: "Annual",
+    price: `$${PRICING.proAnnual}/year`,
+    badge: `Save $${ANNUAL_SAVE_VS_MONTHLY_DOLLARS}/year · ~33%`,
+  },
+  {
+    id: "lifetime",
+    label: "Lifetime",
+    price: `$${PRICING.proLifetime} one-time`,
+    badge: "Limited Time",
+  },
 ];
 
 const comparisonCompetitors = [
-  { name: "Us", price: "$7.99/mo", highlight: true },
+  { name: "Us", price: `$${PRICING.proMonthly}/mo`, highlight: true },
   { name: "Teal", price: "$29/mo", highlight: false },
   { name: "Rezi", price: "$29/mo", highlight: false },
   { name: "Kickresume", price: "$19–24/mo", highlight: false },
 ];
 
 const faqItems = [
-  { question: "How does billing work?", answer: "Free: $0/month – 5 exports/month, 10 basic templates, 3 AI generations per resume, no ads. Pro: $7.99/month or $69.99/year (best value) or $129.99 lifetime – unlimited AI, all 50+ premium templates, unlimited exports. One-Time Export: $19.99 one-time – unlimited exports forever, no ads, all formats (no Pro AI features)." },
-  { question: "Can I cancel my Pro subscription anytime?", answer: "Yes, you can cancel your Pro subscription at any time with no questions asked. You'll continue to have access to Pro features until the end of your current billing period." },
-  { question: "What is the one-time export option?", answer: "Pay $19.99 once to unlock unlimited exports permanently. This gives you all export formats (PDF, DOCX, TXT, JSON, Markdown) without a subscription. Pro AI features (tailoring, cover letters, ATS score) are not included." },
-  { question: "What payment methods do you accept?", answer: "We accept all major credit cards (Visa, Mastercard, American Express) and debit cards through our secure payment processor, Stripe." },
-  { question: "Is there a free trial for Pro?", answer: "You can try our Free plan with no time limit — it includes 5 exports/month, 10 basic templates, and 3 AI generations per resume. Upgrade to Pro for $7.99/month for unlimited access. Cancel anytime." },
+  {
+    question: "How does billing work?",
+    answer: `Free: $0/month – ${PLANS_COPY.free.features[0]}, sponsor message before export, basic AI only. Pro: $${PRICING.proMonthly}/month or $${PRICING.proAnnual}/year or $${PRICING.proLifetime} lifetime – unlimited AI, all templates, unlimited ad-free exports. Export Access: $${PRICING.exportOneTime} one-time – unlimited exports, no ads, no AI.`,
+  },
+  {
+    question: "Can I cancel my Pro subscription anytime?",
+    answer:
+      "Yes, you can cancel your Pro subscription at any time with no questions asked. You'll continue to have access to Pro features until the end of your current billing period.",
+  },
+  {
+    question: "What is Export Access?",
+    answer: `Pay $${PRICING.exportOneTime} once for unlimited exports forever (all formats), no ads, and 10 basic templates. Pro AI (tailoring, cover letters, ATS) is not included — upgrade to Pro for those.`,
+  },
+  {
+    question: "What payment methods do you accept?",
+    answer:
+      "We accept all major credit cards (Visa, Mastercard, American Express) and debit cards through our secure payment processor, Stripe.",
+  },
+  {
+    question: "Is there a free trial for Pro?",
+    answer: `You can use our Free plan with no time limit — ${PLANS_COPY.free.features.slice(0, 3).join(", ")}. Upgrade to Pro from $${PRICING.proMonthly}/month. Cancel anytime.`,
+  },
 ];
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -106,6 +125,12 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   );
 }
 
+function parsePeriodEnd(v: string | Date | null | undefined): Date | null {
+  if (v == null || v === "") return null;
+  const d = v instanceof Date ? v : new Date(v);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
 function deriveActivePlan(sub: {
   plan?: string;
   planInterval?: string | null;
@@ -115,18 +140,55 @@ function deriveActivePlan(sub: {
   status?: string;
 } | null): ActivePlan {
   if (!sub) return "free";
-  if (sub.oneTimeExport && sub.plan !== "pro") return "one_time_export";
-  if (sub.plan !== "pro") return "free";
-  const isLifetime = !sub.stripeSubscriptionId;
-  if (isLifetime) return "pro_lifetime";
-  const isActive =
-    sub.status === "active" &&
-    (!sub.currentPeriodEnd || new Date(sub.currentPeriodEnd) > new Date());
-  if (!isActive) return "free";
-  if (sub.planInterval === "annual" || sub.planInterval === "yearly") return "pro_annual";
-  if (sub.planInterval === "monthly") return "pro_monthly";
-  return "pro_monthly";
+  // Single source of truth with dashboard / builder (avoids “ghost Pro” → wrong modals).
+  const m = getMembershipDisplay({
+    plan: sub.plan ?? "free",
+    planInterval: sub.planInterval ?? null,
+    status: sub.status ?? "active",
+    stripeSubscriptionId: sub.stripeSubscriptionId ?? null,
+    currentPeriodEnd: parsePeriodEnd(sub.currentPeriodEnd),
+    oneTimeExport: !!sub.oneTimeExport,
+  });
+  switch (m) {
+    case "export":
+      return "one_time_export";
+    case "pro_monthly":
+      return "pro_monthly";
+    case "pro_annual":
+      return "pro_annual";
+    case "pro_lifetime":
+      return "pro_lifetime";
+    default:
+      return "free";
+  }
 }
+
+function activePlanLabel(ap: ActivePlan): string {
+  switch (ap) {
+    case "free":
+      return "Free";
+    case "one_time_export":
+      return "Export Access";
+    case "pro_monthly":
+      return "Pro Monthly";
+    case "pro_annual":
+      return "Pro Annual";
+    case "pro_lifetime":
+      return "Pro Lifetime";
+  }
+}
+
+function targetPlanLabel(plan: "pro" | "one-time", interval: ProInterval): string {
+  if (plan === "one-time") return "Export Access";
+  if (interval === "monthly") return "Pro Monthly";
+  if (interval === "annual") return "Pro Annual";
+  return "Pro Lifetime";
+}
+
+type PendingCheckout =
+  | { mode: "checkout"; plan: "pro" | "one-time"; interval: ProInterval }
+  | { mode: "schedule_annual" }
+  | { mode: "schedule_monthly" };
 
 export default function PricingPage() {
   const router = useRouter();
@@ -148,35 +210,139 @@ export default function PricingPage() {
 
   const [exportWarningOpen, setExportWarningOpen] = useState(false);
   const [currentPlanModalOpen, setCurrentPlanModalOpen] = useState(false);
+  const [subscriberConfirmOpen, setSubscriberConfirmOpen] = useState(false);
+  const [pendingCheckout, setPendingCheckout] = useState<PendingCheckout | null>(null);
   const [cancelConfirmModalOpen, setCancelConfirmModalOpen] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  /** Wait for /api/resumes so we never treat a paid user as free (wrong checkout). */
+  const [billingReady, setBillingReady] = useState(false);
 
   const fetchSubscription = useCallback(async () => {
     if (status !== "authenticated") return;
     try {
       const res = await fetch("/api/resumes");
-      if (!res.ok) return;
+      if (!res.ok) {
+        setSubscription(null);
+        return;
+      }
       const data = await res.json();
       setSubscription(data.subscription ?? null);
     } catch {
       setSubscription(null);
+    } finally {
+      setBillingReady(true);
     }
   }, [status]);
 
   useEffect(() => {
-    fetchSubscription();
-  }, [fetchSubscription]);
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      setBillingReady(true);
+      return;
+    }
+    if (status === "authenticated") {
+      setBillingReady(false);
+      void fetchSubscription();
+    }
+  }, [status, fetchSubscription]);
 
+  // When billing snapshot loads, align interval picker with actual subscription (avoids stale UI
+  // e.g. Annual selected while user is Pro Monthly → wrong checkout / not “Current Plan”).
   useEffect(() => {
+    if (!billingReady) return;
     if (activePlan === "pro_lifetime") setProInterval("lifetime");
-    else if (activePlan === "pro_annual" && proInterval === "monthly") setProInterval("annual");
-  }, [activePlan, proInterval]);
+    else if (activePlan === "pro_annual") setProInterval("annual");
+    else if (activePlan === "pro_monthly") setProInterval("monthly");
+  }, [billingReady, activePlan]);
+
+  /**
+   * Tier → pricing cards (via `activePlan` / `getMembershipDisplay`):
+   * FREE → none; EXPORT → Export card; PRO_MONTHLY / PRO_ANNUAL / PRO_LIFETIME → Pro card + matching row.
+   */
+  const subscribedProInterval: ProInterval | null =
+    activePlan === "pro_monthly"
+      ? "monthly"
+      : activePlan === "pro_annual"
+        ? "annual"
+        : activePlan === "pro_lifetime"
+          ? "lifetime"
+          : null;
+
+  const isCurrentProInterval = (opt: ProInterval) =>
+    subscribedProInterval !== null && opt === subscribedProInterval;
 
   const isCurrentPlan = (plan: "pro" | "one-time") =>
-    (plan === "pro" && ((activePlan === "pro_monthly" && proInterval === "monthly") || (activePlan === "pro_annual" && proInterval === "annual") || activePlan === "pro_lifetime")) ||
+    (plan === "pro" &&
+      subscribedProInterval !== null &&
+      proInterval === subscribedProInterval) ||
     (plan === "one-time" && activePlan === "one_time_export");
 
+  /** True when user has Export, any active Pro tier, or Lifetime (anything but Free). */
+  const isPayingCustomer = activePlan !== "free";
+
+  /** Stripe checkout or change-plan — no modals (caller handles UX). */
+  const executeCheckout = async (plan: "pro" | "one-time", interval: ProInterval) => {
+    // Existing subscriber: Monthly → Annual at end of period (not Checkout — no duplicate sub)
+    if (plan === "pro" && interval === "annual" && activePlan === "pro_monthly") {
+      const res = await fetch("/api/stripe/change-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interval: "annual" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(
+          data.message ||
+            "Your plan will switch to Annual at the end of your current billing period."
+        );
+        await fetchSubscription();
+      } else {
+        throw new Error(data.error || "Failed");
+      }
+      return;
+    }
+
+    // Existing subscriber: Annual → Monthly at end of period
+    if (plan === "pro" && interval === "monthly" && activePlan === "pro_annual") {
+      const res = await fetch("/api/stripe/change-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ interval: "monthly" }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(
+          data.message ||
+            "Your plan will switch to Monthly at the end of your current billing period."
+        );
+        await fetchSubscription();
+      } else {
+        throw new Error(data.error || "Failed");
+      }
+      return;
+    }
+
+    if (plan === "pro" && interval === "annual" && activePlan === "pro_annual") {
+      return;
+    }
+
+    const endpoint = plan === "pro" ? "/api/stripe/checkout" : "/api/stripe/one-time-export";
+    const bodyPayload = plan === "pro" ? { plan: "pro", interval } : {};
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(bodyPayload),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else {
+      throw new Error(data.error || "Failed");
+    }
+  };
+
   const handleCheckout = async (plan: "pro" | "one-time") => {
+    if (!billingReady) return;
     if (!isAuthenticated) {
       router.push("/signup");
       return;
@@ -188,54 +354,63 @@ export default function PricingPage() {
       return;
     }
 
+    // No paid product — Stripe Checkout for every interval (monthly, annual, lifetime, export)
+    if (!isPayingCustomer) {
+      setIsLoading(plan);
+      trackEvent("pricing_checkout_click", {
+        plan: plan === "pro" ? `pro_${proInterval}` : "export",
+      });
+      try {
+        await executeCheckout(plan, proInterval);
+      } catch (err) {
+        console.error(err);
+        alert(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+      } finally {
+        setIsLoading(null);
+      }
+      return;
+    }
+
+    // Paying customer: same selection as today → manage / cancel modal only
     if (isCurrentPlan(plan)) {
       setCurrentPlanModalOpen(true);
       return;
     }
 
-    setIsLoading(plan);
+    // Paying customer changing product — confirm before Checkout or schedule
+    if (plan === "pro" && proInterval === "annual" && activePlan === "pro_monthly") {
+      setPendingCheckout({ mode: "schedule_annual" });
+    } else if (plan === "pro" && proInterval === "monthly" && activePlan === "pro_annual") {
+      setPendingCheckout({ mode: "schedule_monthly" });
+    } else {
+      setPendingCheckout({ mode: "checkout", plan, interval: proInterval });
+    }
+    setSubscriberConfirmOpen(true);
+  };
 
+  const confirmSubscriberCheckout = async () => {
+    if (!pendingCheckout) return;
+    const schedule =
+      pendingCheckout.mode === "schedule_annual" || pendingCheckout.mode === "schedule_monthly";
+    setIsLoading(schedule ? "pro" : pendingCheckout.plan);
+    trackEvent("pricing_subscriber_confirm", {
+      mode: pendingCheckout.mode,
+    });
     try {
-      if (plan === "pro" && proInterval === "annual" && activePlan === "pro_monthly") {
-        const res = await fetch("/api/stripe/change-plan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ interval: "annual" }),
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          alert(data.message || "Your plan will switch to Annual at renewal.");
-          fetchSubscription();
-        } else {
-          throw new Error(data.error || "Failed");
-        }
-        setIsLoading(null);
-        return;
-      }
-
-      if (plan === "pro" && proInterval === "annual" && activePlan === "pro_annual") {
-        setIsLoading(null);
-        return;
-      }
-
-      const endpoint = plan === "pro" ? "/api/stripe/checkout" : "/api/stripe/one-time-export";
-      const bodyPayload =
-        plan === "pro" ? { plan: "pro", interval: proInterval } : {};
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bodyPayload),
-      });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
+      if (pendingCheckout.mode === "schedule_annual") {
+        await executeCheckout("pro", "annual");
+      } else if (pendingCheckout.mode === "schedule_monthly") {
+        await executeCheckout("pro", "monthly");
       } else {
-        throw new Error(data.error || "Failed");
+        await executeCheckout(pendingCheckout.plan, pendingCheckout.interval);
       }
     } catch (err) {
       console.error(err);
-      setIsLoading(null);
       alert(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(null);
+      setSubscriberConfirmOpen(false);
+      setPendingCheckout(null);
     }
   };
 
@@ -244,17 +419,12 @@ export default function PricingPage() {
     if (!isAuthenticated) return;
     setIsLoading("one-time");
     try {
-      const res = await fetch("/api/stripe/one-time-export", { method: "POST" });
-      const data = await res.json();
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error(data.error || "Failed");
-      }
+      await executeCheckout("one-time", "monthly");
     } catch (err) {
       console.error(err);
-      setIsLoading(null);
       alert(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setIsLoading(null);
     }
   };
 
@@ -286,16 +456,10 @@ export default function PricingPage() {
     (activePlan === "pro_monthly" || activePlan === "pro_annual") &&
     subscription?.stripeSubscriptionId;
 
-  const isCurrentProInterval = (opt: ProInterval) =>
-    (activePlan === "pro_monthly" && opt === "monthly") ||
-    (activePlan === "pro_annual" && opt === "annual") ||
-    (activePlan === "pro_lifetime" && opt === "lifetime");
   const canUpgradeToPro = activePlan !== "pro_lifetime";
   const canUpgradeToInterval = (opt: ProInterval) => {
     if (activePlan === "pro_lifetime") return false;
-    if (activePlan === "pro_monthly" && opt === "monthly") return false;
-    if (activePlan === "pro_annual" && opt === "annual") return false;
-    if (activePlan === "pro_annual" && opt === "monthly") return false; // no downgrade
+    if (isCurrentProInterval(opt)) return false;
     return true;
   };
   const canUpgradeOneTime = activePlan !== "one_time_export";
@@ -455,10 +619,25 @@ export default function PricingPage() {
               </p>
               <p className="mt-6">
                 <span className={cn("text-4xl font-extrabold", isLight ? "text-[#111827]" : "text-white")}>
-                  $7.99
+                  ${PRICING.proMonthly}
                 </span>
                 <span className={cn("ml-1", isLight ? "text-[#6b7280]" : "text-slate-500")}>/month</span>
               </p>
+              {proInterval === "lifetime" && (
+                <p
+                  className={cn(
+                    "mt-3 text-xs leading-relaxed",
+                    isLight ? "text-slate-600" : "text-slate-500"
+                  )}
+                >
+                  <span className="font-semibold text-amber-600 dark:text-amber-400/90">
+                    Limited availability
+                  </span>
+                  {" · "}
+                  {LIFETIME_VS_MONTHLY_TAGLINE}
+                </p>
+              )}
+
               <div className="mt-4 space-y-2">
                 {proOptions.map((opt) => {
                   const isCurrent = isCurrentProInterval(opt.id);
@@ -501,6 +680,8 @@ export default function PricingPage() {
                           <>
                             {opt.id === "annual" && activePlan === "pro_monthly"
                               ? "Switch to Annual at renewal"
+                              : opt.id === "monthly" && activePlan === "pro_annual"
+                                ? "Switch to Monthly at renewal"
                               : opt.id === "lifetime" && (activePlan === "pro_monthly" || activePlan === "pro_annual")
                                 ? "Upgrade to Lifetime"
                                 : opt.id === "lifetime" && activePlan !== "free" && activePlan !== "one_time_export"
@@ -571,7 +752,7 @@ export default function PricingPage() {
                   )}
                   size="lg"
                   loading={isLoading === "pro"}
-                  disabled={false}
+                  disabled={!billingReady}
                   onClick={() => handleCheckout("pro")}
                 >
                   {(activePlan === "pro_monthly" && proInterval === "monthly") ||
@@ -579,6 +760,8 @@ export default function PricingPage() {
                     ? "Current Plan"
                     : activePlan === "free" || activePlan === "one_time_export"
                       ? "Upgrade to Pro"
+                      : activePlan === "pro_annual" && proInterval === "monthly"
+                        ? "Switch to Monthly"
                       : proInterval === "annual"
                         ? "Upgrade to Annual"
                         : proInterval === "lifetime"
@@ -612,15 +795,15 @@ export default function PricingPage() {
               <div className="flex items-center gap-2">
                 <Zap className="h-5 w-5 text-amber-500" />
                 <h3 className={cn("text-xl font-semibold", isLight ? "text-[#111827]" : "text-white")}>
-                  One-Time Export
+                  Export Access
                 </h3>
               </div>
               <p className={cn("mt-1 text-sm", isLight ? "text-[#374151]" : "text-slate-500")}>
-                $19.99 one-time – unlimited exports forever, no ads, all formats
+                ${PRICING.exportOneTime} one-time – unlimited exports forever, no ads, all formats
               </p>
               <p className="mt-6">
                 <span className={cn("text-4xl font-extrabold", isLight ? "text-[#111827]" : "text-white")}>
-                  $19.99
+                  ${PRICING.exportOneTime}
                 </span>
                 <span className={cn("ml-1", isLight ? "text-[#6b7280]" : "text-slate-500")}>one-time</span>
               </p>
@@ -657,7 +840,7 @@ export default function PricingPage() {
                 )}
                 size="lg"
                 loading={isLoading === "one-time"}
-                disabled={activePlan === "pro_lifetime"}
+                disabled={!billingReady || activePlan === "pro_lifetime"}
                 onClick={() => handleCheckout("one-time")}
               >
                 {activePlan === "one_time_export" ? "Current Plan" : "Buy Export Access"}
@@ -820,6 +1003,100 @@ export default function PricingPage() {
           </div>
         </section>
       </main>
+
+      {/* Subscriber confirmation: paid users changing plan (free users skip — direct Stripe) */}
+      <Modal
+        isOpen={subscriberConfirmOpen}
+        onClose={() => {
+          setSubscriberConfirmOpen(false);
+          setPendingCheckout(null);
+        }}
+        title="Confirm plan change"
+        size="md"
+      >
+        <div className="space-y-4 text-sm text-slate-300">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                Current
+              </p>
+              <p className="mt-1 text-base font-semibold text-white">
+                {activePlanLabel(activePlan)}
+              </p>
+            </div>
+            <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-300/80">
+                New
+              </p>
+              <p className="mt-1 text-base font-semibold text-white">
+                {pendingCheckout?.mode === "schedule_annual"
+                  ? "Pro Annual"
+                  : pendingCheckout?.mode === "schedule_monthly"
+                    ? "Pro Monthly"
+                    : pendingCheckout?.mode === "checkout"
+                      ? targetPlanLabel(pendingCheckout.plan, pendingCheckout.interval)
+                      : "—"}
+              </p>
+            </div>
+          </div>
+          {pendingCheckout?.mode === "schedule_annual" && (
+            <p className="rounded-lg border border-white/[0.06] bg-white/[0.02] p-3 text-xs text-slate-400">
+              Your billing will switch to the annual rate at the{" "}
+              <strong className="text-slate-200">end of your current monthly period</strong>. You
+              keep full Pro access until then.
+            </p>
+          )}
+          {pendingCheckout?.mode === "schedule_monthly" && (
+            <p className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-100/90">
+              <strong>Downgrade:</strong> You keep Annual pricing and features until the{" "}
+              <strong>end of your current annual period</strong>, then you&apos;ll be billed monthly
+              at <strong>${PRICING.proMonthly}/month</strong> (higher effective cost than staying on
+              Annual).
+            </p>
+          )}
+          {pendingCheckout?.mode === "checkout" && pendingCheckout.plan === "one-time" && (
+            <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-3 text-xs text-amber-100/90">
+              <strong>Heads up:</strong> Export Access includes unlimited exports only — no AI
+              (tailoring, cover letter, ATS). To get AI back later, upgrade to Pro.
+            </p>
+          )}
+          {pendingCheckout?.mode === "checkout" &&
+            pendingCheckout.plan === "pro" &&
+            activePlan === "one_time_export" && (
+              <p className="text-xs text-slate-400">
+                You&apos;ll be charged through Stripe. Pro adds unlimited AI (tailoring, cover letter,
+                ATS), all premium templates, and unlimited ad-free exports.
+              </p>
+            )}
+          {pendingCheckout?.mode === "checkout" &&
+            pendingCheckout.plan === "pro" &&
+            pendingCheckout.interval === "lifetime" &&
+            (activePlan === "pro_monthly" || activePlan === "pro_annual") && (
+              <p className="text-xs text-slate-400">
+                Lifetime is a one-time payment. You keep all Pro features with no recurring charges.
+              </p>
+            )}
+          <div className="flex flex-col gap-2 pt-2 sm:flex-row-reverse sm:justify-end">
+            <Button
+              className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500"
+              onClick={() => void confirmSubscriberCheckout()}
+              loading={isLoading === "pro" || isLoading === "one-time"}
+            >
+              Continue to checkout
+            </Button>
+            <Button
+              variant="outline"
+              className="border-white/20 text-slate-300 hover:bg-white/10"
+              onClick={() => {
+                setSubscriberConfirmOpen(false);
+                setPendingCheckout(null);
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Export warning modal: Pro user buying Export */}
       <Modal

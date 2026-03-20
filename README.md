@@ -96,12 +96,12 @@ A production-ready SaaS web application for building professional, ATS-friendly 
 
 ### Stripe Setup
 
-1. Create products in Stripe Dashboard:
-   - Pro Monthly: $7.99/month recurring
-   - Pro Annual: $69.99/year recurring
-   - Pro Lifetime: $129.99 one-time
-   - One-Time Export: $19.99 one-time
-2. Copy each Price ID to `.env`: `STRIPE_PRO_PRICE_ID`, `STRIPE_PRO_ANNUAL_PRICE_ID`, `STRIPE_PRO_LIFETIME_PRICE_ID`, `STRIPE_ONE_TIME_PRICE_ID`
+1. Create products in Stripe Dashboard (match `lib/plans.ts` display amounts):
+   - Pro Monthly: $9.99/month recurring
+   - Pro Annual: $79/year recurring
+   - Pro Lifetime: $199 one-time
+   - Export Access: $29 one-time
+2. Copy each Price ID to `.env`: `STRIPE_PRO_MONTHLY_PRICE_ID`, `STRIPE_PRO_ANNUAL_PRICE_ID`, `STRIPE_PRO_LIFETIME_PRICE_ID`, `STRIPE_EXPORT_PRICE_ID` (legacy `STRIPE_PRO_PRICE_ID` / `STRIPE_ONE_TIME_PRICE_ID` still work)
 3. Set up a webhook endpoint pointing to `your-domain/api/stripe/webhook`
 4. Listen for events: `checkout.session.completed`, `invoice.payment_succeeded`, `customer.subscription.updated`, `customer.subscription.deleted`
 

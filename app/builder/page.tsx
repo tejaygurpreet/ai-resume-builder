@@ -4,7 +4,7 @@
  * (2) Template switching updates store + color from template accent
  * (3) Accent color from template, synced on template change
  * (4) Right sidebar scroll with max-h and overflow-y-auto
- * (5) Pricing: Free 5 exports, Pro $7.99/$69.99/$129.99, One-Time $19.99, no ads
+ * (5) Pricing: Free 2 exports + ad gate, Pro $9.99/$79/$199, Export $29
  * (6) useResumeExport hook + ExportModal centralizes export flow
  * (7) Template modal scale-to-fit, responsive max-height
  */
@@ -94,6 +94,7 @@ import {
   type ExportFormat,
 } from "@/components/editor/pdf-export";
 import { ExportModal } from "@/components/editor/export-modal";
+import { PLANS } from "@/lib/stripe";
 import { ResumeCompletionModal } from "@/components/editor/resume-completion-modal";
 import { UpgradeModal, type UpgradeReason } from "@/components/ui/UpgradeModal";
 import { validateResumeCompletion } from "@/lib/resume-validation";
@@ -401,12 +402,14 @@ function BuilderPage() {
         const subRes = await fetch("/api/resumes");
         const subData = await subRes.json().catch(() => ({}));
         if (subData.subscription?.plan === "pro") setUserPlan("pro");
+        else setUserPlan("free");
         if (subData.subscription?.exportsUsed != null) setExportsUsed(subData.subscription.exportsUsed);
-        if (subData.subscription?.oneTimeExport) setHasOneTimeExport(true);
+        const exportAccess =
+          subData.subscription?.plan === "export" ||
+          !!(subData.subscription?.oneTimeExport && subData.subscription?.plan !== "pro");
+        setHasOneTimeExport(exportAccess);
         const isPro = subData.subscription?.plan === "pro";
-        setIsExportOnly(
-          !!(subData.subscription?.oneTimeExport && subData.subscription?.plan !== "pro")
-        );
+        setIsExportOnly(!!exportAccess && !isPro);
 
         if (resumeId) {
           const res = await fetch(`/api/resumes/${resumeId}`);
@@ -517,17 +520,17 @@ function BuilderPage() {
           exportToMarkdown(sections, name);
           break;
       }
-      if (!userPlan || userPlan === "free") {
-        if (!hasOneTimeExport) {
-          const incRes = await fetch("/api/resumes/increment-export", { method: "POST" });
-          if (incRes.ok) await refreshSubscription();
-        }
+      if (userPlan !== "pro" && !hasOneTimeExport) {
+        const incRes = await fetch("/api/resumes/increment-export", { method: "POST" });
+        if (incRes.ok) await refreshSubscription();
       }
     },
     [resume.title, resume.template, resume.color, sections, userPlan, hasOneTimeExport, refreshSubscription]
   );
 
-  const canExport = userPlan === "pro" || hasOneTimeExport || exportsUsed < 5;
+  const maxFreeExports = PLANS.free.maxExportsPerMonth;
+  const canExport =
+    userPlan === "pro" || hasOneTimeExport || exportsUsed < maxFreeExports;
 
   const handleExportClick = () => {
     if (!validation.isComplete) {
@@ -959,7 +962,8 @@ function BuilderPage() {
         isPro={userPlan === "pro"}
         hasOneTimeExport={hasOneTimeExport}
         exportsUsed={exportsUsed}
-        maxExports={5}
+        maxExports={maxFreeExports}
+        showAdGate
         onExport={handleExport}
         onAfterExport={refreshSubscription}
         resumeTitle={resume.title}
@@ -996,7 +1000,7 @@ function BuilderPage() {
  * 4. Export remains via top Export button only; no export UI in preview.
  *
  * === ALL PRICING BANNERS UPDATED + TEMPLATE LOCKS + LIMIT POPUPS + CONSISTENT LOGIC ===
- * - 2026 plans: Free ($0, 5 exports/mo, 10 templates, 3 AI), Pro ($7.99/$69.99/$129.99), One-Time $19.99
+ * - Plans: Free (2 exports/mo, ad before export, 3 AI), Pro ($9.99/$79/$199), Export $29
  * - Template locking: Free users get 10 basic templates; premium locked with upgrade popup
  * - AI limit (3/resume): UpgradeModal when hit
  * - Export limit (5/mo): UpgradeModal when hit
