@@ -1,14 +1,17 @@
 /**
  * Stripe webhooks — App Router: POST /api/stripe/webhook
  *
- * Configure in Stripe Dashboard (Production): https://optimacv.io/api/stripe/webhook
+ * Dashboard URL (example): https://optimacv.io/api/stripe/webhook
  * Local: stripe listen --forward-to localhost:3000/api/stripe/webhook
  *
- * If Stripe still shows failures, confirm the dashboard endpoint path matches this file exactly
- * (no trailing slash, no /v1, not pages/api).
+ * **Pages Router vs App Router (raw body):**
+ * `import { buffer } from 'micro'` and `export const config = { api: { bodyParser: false } }`
+ * only work under `pages/api/...`. This handler is `app/api/.../route.ts` — there is no
+ * `bodyParser` flag; read the body **once** as bytes: `Buffer.from(await request.arrayBuffer())`
+ * and pass that Buffer to `stripe.webhooks.constructEvent` (same outcome as `micro`).
  *
- * Next.js App Router does not use bodyParser; read the body once via arrayBuffer → Buffer
- * so `constructEvent` receives the exact raw payload Stripe signed.
+ * Webhook signing secret: `STRIPE_LIVE_WEBHOOK_SECRET` (prod) / `STRIPE_TEST_WEBHOOK_SECRET` (dev),
+ * or legacy `STRIPE_WEBHOOK_SECRET` (see `getStripeWebhookSecretForNodeEnv`).
  */
 
 import { NextResponse } from "next/server";
@@ -23,6 +26,7 @@ import {
   planIntervalFromProPriceId,
 } from "@/lib/stripe-prices";
 
+/** Prevent static optimization / caching so Stripe POST always hits this route handler. */
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
@@ -249,13 +253,18 @@ async function handleCheckoutSessionCompleted(
     session.customer_details?.email ?? session.customer_email ?? null;
 
   console.log("[webhook] checkout.session.completed detail", {
+    eventType: "checkout.session.completed",
     sessionId: session.id,
+    metadataUserId: metadata.userId ?? null,
     mode: session.mode,
     paymentStatus: session.payment_status,
     clientReferenceId: session.client_reference_id ? "present" : "missing",
     planType: metadata.planType,
-    metadataUserId: metadata.userId ? "present" : "missing",
     metadataUserEmail: metadata.userEmail ? "present" : "missing",
+    subscriptionId:
+      typeof session.subscription === "string"
+        ? session.subscription
+        : session.subscription?.id ?? null,
   });
 
   const user = await findUserForCheckoutSession(
@@ -518,9 +527,9 @@ async function handleInvoicePaid(event: Stripe.Event): Promise<void> {
     typeof subRef === "string" ? subRef : subRef?.id ?? null;
 
   console.log("[webhook] invoice paid/succeeded", {
-    type: event.type,
+    eventType: event.type,
     invoiceId: invoice.id,
-    subscriptionId: subscriptionId ?? "none",
+    subscriptionId: subscriptionId ?? null,
     amountPaid: invoice.amount_paid,
   });
 
@@ -574,11 +583,19 @@ async function handleInvoicePaid(event: Stripe.Event): Promise<void> {
       { subscriptionId }
     );
   } else {
+    const rows = await prisma.subscription.findMany({
+      where: { stripeSubscriptionId: subscriptionId },
+      select: { userId: true },
+      take: 5,
+    });
     console.log("[webhook] Subscription refreshed from invoice", {
+      eventType: event.type,
       subscriptionId,
+      userIds: rows.map((r) => r.userId),
       rowsUpdated: result.count,
       planInterval,
       currentPeriodEnd: currentPeriodEnd?.toISOString() ?? null,
+      status,
     });
   }
 }
@@ -653,11 +670,14 @@ async function handleSubscriptionCreatedOrUpdated(
   }
 
   console.log("[webhook] customer.subscription sync", {
-    type: event.type,
+    eventType: event.type,
     subscriptionId: subscription.id,
+    metadataUserId: metaUserId,
     stripeStatus: subscription.status,
     rowsUpdated: result.count,
-    hadMetadataUserId: !!metaUserId,
+    currentPeriodEnd: subscription.current_period_end
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null,
   });
 }
 
@@ -693,10 +713,15 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  // App Router raw body (equivalent to `micro` buffer + bodyParser: false on pages/api).
   const rawBody = Buffer.from(await req.arrayBuffer());
   const signature = req.headers.get("stripe-signature");
 
-  const webhookSecret = getStripeWebhookSecretForNodeEnv();
+  const webhookSecret =
+    getStripeWebhookSecretForNodeEnv() ??
+    process.env.STRIPE_WEBHOOK_SECRET?.trim() ??
+    null;
+
   if (!signature || !webhookSecret) {
     console.error("[webhook] Missing stripe-signature header or webhook secret", {
       hasSignature: !!signature,
@@ -711,13 +736,10 @@ export async function POST(req: Request) {
     );
   }
 
+  const stripe = getStripe();
   let event: Stripe.Event;
   try {
-    event = getStripe().webhooks.constructEvent(
-      rawBody,
-      signature,
-      webhookSecret
-    );
+    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[webhook] Signature verification failed:", message, {
@@ -729,7 +751,8 @@ export async function POST(req: Request) {
     );
   }
 
-  console.log("[webhook] event verified — payload summary:", summarizeStripeEvent(event));
+  console.log("Webhook hit:", event.type);
+  console.log("[webhook] payload summary:", summarizeStripeEvent(event));
 
   try {
     switch (event.type) {
@@ -772,4 +795,4 @@ export async function POST(req: Request) {
   return NextResponse.json({ received: true }, { status: 200 });
 }
 
-/* === WEBHOOK FIXED: RAW BODY + SIGNATURE + 404 PREVENTION === */
+/* === WEBHOOK 404 FIXED + RAW BODY + METADATA + EVENT HANDLING === */
