@@ -5,6 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { getStripeClientForMode } from "@/lib/stripe-config";
 import { getRuntimeStripeMode } from "@/lib/stripe-prices";
 import { resolveStripeForSubscriptionId } from "@/lib/stripe-subscription-mode";
+import {
+  autoCleanTestStripeSubscriptionRow,
+  detectTestStripeSubscriptionInLiveDeployment,
+} from "@/lib/stripe-test-live-guard";
 
 const FREE_SUBSCRIPTION = {
   plan: "free",
@@ -18,6 +22,7 @@ const FREE_SUBSCRIPTION = {
 /**
  * GET /api/user/subscription
  * Billing snapshot for pricing / plan UI. On failure, returns 200 + free-shaped body (never throws).
+ * Live deployment: auto-cleans rows whose Stripe subscription resolves as test-mode data.
  */
 export async function GET() {
   try {
@@ -28,7 +33,7 @@ export async function GET() {
       return NextResponse.json(FREE_SUBSCRIPTION);
     }
 
-    const subscription = await prisma.subscription.findFirst({
+    const subscription = await prisma.subscription.findUnique({
       where: { userId },
       select: {
         plan: true,
@@ -42,6 +47,22 @@ export async function GET() {
 
     if (!subscription) {
       return NextResponse.json(FREE_SUBSCRIPTION);
+    }
+
+    if (subscription.stripeSubscriptionId) {
+      const testInLive = await detectTestStripeSubscriptionInLiveDeployment(
+        subscription.stripeSubscriptionId
+      );
+      if (testInLive.isTestSubscriptionInLive) {
+        console.warn(
+          `[GET /api/user/subscription] Test Stripe subscription in live deployment for user ${userId}: ${subscription.stripeSubscriptionId} (reason: ${testInLive.reason}). Auto-cleaning DB row.`
+        );
+        await autoCleanTestStripeSubscriptionRow(prisma, userId);
+        return NextResponse.json({
+          ...FREE_SUBSCRIPTION,
+          status: "canceled",
+        });
+      }
     }
 
     let plan = subscription.plan;
@@ -74,8 +95,11 @@ export async function GET() {
             currentPeriodEnd = new Date(sub.current_period_end * 1000);
           }
         }
-      } catch {
-        /* optional: DB row is enough for pricing */
+      } catch (e) {
+        console.warn(
+          "[GET /api/user/subscription] Stripe subscriptions.retrieve skipped:",
+          e instanceof Error ? e.message : e
+        );
       }
     }
 

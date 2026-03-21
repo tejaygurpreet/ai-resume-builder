@@ -20,6 +20,7 @@ import {
 import { trackEvent } from "@/lib/analytics";
 import { getMembershipDisplay } from "@/lib/membership";
 import { getStripePublishableKeyForRuntime } from "@/lib/stripe-publishable";
+import toast from "react-hot-toast";
 
 type ActivePlan =
   | "free"
@@ -210,10 +211,10 @@ function notifyPricingCheckoutError(err: unknown): void {
     /price id not configured/i.test(msg) ||
     /invalid response from server/i.test(msg);
   if (benign) {
-    console.warn("[pricing] suppressed user alert (benign/expected):", msg);
+    console.warn("[pricing] suppressed toast (benign/expected):", msg);
     return;
   }
-  alert(msg || "Something went wrong. Please try again.");
+  toast.error(msg || "Something went wrong. Please try again.");
 }
 
 export default function PricingPage() {
@@ -255,6 +256,7 @@ export default function PricingPage() {
           res.status,
           res.statusText
         );
+        toast.error("Failed to load subscription. Using free plan.");
         setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
         return;
       }
@@ -263,6 +265,7 @@ export default function PricingPage() {
         data = await res.json();
       } catch (parseErr) {
         console.error("[pricing] subscription JSON parse failed:", parseErr);
+        toast.error("Failed to load subscription. Using free plan.");
         setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
         return;
       }
@@ -288,10 +291,12 @@ export default function PricingPage() {
         });
       } else {
         console.warn("[pricing] subscription payload unexpected, defaulting to free", sub);
+        toast.error("Failed to load subscription. Using free plan.");
         setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
       }
     } catch (err) {
       console.error("[pricing] subscription fetch failed:", err);
+      toast.error("Failed to load subscription. Using free plan.");
       setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
     } finally {
       setBillingReady(true);
@@ -350,56 +355,102 @@ export default function PricingPage() {
   /** True when user has Export, any active Pro tier, or Lifetime (anything but Free). */
   const isPayingCustomer = activePlan !== "free";
 
-  /** Pro Monthly ↔ Annual: proration + correct Stripe mode via create-upgrade-session. */
+  /** Pro Monthly ↔ Annual: POST create-upgrade-session with optional `newPriceId` from public env. */
   const runProIntervalSwitch = async (switchInterval: "annual" | "monthly") => {
-    const res = await fetch("/api/stripe/create-upgrade-session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+    try {
+      const annualPriceId =
+        process.env.NEXT_PUBLIC_STRIPE_PRO_ANNUAL_PRICE_ID?.trim();
+      const monthlyPriceId =
+        process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY_PRICE_ID?.trim();
+      const newPriceId =
+        switchInterval === "annual" ? annualPriceId : monthlyPriceId;
+
+      const payload: Record<string, unknown> = {
         planType: switchInterval,
         interval: switchInterval,
-      }),
-    });
-    let data: Record<string, unknown>;
-    try {
-      data = (await res.json()) as Record<string, unknown>;
-    } catch {
-      throw new Error("Invalid response from server");
-    }
-    if (typeof data.url === "string" && data.url) {
-      window.location.href = data.url;
-      return;
-    }
-    if (res.ok && data.success) {
-      if (typeof data.message === "string" && data.message) {
-        alert(data.message);
+      };
+      if (newPriceId) {
+        payload.newPriceId = newPriceId;
       }
-      await fetchSubscription();
-      return;
-    }
-    if (data.fallbackNewSubscription && switchInterval) {
-      const cr = await fetch("/api/stripe/checkout", {
+
+      const res = await fetch("/api/stripe/create-upgrade-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: "pro", interval: switchInterval }),
+        body: JSON.stringify(payload),
       });
-      let checkoutData: Record<string, unknown>;
+
+      let data: Record<string, unknown>;
       try {
-        checkoutData = (await cr.json()) as Record<string, unknown>;
+        data = (await res.json()) as Record<string, unknown>;
       } catch {
-        throw new Error("Invalid response from server");
-      }
-      if (typeof checkoutData.url === "string" && checkoutData.url) {
-        window.location.href = checkoutData.url;
+        toast.error("Invalid response from server");
         return;
       }
-      throw new Error(
-        typeof checkoutData.error === "string"
-          ? checkoutData.error
-          : "Failed to start checkout"
+
+      if (!res.ok) {
+        toast.error(
+          typeof data.error === "string"
+            ? data.error
+            : `Failed to create upgrade session (${res.status})`
+        );
+        return;
+      }
+
+      if (typeof data.url === "string" && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+
+      if (data.success) {
+        if (typeof data.message === "string" && data.message) {
+          toast.success(data.message);
+        }
+        await fetchSubscription();
+        return;
+      }
+
+      if (data.fallbackNewSubscription && switchInterval) {
+        const cr = await fetch("/api/stripe/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ plan: "pro", interval: switchInterval }),
+        });
+        let checkoutData: Record<string, unknown>;
+        try {
+          checkoutData = (await cr.json()) as Record<string, unknown>;
+        } catch {
+          toast.error("Invalid response from server");
+          return;
+        }
+        if (!cr.ok) {
+          toast.error(
+            typeof checkoutData.error === "string"
+              ? checkoutData.error
+              : "Failed to start checkout"
+          );
+          return;
+        }
+        if (typeof checkoutData.url === "string" && checkoutData.url) {
+          window.location.href = checkoutData.url;
+          return;
+        }
+        toast.error(
+          typeof checkoutData.error === "string"
+            ? checkoutData.error
+            : "Failed to start checkout"
+        );
+        return;
+      }
+
+      toast.error(
+        typeof data.error === "string" ? data.error : "Failed to upgrade plan"
+      );
+    } catch (err) {
+      console.error("[pricing] runProIntervalSwitch", err);
+      toast.error(
+        err instanceof Error ? err.message : "Something went wrong. Please try again."
       );
     }
-    throw new Error(typeof data.error === "string" ? data.error : "Failed");
   };
 
   /** Stripe checkout or plan switch — no duplicate modals (caller handles UX). */
@@ -457,7 +508,7 @@ export default function PricingPage() {
       return;
     }
     if (res.ok && data.success && typeof data.message === "string" && data.message) {
-      alert(data.message);
+      toast.success(data.message);
       await fetchSubscription();
       return;
     }
@@ -559,16 +610,29 @@ export default function PricingPage() {
     setCanceling(true);
     try {
       const res = await fetch("/api/stripe/cancel-subscription", { method: "POST" });
-      const data = await res.json();
+      let data: Record<string, unknown>;
+      try {
+        data = (await res.json()) as Record<string, unknown>;
+      } catch {
+        toast.error("Failed to cancel. Please try again.");
+        return;
+      }
       if (res.ok && data.success) {
         setCancelConfirmModalOpen(false);
-        alert(data.message || "Your subscription will cancel at the end of your billing period.");
-        fetchSubscription();
+        toast.success(
+          typeof data.message === "string" && data.message
+            ? data.message
+            : "Your subscription will cancel at the end of your billing period."
+        );
+        await fetchSubscription();
       } else {
-        throw new Error(data.error || "Failed");
+        toast.error(
+          typeof data.error === "string" ? data.error : "Failed to cancel. Please try again."
+        );
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to cancel.");
+      console.error("[pricing] confirmCancelMembership", err);
+      toast.error("Failed to cancel. Please try again.");
     } finally {
       setCanceling(false);
     }
@@ -1323,4 +1387,4 @@ export default function PricingPage() {
   );
 }
 
-/* === FIXED: MISSING /api/user/subscription ROUTE + ROBUST FETCH ON PRICING PAGE === */
+/* === FULL TEST/LIVE SEPARATION + AUTO-CLEAN + ROBUST PRICING PAGE === */

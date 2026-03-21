@@ -201,16 +201,26 @@ export function getExportPriceId(): string | null {
 
 /** All configured annual price IDs (for webhooks / cross-mode rows). */
 export function getAllProAnnualPriceIds(): string[] {
+  const names = new Set<string>([
+    ...PRICE_ENV_KEYS.annual.test,
+    ...PRICE_ENV_KEYS.annual.live,
+  ]);
   const set = new Set<string>();
-  for (const id of [
-    process.env.STRIPE_TEST_PRO_ANNUAL_PRICE_ID,
-    process.env.STRIPE_LIVE_PRO_ANNUAL_PRICE_ID,
-    process.env.STRIPE_PRO_ANNUAL_PRICE_ID,
-  ]) {
-    const t = id?.trim();
+  for (const k of Array.from(names)) {
+    const t = process.env[k]?.trim();
     if (t) set.add(t);
   }
   return Array.from(set);
+}
+
+/** Any configured Pro monthly or annual price (test + live env names) — for upgrade `newPriceId` validation. */
+export function isConfiguredProRecurringPriceId(priceId: string): boolean {
+  if (!priceId?.trim()) return false;
+  const allowed = new Set<string>([
+    ...getAllProMonthlyPriceIds(),
+    ...getAllProAnnualPriceIds(),
+  ]);
+  return allowed.has(priceId.trim());
 }
 
 /** All configured monthly price IDs (for webhooks / cross-mode rows). */
