@@ -104,6 +104,7 @@ export async function POST(req: Request) {
       line_items: [{ price: priceId as string, quantity: 1 }],
       success_url: successUrl,
       cancel_url: cancelUrl,
+      client_reference_id: userId,
       customer_email: session.user.email,
       metadata: {
         userId,
