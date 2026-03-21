@@ -111,6 +111,17 @@ export async function POST(req: Request) {
         userEmail: session.user.email,
         planType,
       },
+      ...(!isLifetime
+        ? {
+            subscription_data: {
+              metadata: {
+                userId,
+                userEmail: session.user.email ?? "",
+                planType,
+              },
+            },
+          }
+        : {}),
     });
 
     return NextResponse.json({

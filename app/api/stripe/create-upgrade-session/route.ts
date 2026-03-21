@@ -349,6 +349,18 @@ export async function POST(req: Request) {
             }
           : {}),
       },
+      ...(!isPayment
+        ? {
+            subscription_data: {
+              metadata: {
+                userId,
+                userEmail: userEmail ?? "",
+                planType: webhookPlanType,
+                targetTier: targetPlan.tier,
+              },
+            },
+          }
+        : {}),
     });
 
     return NextResponse.json({ url: checkoutSession.url });

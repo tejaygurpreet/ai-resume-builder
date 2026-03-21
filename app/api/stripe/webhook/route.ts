@@ -1,5 +1,17 @@
+/**
+ * Stripe webhooks — App Router: POST /api/stripe/webhook
+ *
+ * Configure in Stripe Dashboard (Production): https://optimacv.io/api/stripe/webhook
+ * Local: stripe listen --forward-to localhost:3000/api/stripe/webhook
+ *
+ * If Stripe still shows failures, confirm the dashboard endpoint path matches this file exactly
+ * (no trailing slash, no /v1, not pages/api).
+ *
+ * Next.js App Router does not use bodyParser; read the body once via arrayBuffer → Buffer
+ * so `constructEvent` receives the exact raw payload Stripe signed.
+ */
+
 import { NextResponse } from "next/server";
-import { headers } from "next/headers";
 import Stripe from "stripe";
 import { getStripe } from "@/lib/stripe";
 import { getStripeWebhookSecretForNodeEnv } from "@/lib/stripe-env";
@@ -40,10 +52,75 @@ function getMetadata(session: Stripe.Checkout.Session): {
 }
 
 /**
- * Resolve app user from Checkout session: metadata.userId, client_reference_id (we set = userId),
- * then metadata email, then Stripe customer email.
- * Note: there is no User.subscriptionTier — plan lives on Subscription.
+ * Safe summary for logs (no full card / PII dumps).
  */
+function summarizeStripeEvent(event: Stripe.Event): Record<string, unknown> {
+  const common = {
+    eventId: event.id,
+    type: event.type,
+    livemode: event.livemode,
+    apiVersion: event.api_version,
+    created: event.created,
+  };
+
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const s = event.data.object as Stripe.Checkout.Session;
+      return {
+        ...common,
+        sessionId: s.id,
+        mode: s.mode,
+        paymentStatus: s.payment_status,
+        customer:
+          typeof s.customer === "string" ? s.customer : s.customer?.id ?? null,
+        subscription:
+          typeof s.subscription === "string"
+            ? s.subscription
+            : s.subscription?.id ?? null,
+        clientReferenceId: s.client_reference_id ? "present" : "missing",
+        metadataKeys: s.metadata ? Object.keys(s.metadata) : [],
+      };
+    }
+    case "invoice.paid":
+    case "invoice.payment_succeeded": {
+      const inv = event.data.object as Stripe.Invoice;
+      return {
+        ...common,
+        invoiceId: inv.id,
+        subscription:
+          typeof inv.subscription === "string"
+            ? inv.subscription
+            : inv.subscription?.id ?? null,
+        amountPaid: inv.amount_paid,
+        currency: inv.currency,
+      };
+    }
+    case "customer.subscription.created":
+    case "customer.subscription.updated":
+    case "customer.subscription.deleted": {
+      const sub = event.data.object as Stripe.Subscription;
+      return {
+        ...common,
+        subscriptionId: sub.id,
+        status: sub.status,
+        customer:
+          typeof sub.customer === "string"
+            ? sub.customer
+            : sub.customer?.id ?? null,
+        metadataKeys: sub.metadata ? Object.keys(sub.metadata) : [],
+      };
+    }
+    default: {
+      const obj = event.data?.object as { object?: string; id?: string } | null;
+      return {
+        ...common,
+        objectType: obj?.object ?? "unknown",
+        objectId: obj?.id ?? null,
+      };
+    }
+  }
+}
+
 async function findUserForCheckoutSession(
   session: Stripe.Checkout.Session,
   metadata: ReturnType<typeof getMetadata>,
@@ -175,9 +252,7 @@ async function handleCheckoutSessionCompleted(
     sessionId: session.id,
     mode: session.mode,
     paymentStatus: session.payment_status,
-    clientReferenceId: session.client_reference_id
-      ? "present"
-      : "missing",
+    clientReferenceId: session.client_reference_id ? "present" : "missing",
     planType: metadata.planType,
     metadataUserId: metadata.userId ? "present" : "missing",
     metadataUserEmail: metadata.userEmail ? "present" : "missing",
@@ -488,7 +563,7 @@ async function handleInvoicePaid(event: Stripe.Event): Promise<void> {
     data: {
       status,
       currentPeriodEnd: currentPeriodEnd ?? undefined,
-      ...(planInterval ? { planInterval } : {}),
+      ...(planInterval ? { planInterval, plan: "pro" } : {}),
       ...(priceId ? { stripePriceId: priceId } : {}),
     },
   });
@@ -508,10 +583,20 @@ async function handleInvoicePaid(event: Stripe.Event): Promise<void> {
   }
 }
 
-async function handleSubscriptionUpdated(
+/**
+ * customer.subscription.created / .updated — keep Prisma in sync; if no row yet,
+ * upsert using subscription.metadata.userId (set via subscription_data on Checkout).
+ */
+async function handleSubscriptionCreatedOrUpdated(
   event: Stripe.Event
 ): Promise<void> {
   const subscription = event.data.object as Stripe.Subscription;
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer?.id ?? null;
+  const metaUserId = subscription.metadata?.userId?.trim() || null;
+
   const item = subscription.items?.data?.[0];
   const priceId = priceIdFromStripePrice(item?.price);
   const planInterval = planIntervalFromProPriceId(priceId);
@@ -520,26 +605,63 @@ async function handleSubscriptionUpdated(
     ? new Date(subscription.current_period_end * 1000)
     : null;
 
+  const status =
+    subscription.status === "trialing" || subscription.status === "active"
+      ? "active"
+      : subscription.status;
+
   const result = await prisma.subscription.updateMany({
     where: { stripeSubscriptionId: subscription.id },
     data: {
-      status: subscription.status,
-      currentPeriodEnd: currentPeriodEnd ?? undefined,
-      ...(planInterval ? { planInterval } : {}),
+      status,
+      ...(currentPeriodEnd ? { currentPeriodEnd } : {}),
+      ...(planInterval ? { planInterval, plan: "pro" } : {}),
       ...(priceId ? { stripePriceId: priceId } : {}),
+      ...(customerId ? { stripeCustomerId: customerId } : {}),
     },
   });
 
-  console.log("[webhook] customer.subscription.updated", {
-    stripeSubscriptionId: subscription.id,
-    status: subscription.status,
+  if (result.count === 0 && metaUserId && customerId) {
+    await prisma.subscription.upsert({
+      where: { userId: metaUserId },
+      create: {
+        userId: metaUserId,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscription.id,
+        stripePriceId: priceId,
+        plan: "pro",
+        planInterval: planInterval ?? "monthly",
+        status,
+        currentPeriodEnd,
+      },
+      update: {
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscription.id,
+        stripePriceId: priceId ?? undefined,
+        plan: "pro",
+        ...(planInterval ? { planInterval } : {}),
+        status,
+        ...(currentPeriodEnd ? { currentPeriodEnd } : {}),
+      },
+    });
+    console.log("[webhook] subscription row upserted from subscription metadata", {
+      type: event.type,
+      subscriptionId: subscription.id,
+      userId: metaUserId,
+    });
+    return;
+  }
+
+  console.log("[webhook] customer.subscription sync", {
+    type: event.type,
+    subscriptionId: subscription.id,
+    stripeStatus: subscription.status,
     rowsUpdated: result.count,
+    hadMetadataUserId: !!metaUserId,
   });
 }
 
-async function handleSubscriptionDeleted(
-  event: Stripe.Event
-): Promise<void> {
+async function handleSubscriptionDeleted(event: Stripe.Event): Promise<void> {
   const subscription = event.data.object as Stripe.Subscription;
   const result = await prisma.subscription.updateMany({
     where: { stripeSubscriptionId: subscription.id },
@@ -554,16 +676,32 @@ async function handleSubscriptionDeleted(
   });
 }
 
+/**
+ * Stripe only POSTs events. Expose GET so visiting the URL in a browser or uptime
+ * checker does not return 404 (common confusion vs failed POST).
+ */
+export async function GET() {
+  return NextResponse.json(
+    {
+      ok: true,
+      service: "stripe-webhook",
+      hint: "Stripe sends signed POST requests to this path.",
+      expectedDashboardUrl: "https://optimacv.io/api/stripe/webhook",
+    },
+    { status: 200 }
+  );
+}
+
 export async function POST(req: Request) {
-  const body = await req.text();
-  const headersList = await headers();
-  const signature = headersList.get("stripe-signature");
+  const rawBody = Buffer.from(await req.arrayBuffer());
+  const signature = req.headers.get("stripe-signature");
 
   const webhookSecret = getStripeWebhookSecretForNodeEnv();
   if (!signature || !webhookSecret) {
     console.error("[webhook] Missing stripe-signature header or webhook secret", {
       hasSignature: !!signature,
       hasSecret: !!webhookSecret,
+      bodyBytes: rawBody.length,
       hint:
         "Set STRIPE_TEST_WEBHOOK_SECRET (dev) or STRIPE_LIVE_WEBHOOK_SECRET (prod), or STRIPE_WEBHOOK_SECRET",
     });
@@ -575,21 +713,23 @@ export async function POST(req: Request) {
 
   let event: Stripe.Event;
   try {
-    event = getStripe().webhooks.constructEvent(body, signature, webhookSecret);
+    event = getStripe().webhooks.constructEvent(
+      rawBody,
+      signature,
+      webhookSecret
+    );
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
-    console.error("[webhook] Signature verification failed:", message);
+    console.error("[webhook] Signature verification failed:", message, {
+      bodyBytes: rawBody.length,
+    });
     return NextResponse.json(
       { error: `Webhook Error: ${message}` },
       { status: 400 }
     );
   }
 
-  console.log("[webhook] event received", {
-    type: event.type,
-    id: event.id,
-    livemode: event.livemode,
-  });
+  console.log("[webhook] event verified — payload summary:", summarizeStripeEvent(event));
 
   try {
     switch (event.type) {
@@ -602,8 +742,9 @@ export async function POST(req: Request) {
         await handleInvoicePaid(event);
         break;
 
+      case "customer.subscription.created":
       case "customer.subscription.updated":
-        await handleSubscriptionUpdated(event);
+        await handleSubscriptionCreatedOrUpdated(event);
         break;
 
       case "customer.subscription.deleted":
@@ -611,7 +752,9 @@ export async function POST(req: Request) {
         break;
 
       default:
-        console.log("[webhook] unhandled event type (ignored)", event.type);
+        console.log("[webhook] unhandled event type (ignored)", event.type, {
+          eventId: event.id,
+        });
     }
   } catch (handlerErr) {
     console.error(
@@ -628,3 +771,5 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ received: true }, { status: 200 });
 }
+
+/* === WEBHOOK FIXED: RAW BODY + SIGNATURE + 404 PREVENTION === */

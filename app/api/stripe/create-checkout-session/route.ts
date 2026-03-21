@@ -106,6 +106,8 @@ export async function POST(req: Request) {
 
     const isPayment = planType === "lifetime" || planType === "export";
 
+    const webhookPlanType = targetPlan.webhookPlanType;
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: isPayment ? "payment" : "subscription",
       payment_method_types: ["card"],
@@ -117,9 +119,21 @@ export async function POST(req: Request) {
       metadata: {
         userId,
         userEmail: session.user.email,
-        planType: targetPlan.webhookPlanType,
+        planType: webhookPlanType,
         tier: targetPlan.tier,
       },
+      ...(!isPayment
+        ? {
+            subscription_data: {
+              metadata: {
+                userId,
+                userEmail: session.user.email ?? "",
+                planType: webhookPlanType,
+                tier: targetPlan.tier,
+              },
+            },
+          }
+        : {}),
     });
 
     return NextResponse.json({ url: checkoutSession.url });
