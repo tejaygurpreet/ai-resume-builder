@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import {
   getExportPriceIdForStripeMode,
   getRuntimeStripeMode,
+  logStripePlanPriceMissing,
+  logStripePlanPriceResolved,
 } from "@/lib/stripe-prices";
 import {
   getStripeClientForMode,
@@ -72,17 +74,19 @@ export async function POST() {
 
     const priceId = getExportPriceIdForStripeMode(mode);
     if (!priceId) {
+      logStripePlanPriceMissing("one-time-export", "export", mode);
       return NextResponse.json(
         {
           error: "One-time export is not configured",
           hint:
             mode === "test"
               ? "Set STRIPE_TEST_EXPORT_PRICE_ID or STRIPE_EXPORT_PRICE_ID / STRIPE_ONE_TIME_PRICE_ID."
-              : "Set STRIPE_LIVE_EXPORT_PRICE_ID or STRIPE_EXPORT_PRICE_ID / STRIPE_ONE_TIME_PRICE_ID.",
+              : "Set STRIPE_LIVE_EXPORT_PRICE_ID, STRIPE_LIVE_ONE_TIME_PRICE_ID, or shared STRIPE_EXPORT_PRICE_ID / STRIPE_ONE_TIME_PRICE_ID.",
         },
         { status: 500 }
       );
     }
+    logStripePlanPriceResolved("one-time-export", "export", mode);
 
     const baseUrl =
       process.env.NEXTAUTH_URL ||

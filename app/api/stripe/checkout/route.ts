@@ -6,6 +6,9 @@ import {
   getProLifetimePriceId,
   getProMonthlyPriceId,
   getRuntimeStripeMode,
+  logStripePlanPriceMissing,
+  logStripePlanPriceResolved,
+  type StripePlanPriceKind,
 } from "@/lib/stripe-prices";
 import { getStripeClientForMode } from "@/lib/stripe-config";
 import { prisma } from "@/lib/prisma";
@@ -39,18 +42,27 @@ export async function POST(req: Request) {
       );
     }
 
-    const priceId =
+    const planKind: StripePlanPriceKind =
       interval === "annual"
-        ? getProAnnualPriceId()
+        ? "annual"
         : interval === "lifetime"
+          ? "lifetime"
+          : "monthly";
+
+    const priceId =
+      planKind === "annual"
+        ? getProAnnualPriceId()
+        : planKind === "lifetime"
           ? getProLifetimePriceId()
           : getProMonthlyPriceId();
     if (!priceId) {
+      logStripePlanPriceMissing("checkout", planKind, mode);
       return NextResponse.json(
         { error: "Pro plan is not configured" },
         { status: 500 }
       );
     }
+    logStripePlanPriceResolved("checkout", planKind, mode);
 
     const baseUrl =
       process.env.NEXTAUTH_URL ||

@@ -7,6 +7,8 @@ import {
   getProLifetimePriceId,
   getProMonthlyPriceId,
   getRuntimeStripeMode,
+  logStripePlanPriceMissing,
+  logStripePlanPriceResolved,
 } from "@/lib/stripe-prices";
 import { getStripeClientForMode } from "@/lib/stripe-config";
 import { prisma } from "@/lib/prisma";
@@ -74,11 +76,13 @@ export async function POST(req: Request) {
             : getProLifetimePriceId();
 
     if (!priceId) {
+      logStripePlanPriceMissing("create-checkout-session", planType, mode);
       return NextResponse.json(
         { error: "Price ID not configured" },
         { status: 500 }
       );
     }
+    logStripePlanPriceResolved("create-checkout-session", planType, mode);
 
     const sub = await prisma.subscription.findUnique({
       where: { userId },

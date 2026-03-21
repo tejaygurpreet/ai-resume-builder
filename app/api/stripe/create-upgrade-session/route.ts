@@ -11,6 +11,12 @@ import {
   resolveStripeForSubscriptionId,
 } from "@/lib/stripe-config";
 import type { StripeMode } from "@/lib/stripe-subscription-mode";
+import {
+  describeStripePlanPriceResolution,
+  isStripePriceDebugEnabled,
+  logStripePlanPriceMissing,
+  logStripePlanPriceResolved,
+} from "@/lib/stripe-prices";
 
 const PLAN_META: Record<string, { tier: string }> = {
   monthly: { tier: "PRO_MONTHLY" },
@@ -84,17 +90,27 @@ export async function POST(req: Request) {
 
     const priceId = getCheckoutPlanPriceId(planType, priceMode);
     if (!priceId) {
+      logStripePlanPriceMissing("create-upgrade-session", planType, priceMode);
       return NextResponse.json(
         {
           error: "Price ID not configured for this mode",
           hint:
             priceMode === "test"
               ? "Set STRIPE_TEST_PRO_MONTHLY_PRICE_ID / STRIPE_TEST_PRO_ANNUAL_PRICE_ID / STRIPE_TEST_EXPORT_PRICE_ID / STRIPE_TEST_*_LIFETIME_* or shared STRIPE_PRO_* / STRIPE_EXPORT_PRICE_ID."
-              : "Set STRIPE_LIVE_* price ID env vars or shared STRIPE_PRO_* / STRIPE_EXPORT_PRICE_ID.",
+              : "Set STRIPE_LIVE_PRO_MONTHLY_PRICE_ID, STRIPE_LIVE_EXPORT_PRICE_ID (or shared STRIPE_PRO_MONTHLY_PRICE_ID / STRIPE_EXPORT_PRICE_ID / STRIPE_ONE_TIME_PRICE_ID) on the host.",
+          ...(isStripePriceDebugEnabled()
+            ? {
+                priceResolution: describeStripePlanPriceResolution(
+                  planType,
+                  priceMode
+                ),
+              }
+            : {}),
         },
         { status: 500 }
       );
     }
+    logStripePlanPriceResolved("create-upgrade-session", planType, priceMode);
 
     const baseUrl =
       process.env.NEXTAUTH_URL ||

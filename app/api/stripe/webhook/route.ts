@@ -5,6 +5,7 @@ import { getStripe } from "@/lib/stripe";
 import { getStripeWebhookSecretForNodeEnv } from "@/lib/stripe-env";
 import { prisma } from "@/lib/prisma";
 import {
+  getAllExportPriceIds,
   getExportPriceId,
   getProAnnualPriceId,
   getProLifetimePriceId,
@@ -200,6 +201,7 @@ export async function POST(req: Request) {
             });
           } else {
             const lifetimePriceId = getProLifetimePriceId();
+            const exportPriceIds = getAllExportPriceIds();
             const oneTimePriceId = getExportPriceId();
             let priceId: string | undefined;
             if (session.line_items?.data?.[0]?.price) {
@@ -246,7 +248,11 @@ export async function POST(req: Request) {
               console.log("[webhook] Access updated: pro_lifetime (inferred)", {
                 userId: user.id,
               });
-            } else if (oneTimePriceId && priceId === oneTimePriceId) {
+            } else if (
+              priceId &&
+              (exportPriceIds.includes(priceId) ||
+                (!!oneTimePriceId && priceId === oneTimePriceId))
+            ) {
               const existingSubForExport = await prisma.subscription.findUnique({
                 where: { userId: user.id },
               });
