@@ -4,14 +4,23 @@
  * Dashboard URL (example): https://optimacv.io/api/stripe/webhook
  * Local: stripe listen --forward-to localhost:3000/api/stripe/webhook
  *
- * **Pages Router vs App Router (raw body):**
- * `import { buffer } from 'micro'` and `export const config = { api: { bodyParser: false } }`
- * only work under `pages/api/...`. This handler is `app/api/.../route.ts` — there is no
- * `bodyParser` flag; read the body **once** as bytes: `Buffer.from(await request.arrayBuffer())`
- * and pass that Buffer to `stripe.webhooks.constructEvent` (same outcome as `micro`).
+ * ---------------------------------------------------------------------------
+ * Pages-only APIs (do NOT use in this file — they are ignored or will break):
  *
- * Webhook signing secret: `STRIPE_LIVE_WEBHOOK_SECRET` (prod) / `STRIPE_TEST_WEBHOOK_SECRET` (dev),
- * or legacy `STRIPE_WEBHOOK_SECRET` (see `getStripeWebhookSecretForNodeEnv`).
+ *   export const config = { api: { bodyParser: false } };
+ *   import { buffer } from 'micro';
+ *   await buffer(req);
+ *
+ * `config.api.bodyParser` and `micro`’s `buffer()` target Node `IncomingMessage` in
+ * `pages/api/*`. App Router `route.ts` receives a Web `Request`; there is no bodyParser
+ * toggle. Equivalent raw body for Stripe signatures:
+ *
+ *   const buf = Buffer.from(await request.arrayBuffer());
+ *   stripe.webhooks.constructEvent(buf, sig, secret);
+ * ---------------------------------------------------------------------------
+ *
+ * Signing secret: prefer `STRIPE_WEBHOOK_SECRET`, else env-specific secrets from
+ * `getStripeWebhookSecretForNodeEnv()` (test/live + legacy).
  */
 
 import { NextResponse } from "next/server";
@@ -29,6 +38,11 @@ import {
 /** Prevent static optimization / caching so Stripe POST always hits this route handler. */
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+/**
+ * NOTE: `export const config = { api: { bodyParser: false } }` is **Pages Router only**
+ * (`pages/api/...`). It is **not** a valid Route Handler export in `app/api/.../route.ts`.
+ */
 
 type PlanType = "pro_monthly" | "pro_annual" | "pro_lifetime" | "one_time_export";
 
@@ -713,22 +727,22 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  // App Router raw body (equivalent to `micro` buffer + bodyParser: false on pages/api).
-  const rawBody = Buffer.from(await req.arrayBuffer());
-  const signature = req.headers.get("stripe-signature");
+  // App Router: raw body (Pages equivalent: `import { buffer } from 'micro'; await buffer(req)`).
+  const buf = Buffer.from(await req.arrayBuffer());
+  const sig = req.headers.get("stripe-signature");
 
   const webhookSecret =
-    getStripeWebhookSecretForNodeEnv() ??
-    process.env.STRIPE_WEBHOOK_SECRET?.trim() ??
+    process.env.STRIPE_WEBHOOK_SECRET?.trim() ||
+    getStripeWebhookSecretForNodeEnv() ||
     null;
 
-  if (!signature || !webhookSecret) {
+  if (!sig || !webhookSecret) {
     console.error("[webhook] Missing stripe-signature header or webhook secret", {
-      hasSignature: !!signature,
+      hasSignature: !!sig,
       hasSecret: !!webhookSecret,
-      bodyBytes: rawBody.length,
+      bodyBytes: buf.length,
       hint:
-        "Set STRIPE_TEST_WEBHOOK_SECRET (dev) or STRIPE_LIVE_WEBHOOK_SECRET (prod), or STRIPE_WEBHOOK_SECRET",
+        "Set STRIPE_WEBHOOK_SECRET and/or STRIPE_TEST_WEBHOOK_SECRET / STRIPE_LIVE_WEBHOOK_SECRET",
     });
     return NextResponse.json(
       { error: "Missing webhook signature or secret" },
@@ -739,11 +753,11 @@ export async function POST(req: Request) {
   const stripe = getStripe();
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+    event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error("[webhook] Signature verification failed:", message, {
-      bodyBytes: rawBody.length,
+      bodyBytes: buf.length,
     });
     return NextResponse.json(
       { error: `Webhook Error: ${message}` },
@@ -751,8 +765,9 @@ export async function POST(req: Request) {
     );
   }
 
-  console.log("Webhook hit:", event.type);
-  console.log("[webhook] payload summary:", summarizeStripeEvent(event));
+  const payloadSummary = summarizeStripeEvent(event);
+  console.log("Webhook hit at:", new Date().toISOString(), event.type);
+  console.log("[webhook] event.type + payload:", event.type, payloadSummary);
 
   try {
     switch (event.type) {
@@ -795,4 +810,4 @@ export async function POST(req: Request) {
   return NextResponse.json({ received: true }, { status: 200 });
 }
 
-/* === WEBHOOK 404 FIXED + RAW BODY + METADATA + EVENT HANDLING === */
+/* === WEBHOOK 404 FIXED + RAW BODY + LOGGING === */
