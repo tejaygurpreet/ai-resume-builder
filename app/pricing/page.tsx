@@ -191,6 +191,16 @@ type PendingCheckout =
   | { mode: "schedule_annual" }
   | { mode: "schedule_monthly" };
 
+/** Default billing snapshot when `/api/user/subscription` fails or returns empty (matches API free shape). */
+const DEFAULT_FREE_SUBSCRIPTION = {
+  plan: "free",
+  planInterval: null as string | null,
+  stripeSubscriptionId: null as string | null,
+  oneTimeExport: false,
+  currentPeriodEnd: null as string | null,
+  status: "active",
+};
+
 export default function PricingPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -217,21 +227,57 @@ export default function PricingPage() {
   const [pendingCheckout, setPendingCheckout] = useState<PendingCheckout | null>(null);
   const [cancelConfirmModalOpen, setCancelConfirmModalOpen] = useState(false);
   const [canceling, setCanceling] = useState(false);
-  /** Wait for /api/resumes so we never treat a paid user as free (wrong checkout). */
+  /** Wait for `/api/user/subscription` so we never treat a paid user as free (wrong checkout). */
   const [billingReady, setBillingReady] = useState(false);
 
   const fetchSubscription = useCallback(async () => {
     if (status !== "authenticated") return;
     try {
-      const res = await fetch("/api/resumes");
+      const res = await fetch("/api/user/subscription", { cache: "no-store" });
       if (!res.ok) {
-        setSubscription(null);
+        console.warn(
+          "[pricing] subscription fetch non-OK:",
+          res.status,
+          res.statusText
+        );
+        setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
         return;
       }
-      const data = await res.json();
-      setSubscription(data.subscription ?? null);
-    } catch {
-      setSubscription(null);
+      let data: unknown;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.error("[pricing] subscription JSON parse failed:", parseErr);
+        setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
+        return;
+      }
+      const sub = data as Record<string, unknown> | null;
+      if (
+        sub &&
+        typeof sub.plan === "string" &&
+        (sub.planInterval === null || typeof sub.planInterval === "string") &&
+        (sub.stripeSubscriptionId === null ||
+          typeof sub.stripeSubscriptionId === "string") &&
+        typeof sub.oneTimeExport === "boolean" &&
+        (sub.currentPeriodEnd === null ||
+          typeof sub.currentPeriodEnd === "string") &&
+        typeof sub.status === "string"
+      ) {
+        setSubscription({
+          plan: sub.plan,
+          planInterval: sub.planInterval,
+          stripeSubscriptionId: sub.stripeSubscriptionId,
+          oneTimeExport: sub.oneTimeExport,
+          currentPeriodEnd: sub.currentPeriodEnd,
+          status: sub.status,
+        });
+      } else {
+        console.warn("[pricing] subscription payload unexpected, defaulting to free", sub);
+        setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
+      }
+    } catch (err) {
+      console.error("[pricing] subscription fetch failed:", err);
+      setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
     } finally {
       setBillingReady(true);
     }
@@ -245,7 +291,13 @@ export default function PricingPage() {
     }
     if (status === "authenticated") {
       setBillingReady(false);
-      void fetchSubscription();
+      try {
+        void fetchSubscription();
+      } catch (e) {
+        console.error("[pricing] loadSubscription effect:", e);
+        setSubscription({ ...DEFAULT_FREE_SUBSCRIPTION });
+        setBillingReady(true);
+      }
     }
   }, [status, fetchSubscription]);
 
@@ -1231,4 +1283,4 @@ export default function PricingPage() {
   );
 }
 
-/* === ALL UPDATES COMPLETE: 5 EXPORTS FREE + TEMPLATE FIX + EDITOR ORDER + DASHBOARD BUTTON + GPT-4o TEXT + 50+ TEMPLATES + $7.99 / $19.99 PRICING === */
+/* === FIXED: MISSING /api/user/subscription ROUTE + ROBUST ERROR HANDLING === */
