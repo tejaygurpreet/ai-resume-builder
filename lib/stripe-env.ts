@@ -1,9 +1,10 @@
 /**
  * Stripe environment selection by NODE_ENV.
- * - Non-production (development, test): STRIPE_TEST_SECRET_KEY + test price IDs + test publishable key
- * - production: STRIPE_LIVE_SECRET_KEY + live price IDs + live publishable key
+ * - Development (NODE_ENV !== production): STRIPE_TEST_SECRET_KEY (+ test price IDs, test webhook, pk_test)
+ * - Production: STRIPE_LIVE_SECRET_KEY (+ live price IDs, live webhook, pk_live)
  *
- * Legacy fallbacks: STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ * You do **not** need STRIPE_SECRET_KEY if you set both keys above. Optional legacy fallback:
+ * STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
  */
 
 import type { StripeMode } from "@/lib/stripe-subscription-mode";
@@ -17,9 +18,8 @@ export function isStripeLiveRuntime(): boolean {
  * Secret key for a specific Stripe **account mode** (test vs live), independent of NODE_ENV.
  * Use when creating Checkout sessions or API calls that must match subscription/price mode.
  *
- * - Prefers STRIPE_TEST_SECRET_KEY / STRIPE_LIVE_SECRET_KEY when set.
- * - Falls back to STRIPE_SECRET_KEY when it looks like the right mode (sk_test… / sk_live…).
- * - Last resort: returns legacy key so single-key setups still work (may mismatch wrong mode).
+ * - Uses STRIPE_TEST_SECRET_KEY (test) or STRIPE_LIVE_SECRET_KEY (live) when set — **this is enough**; no STRIPE_SECRET_KEY required.
+ * - Optional: STRIPE_SECRET_KEY when it matches the mode (sk_test… / sk_live…) or as last resort.
  */
 export function getStripeSecretKeyForStripeAccountMode(
   mode: StripeMode

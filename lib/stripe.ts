@@ -20,13 +20,13 @@ function createStripeClient(secretKey: string): Stripe {
 
 /**
  * Stripe client for this process: STRIPE_LIVE_SECRET_KEY in production,
- * STRIPE_TEST_SECRET_KEY otherwise. Falls back to STRIPE_SECRET_KEY.
+ * STRIPE_TEST_SECRET_KEY in development. STRIPE_SECRET_KEY is optional if those are set.
  */
 export function getStripe(): Stripe {
   const key = getStripeSecretKeyForNodeEnv();
   if (!key) {
     throw new Error(
-      "Stripe is not configured. Set STRIPE_TEST_SECRET_KEY for development or STRIPE_LIVE_SECRET_KEY for production (or STRIPE_SECRET_KEY as fallback)."
+      "Stripe is not configured. Set STRIPE_TEST_SECRET_KEY for local/dev and STRIPE_LIVE_SECRET_KEY for production (optional: STRIPE_SECRET_KEY as fallback)."
     );
   }
   if (_stripe && _cachedSecretKey === key) {

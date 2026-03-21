@@ -23,9 +23,8 @@ function newStripe(secret: string): Stripe {
 
 /**
  * Keys used to probe which Stripe account owns a subscription (upgrades / cross-mode DB).
- * Order: explicit test → explicit live → legacy STRIPE_SECRET_KEY.
- * That way monthly→annual upgrades find the correct account when both keys exist, and
- * single-key setups still work via STRIPE_SECRET_KEY alone.
+ * Order: STRIPE_TEST_SECRET_KEY → STRIPE_LIVE_SECRET_KEY → optional STRIPE_SECRET_KEY.
+ * Monthly→annual upgrades need the key for the account that owns the sub; two-key setups need no STRIPE_SECRET_KEY.
  */
 function collectStripeSecretsForProbe(): string[] {
   const keys: string[] = [];

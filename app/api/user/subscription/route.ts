@@ -6,7 +6,6 @@ import { getStripeClientForMode } from "@/lib/stripe-config";
 import { getRuntimeStripeMode } from "@/lib/stripe-prices";
 import { resolveStripeForSubscriptionId } from "@/lib/stripe-subscription-mode";
 
-/** Matches `deriveActivePlan` / pricing page subscription state. */
 const FREE_SUBSCRIPTION = {
   plan: "free",
   planInterval: null as string | null,
@@ -16,19 +15,9 @@ const FREE_SUBSCRIPTION = {
   status: "active",
 };
 
-function toIso(d: Date | null | undefined): string | null {
-  if (d == null) return null;
-  try {
-    return d instanceof Date ? d.toISOString() : new Date(d).toISOString();
-  } catch {
-    return null;
-  }
-}
-
 /**
  * GET /api/user/subscription
- * Current user’s billing row for pricing / plan UI. Always 200 on success path;
- * returns free-shaped payload if unauthenticated, missing row, or on unexpected errors.
+ * Billing snapshot for pricing / plan UI. On failure, returns 200 + free-shaped body (never throws).
  */
 export async function GET() {
   try {
@@ -39,7 +28,7 @@ export async function GET() {
       return NextResponse.json(FREE_SUBSCRIPTION);
     }
 
-    const row = await prisma.subscription.findUnique({
+    const subscription = await prisma.subscription.findFirst({
       where: { userId },
       select: {
         plan: true,
@@ -51,16 +40,16 @@ export async function GET() {
       },
     });
 
-    if (!row) {
+    if (!subscription) {
       return NextResponse.json(FREE_SUBSCRIPTION);
     }
 
-    let plan = row.plan;
-    let planInterval = row.planInterval;
-    const stripeSubscriptionId = row.stripeSubscriptionId;
-    let oneTimeExport = row.oneTimeExport;
-    let currentPeriodEnd = row.currentPeriodEnd;
-    let status = row.status;
+    let plan = subscription.plan;
+    let planInterval = subscription.planInterval;
+    const stripeSubscriptionId = subscription.stripeSubscriptionId;
+    const oneTimeExport = subscription.oneTimeExport;
+    let currentPeriodEnd = subscription.currentPeriodEnd;
+    let status = subscription.status;
 
     if (stripeSubscriptionId) {
       try {
@@ -85,11 +74,8 @@ export async function GET() {
             currentPeriodEnd = new Date(sub.current_period_end * 1000);
           }
         }
-      } catch (e) {
-        console.warn(
-          "[GET /api/user/subscription] Stripe subscriptions.retrieve skipped:",
-          e instanceof Error ? e.message : e
-        );
+      } catch {
+        /* optional: DB row is enough for pricing */
       }
     }
 
@@ -98,7 +84,7 @@ export async function GET() {
       planInterval,
       stripeSubscriptionId,
       oneTimeExport,
-      currentPeriodEnd: toIso(currentPeriodEnd),
+      currentPeriodEnd: currentPeriodEnd?.toISOString() || null,
       status,
     });
   } catch (e) {

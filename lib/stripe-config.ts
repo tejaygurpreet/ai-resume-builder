@@ -33,8 +33,8 @@ export function getStripeClientForMode(mode: StripeMode): Stripe {
   if (!key) {
     throw new Error(
       mode === "test"
-        ? "Stripe test mode is not configured. Set STRIPE_TEST_SECRET_KEY or STRIPE_SECRET_KEY (sk_test…)."
-        : "Stripe live mode is not configured. Set STRIPE_LIVE_SECRET_KEY or STRIPE_SECRET_KEY (sk_live…)."
+        ? "Stripe test mode is not configured. Set STRIPE_TEST_SECRET_KEY (sk_test…). Optional: STRIPE_SECRET_KEY."
+        : "Stripe live mode is not configured. Set STRIPE_LIVE_SECRET_KEY (sk_live…). Optional: STRIPE_SECRET_KEY."
     );
   }
   let client = stripeClientBySecret.get(key);

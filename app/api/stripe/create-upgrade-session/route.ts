@@ -42,7 +42,7 @@ function normalizePlanType(raw: unknown): CheckoutPlanType | undefined {
  * - Otherwise mode follows NODE_ENV (dev → test, production → live).
  * - Recurring plan switches use `subscriptions.update` + proration (not Checkout on `subscription`).
  * - Which secret key to use: `resolveStripeForSubscriptionId` tries STRIPE_TEST_SECRET_KEY,
- *   STRIPE_LIVE_SECRET_KEY, then STRIPE_SECRET_KEY — Stripe ids are always `sub_…` (there is no `sub_test_` prefix).
+ *   STRIPE_LIVE_SECRET_KEY, then optional STRIPE_SECRET_KEY — Stripe ids are always `sub_…` (there is no `sub_test_` prefix).
  */
 export async function POST(req: Request) {
   try {
@@ -139,11 +139,11 @@ export async function POST(req: Request) {
           {
             error: "Could not load subscription in Stripe",
             hint:
-              "Subscription IDs are always sub_… in test and live. Use the secret key for the Stripe account that owns this subscription: set STRIPE_TEST_SECRET_KEY (test data) and/or STRIPE_LIVE_SECRET_KEY (live data). STRIPE_SECRET_KEY is used as a fallback after those.",
+              "Subscription IDs are always sub_… in test and live. Set STRIPE_TEST_SECRET_KEY and STRIPE_LIVE_SECRET_KEY (both on the server if you upgrade test or live subs). STRIPE_SECRET_KEY is optional.",
             env: {
               hasStripeTestSecretKey: !!process.env.STRIPE_TEST_SECRET_KEY?.trim(),
               hasStripeLiveSecretKey: !!process.env.STRIPE_LIVE_SECRET_KEY?.trim(),
-              hasStripeSecretKey: !!process.env.STRIPE_SECRET_KEY?.trim(),
+              hasStripeSecretKeyLegacy: !!process.env.STRIPE_SECRET_KEY?.trim(),
             },
           },
           { status: 400 }
@@ -192,7 +192,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Stripe is not configured for the account mode required for this checkout. Set STRIPE_TEST_SECRET_KEY / STRIPE_LIVE_SECRET_KEY or STRIPE_SECRET_KEY matching your prices.",
+            "Stripe is not configured for this checkout mode. Set STRIPE_TEST_SECRET_KEY (test) and/or STRIPE_LIVE_SECRET_KEY (live) to match your price IDs.",
         },
         { status: 503 }
       );
