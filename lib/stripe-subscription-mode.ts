@@ -23,24 +23,24 @@ function newStripe(secret: string): Stripe {
 
 /**
  * Keys used to probe which Stripe account owns a subscription (upgrades / cross-mode DB).
- * Order: STRIPE_SECRET_KEY first (common single-key setups), then explicit test/live keys.
- * Independent of NODE_ENV so production can still update a test-mode sub if both keys are set.
+ * Order: explicit test → explicit live → legacy STRIPE_SECRET_KEY.
+ * That way monthly→annual upgrades find the correct account when both keys exist, and
+ * single-key setups still work via STRIPE_SECRET_KEY alone.
  */
 function collectStripeSecretsForProbe(): string[] {
-  const legacy = process.env.STRIPE_SECRET_KEY?.trim();
-  const test =
-    process.env.STRIPE_TEST_SECRET_KEY?.trim() ||
-    process.env.STRIPE_SECRET_KEY_TEST?.trim();
-  const live =
-    process.env.STRIPE_LIVE_SECRET_KEY?.trim() ||
-    process.env.STRIPE_SECRET_KEY_LIVE?.trim();
-
   const keys: string[] = [];
-  if (legacy) keys.push(legacy);
-  if (test && test !== legacy) keys.push(test);
-  if (live && live !== legacy && live !== test) keys.push(live);
-
-  return Array.from(new Set(keys));
+  const add = (s: string | undefined) => {
+    const t = s?.trim();
+    if (t && !keys.includes(t)) keys.push(t);
+  };
+  add(
+    process.env.STRIPE_TEST_SECRET_KEY || process.env.STRIPE_SECRET_KEY_TEST
+  );
+  add(
+    process.env.STRIPE_LIVE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE
+  );
+  add(process.env.STRIPE_SECRET_KEY);
+  return keys;
 }
 
 function isMissingSubscriptionError(err: unknown): boolean {
@@ -70,7 +70,15 @@ export async function resolveStripeForSubscriptionId(
       return { stripe, mode: stripeModeFromSecretKey(secret) };
     } catch (err) {
       if (isMissingSubscriptionError(err)) continue;
-      throw err;
+      console.warn(
+        "[stripe-subscription-mode] subscriptions.retrieve failed while probing keys (trying next)",
+        {
+          subscriptionId,
+          modeGuess: stripeModeFromSecretKey(secret),
+          message: err instanceof Error ? err.message : String(err),
+        }
+      );
+      continue;
     }
   }
   return null;

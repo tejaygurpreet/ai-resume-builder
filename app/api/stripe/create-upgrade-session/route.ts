@@ -41,6 +41,8 @@ function normalizePlanType(raw: unknown): CheckoutPlanType | undefined {
  *   `stripeSubscriptionId` is set (probe with all configured secret keys).
  * - Otherwise mode follows NODE_ENV (dev → test, production → live).
  * - Recurring plan switches use `subscriptions.update` + proration (not Checkout on `subscription`).
+ * - Which secret key to use: `resolveStripeForSubscriptionId` tries STRIPE_TEST_SECRET_KEY,
+ *   STRIPE_LIVE_SECRET_KEY, then STRIPE_SECRET_KEY — Stripe ids are always `sub_…` (there is no `sub_test_` prefix).
  */
 export async function POST(req: Request) {
   try {
@@ -78,13 +80,18 @@ export async function POST(req: Request) {
       },
     });
 
+    /** Stripe client + mode for this subscription (same instance used for proration). */
+    let stripeForExistingSub: Awaited<
+      ReturnType<typeof resolveStripeForSubscriptionId>
+    > = null;
+
     let priceMode: StripeMode = getDefaultCheckoutStripeMode();
     if (currentSubscription?.stripeSubscriptionId) {
-      const resolved = await resolveStripeForSubscriptionId(
+      stripeForExistingSub = await resolveStripeForSubscriptionId(
         currentSubscription.stripeSubscriptionId
       );
-      if (resolved) {
-        priceMode = resolved.mode;
+      if (stripeForExistingSub) {
+        priceMode = stripeForExistingSub.mode;
       }
     }
 
@@ -127,14 +134,17 @@ export async function POST(req: Request) {
       currentSubscription?.stripeSubscriptionId &&
       (planType === "monthly" || planType === "annual")
     ) {
-      const resolved = await resolveStripeForSubscriptionId(
-        currentSubscription.stripeSubscriptionId
-      );
-      if (!resolved) {
+      if (!stripeForExistingSub) {
         return NextResponse.json(
           {
-            error:
-              "Could not load subscription in Stripe. Set STRIPE_SECRET_KEY and/or STRIPE_TEST_SECRET_KEY + STRIPE_LIVE_SECRET_KEY so the correct account can retrieve this subscription.",
+            error: "Could not load subscription in Stripe",
+            hint:
+              "Subscription IDs are always sub_… in test and live. Use the secret key for the Stripe account that owns this subscription: set STRIPE_TEST_SECRET_KEY (test data) and/or STRIPE_LIVE_SECRET_KEY (live data). STRIPE_SECRET_KEY is used as a fallback after those.",
+            env: {
+              hasStripeTestSecretKey: !!process.env.STRIPE_TEST_SECRET_KEY?.trim(),
+              hasStripeLiveSecretKey: !!process.env.STRIPE_LIVE_SECRET_KEY?.trim(),
+              hasStripeSecretKey: !!process.env.STRIPE_SECRET_KEY?.trim(),
+            },
           },
           { status: 400 }
         );
@@ -142,7 +152,7 @@ export async function POST(req: Request) {
 
       try {
         const { paymentUrl, message } = await applySubscriptionProrationPriceChange(
-          resolved.stripe,
+          stripeForExistingSub.stripe,
           currentSubscription.stripeSubscriptionId,
           priceId
         );
@@ -151,7 +161,7 @@ export async function POST(req: Request) {
           url: paymentUrl,
           success: true,
           message,
-          stripeMode: resolved.mode,
+          stripeMode: stripeForExistingSub.mode,
           metadata: {
             userId,
             targetTier: targetPlan.tier,
