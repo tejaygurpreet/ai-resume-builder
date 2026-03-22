@@ -538,9 +538,8 @@ export default function PricingPage() {
       return;
     }
 
-    // Paying customer: same selection as today → manage / cancel modal only
+    // Paying customer on this exact plan: no checkout / no modal (button stays clickable).
     if (isCurrentPlan(plan)) {
-      setCurrentPlanModalOpen(true);
       return;
     }
 
@@ -633,14 +632,6 @@ export default function PricingPage() {
   const canCancelMembership =
     (activePlan === "pro_monthly" || activePlan === "pro_annual") &&
     subscription?.stripeSubscriptionId;
-
-  const canUpgradeToPro = activePlan !== "pro_lifetime";
-  const canUpgradeToInterval = (opt: ProInterval) => {
-    if (activePlan === "pro_lifetime") return false;
-    if (isCurrentProInterval(opt)) return false;
-    return true;
-  };
-  const canUpgradeOneTime = activePlan !== "one_time_export";
 
   return (
     <div
@@ -822,19 +813,22 @@ export default function PricingPage() {
               <div className="mt-4 space-y-2">
                 {proOptions.map((opt) => {
                   const isCurrent = isCurrentProInterval(opt.id);
-                  const canSelect = canUpgradeToInterval(opt.id);
                   const isLifetimeLocked = activePlan === "pro_lifetime";
                   return (
                     <button
                       key={opt.id}
-                      onClick={() => !isLifetimeLocked && canSelect && setProInterval(opt.id)}
-                      disabled={isCurrent || isLifetimeLocked}
+                      type="button"
+                      onClick={() => {
+                        if (isLifetimeLocked) return;
+                        setProInterval(opt.id);
+                      }}
+                      disabled={isLifetimeLocked}
                       className={cn(
                         "flex w-full items-center justify-between rounded-xl border px-4 py-2.5 text-left text-sm transition-all duration-200",
                         isCurrent
                           ? isLight
-                            ? "cursor-default border-emerald-200 bg-emerald-50 text-emerald-800"
-                            : "cursor-default border-emerald-500/40 bg-emerald-500/10 text-emerald-300"
+                            ? "cursor-pointer border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-300 hover:bg-emerald-100/90 hover:shadow-sm active:scale-[0.99]"
+                            : "cursor-pointer border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:border-emerald-400/60 hover:bg-emerald-500/[0.18] hover:shadow-md active:scale-[0.99]"
                           : proInterval === opt.id
                             ? isLight
                               ? "border-violet-300 bg-[#f5f3ff] text-[#111827]"
@@ -927,9 +921,14 @@ export default function PricingPage() {
                 <Button
                   className={cn(
                     "mt-8 w-full text-base font-bold transition-all duration-200",
-                    isLight
-                      ? "bg-gradient-to-r from-[#4f46e5] to-violet-600 text-white shadow-md shadow-indigo-500/20 hover:scale-[1.01] hover:from-[#4338ca] hover:to-violet-700 hover:shadow-lg"
-                      : "bg-gradient-to-r from-purple-600 to-violet-600 shadow-lg shadow-purple-500/25 hover:from-purple-500 hover:to-violet-500 hover:shadow-purple-500/30"
+                    (activePlan === "pro_monthly" && proInterval === "monthly") ||
+                      (activePlan === "pro_annual" && proInterval === "annual")
+                      ? isLight
+                        ? "bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25 hover:scale-[1.01] hover:from-emerald-700 hover:to-teal-700 hover:shadow-lg"
+                        : "bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-900/30 hover:from-emerald-500 hover:to-emerald-600 hover:shadow-emerald-900/40"
+                      : isLight
+                        ? "bg-gradient-to-r from-[#4f46e5] to-violet-600 text-white shadow-md shadow-indigo-500/20 hover:scale-[1.01] hover:from-[#4338ca] hover:to-violet-700 hover:shadow-lg"
+                        : "bg-gradient-to-r from-purple-600 to-violet-600 shadow-lg shadow-purple-500/25 hover:from-purple-500 hover:to-violet-500 hover:shadow-purple-500/30"
                   )}
                   size="lg"
                   loading={isLoading === "pro" || isLoading === "pro_interval"}
@@ -1014,10 +1013,14 @@ export default function PricingPage() {
               <Button
                 variant="outline"
                 className={cn(
-                  "mt-8 w-full transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60",
-                  isLight
-                    ? "border-amber-300 bg-white text-amber-900 hover:scale-[1.02] hover:border-amber-400 hover:bg-amber-100 hover:shadow-md"
-                    : "border-amber-500/40 text-amber-300 hover:border-amber-500/50 hover:bg-amber-900/30 hover:text-amber-100"
+                  "mt-8 w-full transition-all duration-200",
+                  activePlan === "one_time_export"
+                    ? isLight
+                      ? "cursor-pointer border-emerald-400 bg-emerald-50 text-emerald-900 hover:scale-[1.02] hover:border-emerald-500 hover:bg-emerald-100 hover:shadow-md"
+                      : "cursor-pointer border-emerald-500/50 bg-emerald-500/10 text-emerald-200 hover:border-emerald-400/70 hover:bg-emerald-500/20 hover:shadow-md"
+                    : isLight
+                      ? "border-amber-300 bg-white text-amber-900 hover:scale-[1.02] hover:border-amber-400 hover:bg-amber-100 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+                      : "border-amber-500/40 text-amber-300 hover:border-amber-500/50 hover:bg-amber-900/30 hover:text-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
                 )}
                 size="lg"
                 loading={isLoading === "one-time"}
@@ -1385,3 +1388,4 @@ export default function PricingPage() {
 
 /* === FULL TEST/LIVE SEPARATION + AUTO-CLEAN + ROBUST PRICING PAGE === */
 /* === UPGRADE FLOW FIXED: NO PREMATURE SUCCESS + REAL STRIPE REDIRECT === */
+/* === FIXED: CURRENT PLAN BUTTON NO LONGER DISABLED === */
