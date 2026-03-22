@@ -3,7 +3,10 @@ import {
   getProAnnualPriceIdForStripeMode,
   getProMonthlyPriceIdForStripeMode,
 } from "@/lib/stripe-prices";
-import { applySubscriptionProrationPriceChange } from "@/lib/stripe-subscription-proration-upgrade";
+import {
+  applySubscriptionProrationPriceChange,
+  resolveUpgradePaymentUrl,
+} from "@/lib/stripe-subscription-proration-upgrade";
 import {
   resolveStripeForSubscriptionId,
   type StripeMode,
@@ -12,11 +15,10 @@ import {
 export type IntervalUpgradeResult =
   | {
       ok: true;
-      message: string;
       stripeMode: StripeMode;
       currentPeriodEnd: string;
-      /** Stripe hosted invoice URL when proration requires payment; otherwise null. */
-      url: string | null;
+      /** Stripe Checkout or hosted invoice URL — always set when ok. */
+      url: string;
     }
   | {
       ok: false;
@@ -144,22 +146,41 @@ export async function runSubscriptionIntervalScheduleUpgrade(params: {
     };
   }
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.NEXTAUTH_URL?.trim() ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+    "http://localhost:3000";
+
   try {
-    const { subscription: updated, paymentUrl, message } =
+    const { subscription: updated, invoice } =
       await applySubscriptionProrationPriceChange(
         resolved.stripe,
         subscription.stripeSubscriptionId,
         targetPriceId
       );
 
+    const url = await resolveUpgradePaymentUrl({
+      stripe: resolved.stripe,
+      subscription: updated,
+      invoice,
+      baseUrl,
+      userId,
+      userEmail: user?.email ?? null,
+    });
+
     return {
       ok: true,
-      message,
       stripeMode: resolved.mode,
       currentPeriodEnd: new Date(
         updated.current_period_end * 1000
       ).toISOString(),
-      url: paymentUrl,
+      url,
     };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed to change plan";

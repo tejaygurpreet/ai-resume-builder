@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { applySubscriptionProrationPriceChange } from "@/lib/stripe-subscription-proration-upgrade";
+import {
+  applySubscriptionProrationPriceChange,
+  resolveUpgradePaymentUrl,
+} from "@/lib/stripe-subscription-proration-upgrade";
 import {
   type CheckoutPlanType,
   getCheckoutPlanPriceId,
@@ -49,13 +52,38 @@ function getSiteBaseUrl(): string {
 }
 
 /**
+ * Proration + always return a Stripe URL (Checkout or hosted invoice).
+ * On success: caller returns ONLY `{ url }` — never `{ success, message }` without a real URL.
+ */
+async function upgradeExistingSubscriptionToPrice(params: {
+  stripe: import("stripe").default;
+  stripeSubscriptionId: string;
+  targetPriceId: string;
+  baseUrl: string;
+  userId: string;
+  userEmail: string | null | undefined;
+}): Promise<string> {
+  const { subscription, invoice } = await applySubscriptionProrationPriceChange(
+    params.stripe,
+    params.stripeSubscriptionId,
+    params.targetPriceId
+  );
+  return resolveUpgradePaymentUrl({
+    stripe: params.stripe,
+    subscription,
+    invoice,
+    baseUrl: params.baseUrl,
+    userId: params.userId,
+    userEmail: params.userEmail,
+  });
+}
+
+/**
  * POST /api/stripe/create-upgrade-session
  *
- * **Upgrade with body `{ newPriceId }`:** requires an active row with `stripeSubscriptionId`.
- * Uses `subscriptions.update` + proration (Stripe Checkout cannot swap an existing sub’s price
- * the way `subscription_data` on `sessions.create` suggests — that only applies to *new* subs).
- *
- * **Otherwise** accepts `planType` / `interval` for new checkouts and legacy flows (free → Pro, etc.).
+ * **Existing Pro (monthly ↔ annual) with `newPriceId` or matching `planType`:**
+ * `subscriptions.update` (proration) then Checkout Session paying the invoice, or hosted invoice URL.
+ * Response on success: **only** `{ url: string }`.
  */
 export async function POST(req: Request) {
   try {
@@ -117,6 +145,8 @@ export async function POST(req: Request) {
       stripeSubscriptionId: currentSubscription?.stripeSubscriptionId ?? null,
     });
 
+    const baseUrl = getSiteBaseUrl();
+
     // ── Explicit price upgrade (pricing page sends `newPriceId` for monthly ↔ annual) ──
     if (newPriceIdRaw) {
       if (!currentSubscription?.stripeSubscriptionId) {
@@ -124,13 +154,13 @@ export async function POST(req: Request) {
           "[create-upgrade-session] newPriceId but no stripeSubscriptionId"
         );
         return NextResponse.json(
-          { error: "No active subscription" },
+          { error: "No active subscription to upgrade." },
           { status: 400 }
         );
       }
       if (!isConfiguredProRecurringPriceId(newPriceIdRaw)) {
         return NextResponse.json(
-          { error: "Invalid or unknown price id for upgrade" },
+          { error: "Invalid or unknown price id for upgrade." },
           { status: 400 }
         );
       }
@@ -145,49 +175,40 @@ export async function POST(req: Request) {
         );
         return NextResponse.json(
           {
-            error: "Could not load subscription in Stripe",
-            hint: "Set STRIPE_TEST_SECRET_KEY and STRIPE_LIVE_SECRET_KEY for the account that owns this subscription.",
+            error:
+              "Could not load subscription in Stripe. Set STRIPE_TEST_SECRET_KEY and STRIPE_LIVE_SECRET_KEY for the account that owns this subscription.",
           },
           { status: 400 }
         );
       }
 
       try {
-        const { paymentUrl, message } = await applySubscriptionProrationPriceChange(
-          stripeForExistingSub.stripe,
-          currentSubscription.stripeSubscriptionId,
-          newPriceIdRaw
-        );
-
-        console.log("[create-upgrade-session] proration result", {
+        const url = await upgradeExistingSubscriptionToPrice({
+          stripe: stripeForExistingSub.stripe,
+          stripeSubscriptionId: currentSubscription.stripeSubscriptionId,
+          targetPriceId: newPriceIdRaw,
+          baseUrl,
           userId,
-          hasPaymentUrl: !!paymentUrl,
-          message,
+          userEmail,
         });
-
-        return NextResponse.json({
-          url: paymentUrl,
-          success: true,
-          message,
-          stripeMode: stripeForExistingSub.mode,
-          metadata: {
-            userId,
-            targetTier: "PRO",
-            upgradeFromPlan: currentSubscription.plan ?? "",
-            upgradeFromInterval: currentSubscription.planInterval ?? "",
-            isUpgrade: "true",
-          },
-        });
+        if (!url) {
+          return NextResponse.json(
+            { error: "Stripe did not return a checkout URL." },
+            { status: 400 }
+          );
+        }
+        console.log("Upgrade session created. URL:", url);
+        return NextResponse.json({ url });
       } catch (e) {
-        console.error("[create-upgrade-session] Stripe proration error", {
+        const msg = e instanceof Error ? e.message : "Upgrade failed";
+        console.error("[create-upgrade-session] Stripe proration / URL error", {
           userId,
           stripeSubscriptionId: currentSubscription.stripeSubscriptionId,
-          error: e instanceof Error ? e.message : e,
+          error: msg,
         });
-        return NextResponse.json(
-          { error: e instanceof Error ? e.message : "Upgrade failed" },
-          { status: 500 }
-        );
+        const status =
+          /already on this billing interval/i.test(msg) ? 400 : 500;
+        return NextResponse.json({ error: msg }, { status });
       }
     }
 
@@ -202,7 +223,7 @@ export async function POST(req: Request) {
       return NextResponse.json(
         {
           error:
-            "Invalid request: send newPriceId for upgrades, or planType (monthly, annual, export, lifetime)",
+            "Invalid request: send newPriceId for upgrades, or planType (monthly, annual, export, lifetime).",
         },
         { status: 400 }
       );
@@ -227,7 +248,7 @@ export async function POST(req: Request) {
       logStripePlanPriceMissing("create-upgrade-session", planType, priceMode);
       return NextResponse.json(
         {
-          error: "Price ID not configured for this mode",
+          error: "Price ID not configured for this mode.",
           hint:
             priceMode === "test"
               ? "Set STRIPE_TEST_* Pro / export price env vars."
@@ -246,10 +267,7 @@ export async function POST(req: Request) {
     }
     logStripePlanPriceResolved("create-upgrade-session", planType, priceMode);
 
-    const baseUrl = getSiteBaseUrl();
     const targetPlan = PLAN_META[planType]!;
-    const upgradeFromPlan = currentSubscription?.plan ?? "";
-    const upgradeFromInterval = currentSubscription?.planInterval ?? "";
 
     if (
       currentSubscription?.stripeSubscriptionId &&
@@ -258,49 +276,41 @@ export async function POST(req: Request) {
       if (!stripeForExistingSub) {
         return NextResponse.json(
           {
-            error: "Could not load subscription in Stripe",
-            hint: "Set STRIPE_TEST_SECRET_KEY and STRIPE_LIVE_SECRET_KEY on the server.",
-            env: {
-              hasStripeTestSecretKey: !!process.env.STRIPE_TEST_SECRET_KEY?.trim(),
-              hasStripeLiveSecretKey: !!process.env.STRIPE_LIVE_SECRET_KEY?.trim(),
-              hasStripeSecretKeyLegacy: !!process.env.STRIPE_SECRET_KEY?.trim(),
-            },
+            error:
+              "Could not load subscription in Stripe. Set STRIPE_TEST_SECRET_KEY and STRIPE_LIVE_SECRET_KEY on the server.",
           },
           { status: 400 }
         );
       }
 
       try {
-        const { paymentUrl, message } = await applySubscriptionProrationPriceChange(
-          stripeForExistingSub.stripe,
-          currentSubscription.stripeSubscriptionId,
-          priceId
-        );
-
-        return NextResponse.json({
-          url: paymentUrl,
-          success: true,
-          message,
-          stripeMode: stripeForExistingSub.mode,
-          metadata: {
-            userId,
-            targetTier: targetPlan.tier,
-            upgradeFromPlan,
-            upgradeFromInterval,
-            isUpgrade: "true",
-          },
+        const url = await upgradeExistingSubscriptionToPrice({
+          stripe: stripeForExistingSub.stripe,
+          stripeSubscriptionId: currentSubscription.stripeSubscriptionId,
+          targetPriceId: priceId,
+          baseUrl,
+          userId,
+          userEmail,
         });
+        if (!url) {
+          return NextResponse.json(
+            { error: "Stripe did not return a checkout URL." },
+            { status: 400 }
+          );
+        }
+        console.log("Upgrade session created. URL:", url);
+        return NextResponse.json({ url });
       } catch (e) {
-        console.error("[create-upgrade-session] proration error", {
+        const msg = e instanceof Error ? e.message : "Upgrade failed";
+        console.error("[create-upgrade-session] proration / URL error", {
           userId,
           stripeSubscriptionId: currentSubscription.stripeSubscriptionId,
           planType,
-          error: e instanceof Error ? e.message : e,
+          error: msg,
         });
-        return NextResponse.json(
-          { error: e instanceof Error ? e.message : "Upgrade failed" },
-          { status: 500 }
-        );
+        const status =
+          /already on this billing interval/i.test(msg) ? 400 : 500;
+        return NextResponse.json({ error: msg }, { status });
       }
     }
 
@@ -328,6 +338,9 @@ export async function POST(req: Request) {
             : "one_time_export";
 
     const isPayment = planType === "lifetime" || planType === "export";
+    const upgradeFromPlan = currentSubscription?.plan ?? "";
+    const upgradeFromInterval = currentSubscription?.planInterval ?? "";
+
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: isPayment ? "payment" : "subscription",
       payment_method_types: ["card"],
@@ -363,6 +376,13 @@ export async function POST(req: Request) {
         : {}),
     });
 
+    if (!checkoutSession.url) {
+      return NextResponse.json(
+        { error: "Stripe did not return a checkout URL." },
+        { status: 400 }
+      );
+    }
+    console.log("Upgrade session created. URL:", checkoutSession.url);
     return NextResponse.json({ url: checkoutSession.url });
   } catch (error) {
     console.error("[create-upgrade-session] Upgrade error:", error);
@@ -372,3 +392,5 @@ export async function POST(req: Request) {
     );
   }
 }
+
+/* === UPGRADE FLOW FIXED: NO PREMATURE SUCCESS + REAL STRIPE REDIRECT === */

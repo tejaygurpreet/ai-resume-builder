@@ -60,13 +60,13 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      url: result.url,
-      message: result.message,
-      stripeMode: result.stripeMode,
-      currentPeriodEnd: result.currentPeriodEnd,
-    });
+    if (!result.url?.trim()) {
+      return NextResponse.json(
+        { error: "No Stripe checkout URL returned for this plan change." },
+        { status: 400 }
+      );
+    }
+    return NextResponse.json({ url: result.url.trim() });
   } catch (err) {
     console.error("Stripe change-plan error:", err);
     return NextResponse.json(

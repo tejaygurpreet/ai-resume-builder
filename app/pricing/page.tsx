@@ -202,6 +202,14 @@ const DEFAULT_FREE_SUBSCRIPTION = {
   status: "active",
 };
 
+/** Build user-visible message from create-upgrade-session error JSON. */
+function upgradeApiErrorMessage(data: Record<string, unknown>): string {
+  const parts = [data.error, data.hint].filter(
+    (x): x is string => typeof x === "string" && x.length > 0
+  );
+  return parts.join(" ").trim() || "Something went wrong. Please try again.";
+}
+
 /** Log always; avoid alert for missing route, 404, empty body, or known Stripe resolution errors. */
 function notifyPricingCheckoutError(err: unknown): void {
   console.error("[pricing] checkout error:", err);
@@ -355,8 +363,9 @@ export default function PricingPage() {
   /** True when user has Export, any active Pro tier, or Lifetime (anything but Free). */
   const isPayingCustomer = activePlan !== "free";
 
-  /** Pro Monthly ↔ Annual: POST create-upgrade-session with optional `newPriceId` from public env. */
+  /** Pro Monthly ↔ Annual: POST create-upgrade-session — only success UX is redirect to `data.url` (Stripe). */
   const runProIntervalSwitch = async (switchInterval: "annual" | "monthly") => {
+    setIsLoading("pro_interval");
     try {
       const annualPriceId =
         process.env.NEXT_PUBLIC_STRIPE_PRO_ANNUAL_PRICE_ID?.trim();
@@ -388,24 +397,16 @@ export default function PricingPage() {
       }
 
       if (!res.ok) {
-        toast.error(
-          typeof data.error === "string"
-            ? data.error
-            : `Failed to create upgrade session (${res.status})`
-        );
+        toast.error(upgradeApiErrorMessage(data));
         return;
       }
 
-      if (typeof data.url === "string" && data.url) {
-        window.location.href = data.url;
-        return;
-      }
-
-      if (data.success) {
-        if (typeof data.message === "string" && data.message) {
-          toast.success(data.message);
-        }
-        await fetchSubscription();
+      const url =
+        typeof data.url === "string" && data.url.trim().length > 0
+          ? data.url.trim()
+          : "";
+      if (url) {
+        window.location.href = url;
         return;
       }
 
@@ -423,33 +424,31 @@ export default function PricingPage() {
           return;
         }
         if (!cr.ok) {
-          toast.error(
-            typeof checkoutData.error === "string"
-              ? checkoutData.error
-              : "Failed to start checkout"
-          );
+          toast.error(upgradeApiErrorMessage(checkoutData));
           return;
         }
-        if (typeof checkoutData.url === "string" && checkoutData.url) {
-          window.location.href = checkoutData.url;
+        const fallbackUrl =
+          typeof checkoutData.url === "string" && checkoutData.url.trim()
+            ? checkoutData.url.trim()
+            : "";
+        if (fallbackUrl) {
+          window.location.href = fallbackUrl;
           return;
         }
-        toast.error(
-          typeof checkoutData.error === "string"
-            ? checkoutData.error
-            : "Failed to start checkout"
-        );
+        toast.error(upgradeApiErrorMessage(checkoutData));
         return;
       }
 
       toast.error(
-        typeof data.error === "string" ? data.error : "Failed to upgrade plan"
+        "No Stripe checkout URL was returned. Please try again or contact support."
       );
     } catch (err) {
       console.error("[pricing] runProIntervalSwitch", err);
       toast.error(
         err instanceof Error ? err.message : "Something went wrong. Please try again."
       );
+    } finally {
+      setIsLoading(null);
     }
   };
 
@@ -503,18 +502,11 @@ export default function PricingPage() {
     } catch {
       throw new Error("Invalid response from server");
     }
-    if (typeof data.url === "string" && data.url) {
-      window.location.href = data.url;
+    if (typeof data.url === "string" && data.url.trim()) {
+      window.location.href = data.url.trim();
       return;
     }
-    if (res.ok && data.success && typeof data.message === "string" && data.message) {
-      toast.success(data.message);
-      await fetchSubscription();
-      return;
-    }
-    throw new Error(
-      typeof data.error === "string" ? data.error : "Failed"
-    );
+    throw new Error(upgradeApiErrorMessage(data));
   };
 
   const handleCheckout = async (plan: "pro" | "one-time") => {
@@ -940,7 +932,7 @@ export default function PricingPage() {
                       : "bg-gradient-to-r from-purple-600 to-violet-600 shadow-lg shadow-purple-500/25 hover:from-purple-500 hover:to-violet-500 hover:shadow-purple-500/30"
                   )}
                   size="lg"
-                  loading={isLoading === "pro"}
+                  loading={isLoading === "pro" || isLoading === "pro_interval"}
                   disabled={!billingReady}
                   onClick={() => handleCheckout("pro")}
                 >
@@ -1269,7 +1261,11 @@ export default function PricingPage() {
             <Button
               className="bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-500 hover:to-violet-500"
               onClick={() => void confirmSubscriberCheckout()}
-              loading={isLoading === "pro" || isLoading === "one-time"}
+              loading={
+                isLoading === "pro" ||
+                isLoading === "pro_interval" ||
+                isLoading === "one-time"
+              }
             >
               Continue to checkout
             </Button>
@@ -1388,3 +1384,4 @@ export default function PricingPage() {
 }
 
 /* === FULL TEST/LIVE SEPARATION + AUTO-CLEAN + ROBUST PRICING PAGE === */
+/* === UPGRADE FLOW FIXED: NO PREMATURE SUCCESS + REAL STRIPE REDIRECT === */
