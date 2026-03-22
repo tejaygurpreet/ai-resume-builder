@@ -118,74 +118,37 @@ const defaultResume: ResumeData = {
       id: "projects",
       type: "projects",
       order: 5,
-      content: {
-        items: [
-          {
-            id: "proj-1",
-            name: "",
-            description: "",
-            technologies: "",
-            link: "",
-          },
-        ],
-      },
+      content: { items: [] },
     },
     {
       id: "certifications",
       type: "certifications",
       order: 6,
-      content: {
-        items: [
-          {
-            id: "cert-1",
-            name: "",
-            issuer: "",
-            date: "",
-          },
-        ],
-      },
+      content: { items: [] },
     },
     {
       id: "languages",
       type: "languages",
       order: 7,
-      content: {
-        items: [{ id: "lang-1", language: "", proficiency: "Native" }],
-      },
+      content: { items: [] },
     },
     {
       id: "awards",
       type: "awards",
       order: 8,
-      content: {
-        items: [
-          { id: "aw-1", name: "", issuer: "", date: "" },
-        ],
-      },
+      content: { items: [] },
     },
     {
       id: "volunteer",
       type: "volunteer",
       order: 9,
-      content: {
-        items: [
-          {
-            id: "vol-1",
-            role: "",
-            organization: "",
-            startDate: "",
-            endDate: "",
-            current: false,
-            bullets: [""],
-          },
-        ],
-      },
+      content: { items: [] },
     },
     {
       id: "interests",
       type: "interests",
       order: 10,
-      content: { items: [""] },
+      content: { items: [] },
     },
   ],
 };
@@ -253,3 +216,5 @@ export const useResumeStore = create<ResumeStore>((set) => ({
   setIsSaving: (isSaving) => set({ isSaving }),
   markClean: () => set({ isDirty: false, lastSavedAt: new Date() }),
 }));
+
+/* === EDITOR FIXED: CLEAN EMPTY PREVIEW + SUMMARY MOVED BELOW EXPERIENCE/EDUCATION IN SIDEBAR === */

@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo } from "react";
 import { templates, type TemplateName } from "@/components/resume/templates";
 import type { ResumeSection } from "@/hooks/use-resume-store";
+import { sectionHasRenderableContent } from "@/lib/template-utils";
 
 const DOC_WIDTH = 794;
 const DOC_HEIGHT = 1123;
@@ -28,6 +29,12 @@ export function LivePreview({
   const [scale, setScale] = useState(0.65);
 
   const TemplateComponent = templates[template as TemplateName];
+
+  /** Hide sections with no real data so the canvas starts clean (PDF/export still uses full `sections`). */
+  const previewSections = useMemo(
+    () => sections.filter((s) => sectionHasRenderableContent(s)),
+    [sections]
+  );
 
   useEffect(() => {
     const el = containerRef.current;
@@ -75,8 +82,10 @@ export function LivePreview({
         }}
         className="resume-preview-document shrink-0"
       >
-        <TemplateComponent sections={sections} color={color} />
+        <TemplateComponent sections={previewSections} color={color} />
       </div>
     </div>
   );
 }
+
+/* === EDITOR FIXED: CLEAN EMPTY PREVIEW + SUMMARY MOVED BELOW EXPERIENCE/EDUCATION IN SIDEBAR === */

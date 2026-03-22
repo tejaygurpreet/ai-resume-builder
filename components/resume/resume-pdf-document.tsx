@@ -8,7 +8,11 @@ import {
   View,
   StyleSheet,
 } from "@react-pdf/renderer";
-import { getFullName, filterValidSkills } from "@/lib/template-utils";
+import {
+  getFullName,
+  filterValidSkills,
+  sectionHasRenderableContent,
+} from "@/lib/template-utils";
 import type { ResumeSection } from "@/hooks/use-resume-store";
 
 const PADDING_TOP = 40;
@@ -115,18 +119,7 @@ function getSection(sections: ResumeSection[], type: string) {
 }
 
 function hasContent(section: ResumeSection | undefined): boolean {
-  if (!section?.content) return false;
-  const c = section.content;
-  if (c.text && (c.text as string).trim()) return true;
-  if (c.fullName && (c.fullName as string).trim()) return true;
-  if (c.firstName || c.lastName) return true;
-  if (c.items && Array.isArray(c.items) && c.items.length > 0) {
-    if (section.type === "interests") {
-      return (c.items as string[]).some((s) => (s ?? "").trim());
-    }
-    return true;
-  }
-  return false;
+  return sectionHasRenderableContent(section);
 }
 
 interface ResumePDFDocumentProps {

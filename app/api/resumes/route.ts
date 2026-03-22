@@ -66,31 +66,17 @@ const DEFAULT_SECTIONS = [
   {
     type: "projects",
     order: 5,
-    content: {
-      items: [
-        {
-          id: "proj-1",
-          name: "",
-          description: "",
-          technologies: "",
-          link: "",
-        },
-      ],
-    },
+    content: { items: [] },
   },
   {
     type: "certifications",
     order: 6,
-    content: {
-      items: [{ id: "cert-1", name: "", issuer: "", date: "" }],
-    },
+    content: { items: [] },
   },
   {
     type: "languages",
     order: 7,
-    content: {
-      items: [{ id: "lang-1", language: "", proficiency: "Native" }],
-    },
+    content: { items: [] },
   },
 ];
 

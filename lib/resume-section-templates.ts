@@ -84,55 +84,16 @@ export function getDefaultContentForSectionType(type: string): Record<string, un
     case "skills":
       return { items: [""] };
     case "projects":
-      return {
-        items: [
-          {
-            id: `proj-${uuidv4().slice(0, 8)}`,
-            name: "",
-            description: "",
-            technologies: "",
-            link: "",
-          },
-        ],
-      };
+      return { items: [] };
     case "certifications":
     case "awards":
-      return {
-        items: [
-          {
-            id: `${type === "awards" ? "aw" : "cert"}-${uuidv4().slice(0, 8)}`,
-            name: "",
-            issuer: "",
-            date: "",
-          },
-        ],
-      };
+      return { items: [] };
     case "languages":
-      return {
-        items: [
-          {
-            id: `lang-${uuidv4().slice(0, 8)}`,
-            language: "",
-            proficiency: "Native",
-          },
-        ],
-      };
+      return { items: [] };
     case "volunteer":
-      return {
-        items: [
-          {
-            id: `vol-${uuidv4().slice(0, 8)}`,
-            role: "",
-            organization: "",
-            startDate: "",
-            endDate: "",
-            current: false,
-            bullets: [""],
-          },
-        ],
-      };
+      return { items: [] };
     case "interests":
-      return { items: [""] };
+      return { items: [] };
     default:
       return {};
   }
@@ -147,3 +108,5 @@ export function createResumeSection(type: string, order: number): ResumeSection 
     content: getDefaultContentForSectionType(type),
   };
 }
+
+/* === EDITOR FIXED: CLEAN EMPTY PREVIEW + SUMMARY MOVED BELOW EXPERIENCE/EDUCATION IN SIDEBAR === */

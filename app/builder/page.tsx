@@ -151,14 +151,15 @@ const SECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>>
 };
 
 /**
- * Editor sidebar display order only — does NOT affect template/PDF output order.
- * Matches: Personal → Summary → Experience → Education → Skills → Projects → Certifications → Languages → …
+ * Editor sidebar display order only — does NOT affect template/PDF output order
+ * (`section.order` + template layout still control exported PDF).
+ * Personal → Education → Work Experience → Summary → Skills → Projects → …
  */
 const EDITOR_DISPLAY_ORDER: string[] = [
   "personal",
-  "summary",
-  "experience",
   "education",
+  "experience",
+  "summary",
   "skills",
   "projects",
   "certifications",
@@ -1009,4 +1010,6 @@ function BuilderPage() {
  * === REQUESTED CHANGES COMPLETE: EDITOR ORDER + AI LOGIC + IMPROVE WITH AI PRO + PRICING FIXES (50+ TEMPLATES + CLEAN ONE-TIME) ===
  *
  * === EDITOR FIXES: DASHBOARD BUTTON STYLE + PREVIEW SCROLL + COVER LETTER MEMBERSHIP LOGIC ===
+ *
+ * === EDITOR FIXED: CLEAN EMPTY PREVIEW + SUMMARY MOVED BELOW EXPERIENCE/EDUCATION IN SIDEBAR ===
  */
