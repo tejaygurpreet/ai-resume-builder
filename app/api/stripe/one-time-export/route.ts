@@ -101,6 +101,7 @@ export async function POST() {
       mode: "payment",
       payment_method_types: ["card"],
       line_items: [{ price: priceId as string, quantity: 1 }],
+      allow_promotion_codes: true, // Enabled promotion codes for PH launch discount
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: userId,

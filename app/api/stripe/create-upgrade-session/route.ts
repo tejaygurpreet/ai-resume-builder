@@ -345,6 +345,7 @@ export async function POST(req: Request) {
       mode: isPayment ? "payment" : "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
+      allow_promotion_codes: true, // Enabled promotion codes for PH launch discount
       success_url: `${baseUrl}/dashboard?${isPayment ? "success=true" : "upgraded=true"}`,
       cancel_url: `${baseUrl}/pricing?canceled=true`,
       client_reference_id: userId,
