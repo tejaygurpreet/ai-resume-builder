@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { AuthCTA } from "@/components/auth-cta";
@@ -14,23 +13,16 @@ import {
   Download,
   GripVertical,
   Target,
-  Star,
   Check,
   ArrowRight,
   ChevronDown,
   Zap,
   Shield,
-  Users,
-  FileText,
-  TrendingUp,
-  LayoutTemplate,
 } from "lucide-react";
 import { HeroProductPreview } from "@/components/landing/hero-product-preview";
-import { AnimatedStat } from "@/components/landing/animated-counter";
 import { TemplatePreviewCard } from "@/components/landing/template-preview-card";
 import { TemplatePreviewModal } from "@/components/landing/template-preview-modal";
 import { templateRegistry } from "@/components/resume/templates";
-import { cn } from "@/lib/utils";
 import { PLANS_COPY, PRICING } from "@/lib/plans";
 
 const features = [
@@ -40,12 +32,6 @@ const features = [
   { Icon: Download, title: "Multi-Format Export", description: "Download as PDF, DOCX, TXT, JSON, or Markdown — perfectly formatted.", color: "from-amber-500 to-orange-400" },
   { Icon: GripVertical, title: "Drag & Drop Editor", description: "Rearrange sections effortlessly with an intuitive drag-and-drop interface.", color: "from-pink-500 to-rose-400" },
   { Icon: Target, title: "Job Keyword Matching", description: "Paste a job description and see which keywords are missing from your resume.", color: "from-indigo-500 to-blue-400" },
-];
-
-const testimonials = [
-  { quote: "OptimaCV helped me land interviews at three FAANG companies within two weeks. The AI suggestions were spot-on!", name: "Sarah Chen", title: "Software Engineer at Google", stars: 5 },
-  { quote: "I went from getting zero callbacks to five interview requests in one week. The ATS optimization made all the difference.", name: "Marcus Johnson", title: "Marketing Manager", stars: 5 },
-  { quote: "As a career changer, I struggled to frame my experience. OptimaCV rewrote my bullets perfectly for my new field.", name: "Emily Rodriguez", title: "UX Designer at Shopify", stars: 5 },
 ];
 
 const faqItems = [
@@ -64,13 +50,6 @@ const FEATURED_TEMPLATE_IDS = ["modern", "professional", "minimal", "tech", "cre
 
 const freePlanFeatures = ["$0/month", ...PLANS_COPY.free.features];
 const proPlanFeatures = [...PLANS_COPY.pro.features];
-
-const stats = [
-  { value: 50, suffix: "K+", label: "Resumes Created", icon: FileText },
-  { value: 89, suffix: "%", label: "Interview Rate", icon: TrendingUp },
-  { value: 20, suffix: "+", label: "ATS Templates", icon: LayoutTemplate },
-  { value: 4.9, suffix: "★", label: "User Rating", icon: Star },
-];
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {
   return (
@@ -150,13 +129,10 @@ export default function HomePage() {
               </div>
             </FadeUp>
             <FadeUp delay={0.4}>
-              <div className="mt-8 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-500 lg:justify-start">
-                <span className="flex items-center gap-2"><Shield className="h-4 w-4 text-slate-600" /> No credit card</span>
-                <span className="h-4 w-px bg-white/15" />
-                <span className="flex items-center gap-2"><Users className="h-4 w-4 text-slate-600" /> 50K+ users</span>
-                <span className="h-4 w-px bg-white/15" />
-                <span className="flex items-center gap-2"><Star className="h-4 w-4 fill-amber-400 text-amber-400" /> 4.9 rating</span>
-              </div>
+              <p className="mt-8 flex flex-wrap items-center justify-center gap-2 text-sm text-slate-500 lg:justify-start">
+                <Shield className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
+                No credit card • Join 0 early users • First 100 get lifetime 50% off
+              </p>
             </FadeUp>
           </div>
 
@@ -167,52 +143,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ TRUST SIGNALS — Below hero ═══ */}
-      <section className="relative z-10 px-4 py-8 sm:px-6 lg:px-8">
-        <FadeUp>
-          <div className="glass mx-auto max-w-4xl rounded-2xl border border-white/[0.06] bg-white/[0.02] px-8 py-6 shadow-[0_2px_16px_-8px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all duration-300 ease-out">
-            <p className="mb-6 text-center text-sm font-semibold uppercase tracking-wider text-slate-500">
-              Trusted by job seekers worldwide
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-8 sm:gap-12">
-              {testimonials.slice(0, 3).map(({ name, title }) => (
-                <div key={name} className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-brand-500/30 to-accent-violet/30 text-sm font-bold text-white ring-2 ring-white/10">
-                    {name.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-white">{name}</p>
-                    <p className="text-xs text-slate-500">{title}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </FadeUp>
-      </section>
-
-      {/* ═══ STATS — Animated counters, glowing icons ═══ */}
-      <section className="relative -mt-12 z-10 px-4 sm:px-6 lg:px-8">
-        <FadeUp>
-          <div className="mx-auto max-w-5xl rounded-3xl glass p-10 shadow-[0_2px_24px_-8px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.04)_inset] transition-all duration-300 ease-out">
-            <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
-              {stats.map((stat, i) => (
-                <AnimatedStat
-                  key={stat.label}
-                  value={stat.value}
-                  suffix={stat.suffix}
-                  label={stat.label}
-                  icon={<stat.icon className="h-5 w-5" />}
-                  delay={i * 0.1}
-                />
-              ))}
-            </div>
-          </div>
-        </FadeUp>
-      </section>
-
       {/* ═══ FEATURES — Pure white section, strong contrast ═══ */}
-      <section id="features" className="relative section-light py-36">
+      <section id="features" className="relative z-10 -mt-8 section-light py-36 sm:-mt-12">
         <div className="divider-wave divider-wave-top" />
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <FadeUp className="mx-auto max-w-2xl text-center">
@@ -271,7 +203,7 @@ export default function HomePage() {
               href="/templates"
               className="inline-flex items-center gap-2.5 rounded-2xl border-2 border-white/[0.12] bg-white/[0.04] px-8 py-4 text-base font-bold text-white transition-all duration-300 hover:bg-white/[0.1] hover:border-white/[0.25] hover:-translate-y-[2px]"
             >
-              Explore All 50+ Templates <ArrowRight className="h-5 w-5" />
+              Explore 55 ATS-friendly templates <ArrowRight className="h-5 w-5" />
             </Link>
           </FadeUp>
         </div>
@@ -346,46 +278,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ═══ TESTIMONIALS — Darker, elevated cards ═══ */}
-      <section className="relative section-darker py-36">
-        <div className="divider-wave divider-wave-dark-top" />
-        <div className="divider-wave divider-wave-dark-bottom" />
-        <div className="orb orb-violet absolute -right-40 top-1/4 h-[500px] w-[500px] animate-pulse-glow" />
-
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <FadeUp className="mx-auto max-w-2xl text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-500/30 bg-brand-500/15 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-brand-300">Testimonials</span>
-            <h2 className="mt-6 text-4xl font-black tracking-tight text-white sm:text-5xl">
-              Loved by Job Seekers <span className="gradient-text">Worldwide</span>
-            </h2>
-          </FadeUp>
-
-          <Stagger className="mt-20 grid gap-8 md:grid-cols-3">
-            {testimonials.map(({ quote, name, title, stars }) => (
-              <StaggerChild key={name}>
-                <div className="glass-card p-10">
-                  <div className="mb-5 flex gap-1">
-                    {Array.from({ length: stars }).map((_, i) => (
-                      <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
-                    ))}
-                  </div>
-                  <p className="text-base leading-relaxed text-slate-400">&ldquo;{quote}&rdquo;</p>
-                  <div className="mt-8 flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500 to-accent-violet text-base font-bold text-white shadow-lg">
-                      {name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-base font-bold text-white">{name}</p>
-                      <p className="text-sm text-slate-500">{title}</p>
-                    </div>
-                  </div>
-                </div>
-              </StaggerChild>
-            ))}
-          </Stagger>
-        </div>
-      </section>
-
       {/* ═══ FAQ — Clean, elevated ═══ */}
       <section id="faq" className="relative section-light py-36">
         <div className="divider-wave divider-wave-top" />
@@ -416,7 +308,7 @@ export default function HomePage() {
             Ready to Build Your <span className="gradient-text">Perfect Resume</span>?
           </h2>
           <p className="mt-6 text-xl text-slate-400">
-            Join thousands of job seekers who landed their dream jobs with OptimaCV.
+            Start free, refine with AI, and export when you&apos;re ready — no inflated claims, just the tools.
           </p>
           <AuthCTA
             guestHref="/signup"

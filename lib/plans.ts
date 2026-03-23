@@ -51,7 +51,7 @@ export const PLANS_COPY = {
     name: "Pro",
     features: [
       "Unlimited AI generations",
-      "All 50+ premium templates",
+      "All 55 ATS-friendly premium templates",
       "Job tailoring",
       "Cover letter generator",
       "ATS score analysis",

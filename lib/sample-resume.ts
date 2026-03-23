@@ -21,7 +21,7 @@ export const sampleSections = [
     type: "summary",
     order: 1,
     content: {
-      text: "Senior Software Engineer with 6+ years building scalable systems at high-growth tech companies. Proven track record leading architecture decisions, mentoring teams, and delivering products used by millions. Strong in TypeScript, distributed systems, and cross-functional collaboration.",
+      text: "Senior Software Engineer with 6+ years building scalable systems at high-growth tech companies. Proven track record leading architecture decisions, mentoring teams, and shipping reliable products. Strong in TypeScript, distributed systems, and cross-functional collaboration.",
     },
   },
   {
@@ -39,9 +39,9 @@ export const sampleSections = [
           endDate: "",
           current: true,
           bullets: [
-            "Led migration of payment processing pipeline to event-driven architecture, reducing latency by 40%",
+            "Led migration of payment processing pipeline to event-driven architecture with improved reliability and observability",
             "Mentored team of 6 engineers; established code review standards adopted across 3 teams",
-            "Designed real-time fraud detection dashboard serving 2M+ transactions daily",
+            "Designed real-time fraud detection dashboard for operations and risk teams",
           ],
         },
         {
@@ -53,8 +53,8 @@ export const sampleSections = [
           endDate: "Dec 2021",
           current: false,
           bullets: [
-            "Built collaborative editing features used by 10M+ monthly active users",
-            "Reduced API p99 latency by 45% through query optimization and caching layer",
+            "Built collaborative editing features shipped across core product surfaces",
+            "Improved API performance through query optimization and a caching layer",
           ],
         },
       ],
@@ -107,7 +107,7 @@ export const sampleSections = [
         {
           id: "proj-1",
           name: "Resume Parser CLI",
-          description: "Open-source developer tool for parsing and validating resume JSON. 2.4K GitHub stars.",
+          description: "Open-source developer tool for parsing and validating resume JSON. MIT licensed, published to npm.",
           technologies: "Rust, GitHub Actions, npm",
           link: "github.com/alexchen/resume-cli",
         },

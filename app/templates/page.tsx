@@ -7,7 +7,6 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { TemplateGallery } from "@/components/resume/template-gallery";
 import type { TemplateName } from "@/components/resume/templates";
-import { templateRegistry } from "@/components/resume/templates";
 import { Sparkles } from "lucide-react";
 
 export default function TemplatesPage() {
@@ -41,14 +40,14 @@ export default function TemplatesPage() {
         <div className="relative mx-auto mb-14 max-w-2xl text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-500/20 bg-brand-500/10 px-3 py-1 text-xs font-semibold text-brand-300">
             <Sparkles className="h-3.5 w-3.5" />
-            {templateRegistry.length} Templates
+            55 ATS-friendly templates
           </span>
           <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             Resume Templates
           </h1>
           <p className="mt-3 text-lg text-slate-400">
-            Choose from {templateRegistry.length} professionally designed,
-            ATS-friendly templates. Free & Export Access: 10 basic. Pro: all 50+.
+            Choose from 55 professionally designed, ATS-friendly templates.
+            Free & Export Access: 10 basic. Pro: full library of 55.
           </p>
         </div>
 

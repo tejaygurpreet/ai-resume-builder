@@ -1007,7 +1007,7 @@ function BuilderPage() {
  * - Export limit (5/mo): UpgradeModal when hit
  * - usePlan, UpgradeModal, useMembershipLimit centralize logic
  *
- * === REQUESTED CHANGES COMPLETE: EDITOR ORDER + AI LOGIC + IMPROVE WITH AI PRO + PRICING FIXES (50+ TEMPLATES + CLEAN ONE-TIME) ===
+ * === REQUESTED CHANGES COMPLETE: EDITOR ORDER + AI LOGIC + IMPROVE WITH AI PRO + PRICING FIXES ===
  *
  * === EDITOR FIXES: DASHBOARD BUTTON STYLE + PREVIEW SCROLL + COVER LETTER MEMBERSHIP LOGIC ===
  *

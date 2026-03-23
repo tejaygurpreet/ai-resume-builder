@@ -1,5 +1,5 @@
 /**
- * Template configuration - 50 professional resume templates
+ * Template configuration — ATS-friendly resume templates
  * Each template maps to a base component with unique accent and display name
  */
 

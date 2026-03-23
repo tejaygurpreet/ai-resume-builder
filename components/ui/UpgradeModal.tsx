@@ -46,7 +46,7 @@ const REASON_CONFIG: Record<
   },
   template_lock: {
     title: "Premium Template",
-    message: `Unlock all 50+ premium templates with Pro — $${PRICING.proMonthly}/month`,
+    message: `Unlock all 55 ATS-friendly premium templates with Pro — $${PRICING.proMonthly}/month`,
     icon: Crown,
   },
   pro_feature: {
@@ -86,7 +86,7 @@ export function UpgradeModal({
 
   const message =
     templateName && reason === "template_lock"
-      ? `Unlock "${templateName}" and all 50+ premium templates with Pro — $${PRICING.proMonthly}/month`
+      ? `Unlock "${templateName}" and all 55 ATS-friendly premium templates with Pro — $${PRICING.proMonthly}/month`
       : config.message;
 
   const handleUpgrade = async () => {
