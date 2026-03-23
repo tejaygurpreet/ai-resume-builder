@@ -43,10 +43,11 @@ const ResumePreview = forwardRef<HTMLDivElement, ResumePreviewProps>(
       >
         <div
           ref={ref}
+          className="resume-pdf-root bg-white"
           style={{
             width: "794px",
             height: "1123px",
-            transform: `scale(${previewScale})`,
+            transform: `scale(${previewScale}) translateZ(0)`,
             transformOrigin: "top left",
           }}
         >

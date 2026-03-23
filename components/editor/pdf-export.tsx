@@ -5,6 +5,59 @@ import type { ResumeSection } from "@/hooks/use-resume-store";
 
 export type ExportFormat = "pdf" | "docx" | "txt" | "json" | "md";
 
+/** Builder live preview node — html2canvas captures this for WYSIWYG PDF. */
+export const RESUME_PDF_CAPTURE_ID = "resume-pdf-capture";
+
+/**
+ * html2canvas + jsPDF — tuned for crisp text and stable letter-spacing vs the DOM preview.
+ * Temporarily un-scales the element (editor preview uses CSS scale) so the PDF matches full A4 layout.
+ */
+async function captureResumeElementToPdf(element: HTMLElement, title: string): Promise<void> {
+  await document.fonts.ready;
+
+  const prevTransform = element.style.transform;
+  const prevOrigin = element.style.transformOrigin;
+
+  try {
+    element.style.transform = "scale(1) translateZ(0)";
+    element.style.transformOrigin = "top left";
+    await new Promise<void>((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+    );
+
+    const { default: html2canvas } = await import("html2canvas");
+    const { default: jsPDF } = await import("jspdf");
+
+    // Note: `dpi` / `letterRendering` are honored by some html2canvas builds; extra keys are ignored safely in 1.4.x.
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      dpi: 300,
+      letterRendering: true,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      backgroundColor: "#ffffff",
+      width: element.offsetWidth,
+      height: element.offsetHeight,
+      windowWidth: element.scrollWidth,
+      windowHeight: element.scrollHeight,
+      scrollX: 0,
+      scrollY: -window.scrollY,
+    } as Parameters<typeof html2canvas>[1]);
+
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const pdf = new jsPDF("p", "mm", "a4");
+    const imgData = canvas.toDataURL("image/png", 1.0);
+    pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+    const safeName = title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "Resume";
+    pdf.save(`${safeName}.pdf`);
+  } finally {
+    element.style.transform = prevTransform;
+    element.style.transformOrigin = prevOrigin;
+  }
+}
+
 export async function exportToPdf(
   sections: ResumeSection[],
   title: string = "Resume",
@@ -13,6 +66,17 @@ export async function exportToPdf(
   const toastId = toast.loading("Generating PDF…");
 
   try {
+    const liveEl =
+      typeof document !== "undefined"
+        ? document.getElementById(RESUME_PDF_CAPTURE_ID)
+        : null;
+
+    if (liveEl) {
+      await captureResumeElementToPdf(liveEl, title);
+      toast.success("PDF downloaded!", { id: toastId });
+      return;
+    }
+
     const { pdf } = await import("@react-pdf/renderer");
     const { ResumePDFDocument } = await import("@/components/resume/resume-pdf-document");
 
@@ -35,7 +99,7 @@ export async function exportToPdf(
   }
 }
 
-/** @deprecated Use exportToPdf(sections, title, color) instead */
+/** @deprecated Prefer exportToPdf from the builder (captures live DOM). Kept for legacy callers. */
 export async function exportToPdfFromElement(
   element: HTMLElement | null,
   title: string = "Resume"
@@ -44,23 +108,10 @@ export async function exportToPdfFromElement(
     toast.error("Nothing to export");
     return;
   }
-  const { default: html2canvas } = await import("html2canvas");
-  const { default: jsPDF } = await import("jspdf");
 
   const toastId = toast.loading("Generating PDF…");
   try {
-    const canvas = await html2canvas(element, {
-      scale: 3,
-      useCORS: true,
-      logging: false,
-      backgroundColor: "#ffffff",
-    });
-    const imgWidth = 210;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    const pdf = new jsPDF("p", "mm", "a4");
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgWidth, imgHeight);
-    const safeName = title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "Resume";
-    pdf.save(`${safeName}.pdf`);
+    await captureResumeElementToPdf(element, title);
     toast.success("PDF downloaded!", { id: toastId });
   } catch {
     toast.error("Failed to export PDF", { id: toastId });

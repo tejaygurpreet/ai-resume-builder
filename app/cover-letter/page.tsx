@@ -115,18 +115,32 @@ export default function CoverLetterPage() {
   const handleExportPDF = async () => {
     if (!letterRef.current) return;
     try {
+      await document.fonts.ready;
+      const el = letterRef.current;
       const { default: html2canvas } = await import("html2canvas");
       const { default: jsPDF } = await import("jspdf");
 
-      const canvas = await html2canvas(letterRef.current, {
+      const canvas = await html2canvas(el, {
         scale: 2,
+        dpi: 300,
+        letterRendering: true,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
         backgroundColor: "#ffffff",
-      });
+        width: el.offsetWidth,
+        height: el.offsetHeight,
+        windowWidth: el.scrollWidth,
+        windowHeight: el.scrollHeight,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+      } as Parameters<typeof html2canvas>[1]);
 
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       const pdf = new jsPDF("p", "mm", "a4");
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgWidth, imgHeight);
+      const imgData = canvas.toDataURL("image/png", 1.0);
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
       pdf.save(`cover-letter-${company.replace(/\s+/g, "-").toLowerCase()}.pdf`);
       toast.success("PDF downloaded!");
     } catch {

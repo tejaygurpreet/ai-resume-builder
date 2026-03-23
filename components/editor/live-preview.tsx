@@ -74,13 +74,14 @@ export function LivePreview({
       className={`flex min-h-0 flex-1 items-start justify-center overflow-auto ${className}`}
     >
       <div
+        id="resume-pdf-capture"
         style={{
           width: DOC_WIDTH,
           height: DOC_HEIGHT,
-          transform: `scale(${scale})`,
+          transform: `scale(${scale}) translateZ(0)`,
           transformOrigin: "top center",
         }}
-        className="resume-preview-document shrink-0"
+        className="resume-preview-document resume-pdf-root shrink-0 bg-white"
       >
         <TemplateComponent sections={previewSections} color={color} />
       </div>

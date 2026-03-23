@@ -33,6 +33,14 @@
 }
 
 @layer components {
+  /* Resume PDF / html2canvas capture root — stable text metrics vs preview */
+  .resume-pdf-root {
+    letter-spacing: 0.01px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-inter), "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  }
+
   /* Glass effects - darker, richer */
   .glass {
     background: rgba(255, 255, 255, 0.02);

@@ -50,6 +50,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.variable} data-theme="dark" suppressHydrationWarning>
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){var t=localStorage.getItem("resumeai-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);})();`,
