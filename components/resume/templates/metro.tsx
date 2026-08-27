@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ContactLine from "@/components/resume/ContactLine";
 import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
@@ -82,97 +83,7 @@ export default function MetroTemplate({ sections, color }: TemplateProps) {
               marginTop: "10px",
             }}
           >
-            {personal.content.email && (
-              <span
-                style={{
-                  fontSize: "9.5px",
-                  padding: "3px 10px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "2px",
-                  fontWeight: 500,
-                }}
-              >
-                {personal.content.email}
-              </span>
-            )}
-            {personal.content.phone && (
-              <span
-                style={{
-                  fontSize: "9.5px",
-                  padding: "3px 10px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "2px",
-                  fontWeight: 500,
-                }}
-              >
-                {personal.content.phone}
-              </span>
-            )}
-            {personal.content.location && (
-              <span
-                style={{
-                  fontSize: "9.5px",
-                  padding: "3px 10px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "2px",
-                  fontWeight: 500,
-                }}
-              >
-                {personal.content.location}
-              </span>
-            )}
-            {personal.content.linkedin && (
-              <span
-                style={{
-                  fontSize: "9.5px",
-                  padding: "3px 10px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "2px",
-                  fontWeight: 500,
-                }}
-              >
-                {personal.content.linkedin}
-              </span>
-            )}
-            {personal.content.github && (
-              <span
-                style={{
-                  fontSize: "9.5px",
-                  padding: "3px 10px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "2px",
-                  fontWeight: 500,
-                }}
-              >
-                {personal.content.github}
-              </span>
-            )}
-            {personal.content.portfolio && (
-              <span
-                style={{
-                  fontSize: "9.5px",
-                  padding: "3px 10px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "2px",
-                  fontWeight: 500,
-                }}
-              >
-                {personal.content.portfolio}
-              </span>
-            )}
-            {personal.content.website && (
-              <span
-                style={{
-                  fontSize: "9.5px",
-                  padding: "3px 10px",
-                  backgroundColor: "rgba(255,255,255,0.2)",
-                  borderRadius: "2px",
-                  fontWeight: 500,
-                }}
-              >
-                {personal.content.website}
-              </span>
-            )}
+            <ContactLine personal={personal.content} separator=" · " />
           </div>
         </div>
       )}

@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/page-metadata";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
-export const metadata: Metadata = {
-  title: "Privacy Policy | OptimaCV",
+export const metadata: Metadata = pageMetadata({
+  title: "Privacy Policy",
   description:
-    "Learn how OptimaCV collects, uses, and protects your personal data.",
-};
+    "How OptimaCV collects, uses, stores and protects your personal data, including AI processing, advertising and your rights over your information.",
+  path: "/privacy",
+});
 
 export default function PrivacyPolicyPage() {
   return (
@@ -193,6 +195,37 @@ export default function PrivacyPolicyPage() {
                     areas for improvement. These are anonymized where possible.
                   </span>
                 </li>
+                <li className="flex gap-3">
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
+                  <span>
+                    <strong className="text-slate-900">
+                      Advertising Cookies
+                    </strong>{" "}
+                    — On the Free plan we display a sponsored message before each
+                    export. These ads are served by Google AdSense, which uses
+                    cookies to serve and measure them. Google may use the DoubleClick
+                    cookie to show ads based on your visits to this and other sites.
+                    You can opt out of personalized advertising in{" "}
+                    <a
+                      href="https://adssettings.google.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-400 underline hover:text-brand-300"
+                    >
+                      Google Ads Settings
+                    </a>
+                    , or opt out of third-party vendor cookies at{" "}
+                    <a
+                      href="https://www.aboutads.info/choices/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-400 underline hover:text-brand-300"
+                    >
+                      aboutads.info
+                    </a>
+                    . Pro and Export Access plans are ad-free.
+                  </span>
+                </li>
               </ul>
             </div>
 
@@ -223,12 +256,35 @@ export default function PrivacyPolicyPage() {
                 <li className="flex gap-3">
                   <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
                   <span>
+                    <strong className="text-slate-900">Google AdSense</strong> —
+                    Serves the sponsored message shown to Free plan users before
+                    an export. Google is a third-party vendor that uses cookies
+                    to serve ads. See{" "}
+                    <a
+                      href="https://policies.google.com/technologies/partner-sites"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-brand-400 underline hover:text-brand-300"
+                    >
+                      how Google uses information from sites that use its services
+                    </a>
+                    .
+                  </span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="mt-1 block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-500" />
+                  <span>
                     <strong className="text-slate-900">Hosting Provider</strong> —
                     Our application is hosted on infrastructure that provides
                     enterprise-grade security and uptime.
                   </span>
                 </li>
               </ul>
+              <p className="mt-4 text-base leading-relaxed text-slate-400">
+                We do not sell your personal information, and we do not share your
+                resume content with advertisers. Serving an ad is not a sale of
+                your data.
+              </p>
             </div>
 
             {/* 7. Data Security */}
@@ -309,10 +365,10 @@ export default function PrivacyPolicyPage() {
               <p className="mt-3 text-base leading-relaxed text-slate-400">
                 To exercise any of these rights, please contact us at{" "}
                 <a
-                  href="mailto:support@optimacv.com"
+                  href="mailto:support@optimacv.io"
                   className="font-medium text-brand-600 hover:text-brand-700"
                 >
-                  support@optimacv.com
+                  support@optimacv.io
                 </a>
                 .
               </p>
@@ -345,10 +401,10 @@ export default function PrivacyPolicyPage() {
                 information promptly. If you believe a child under 13 has
                 provided us with personal data, please contact us at{" "}
                 <a
-                  href="mailto:support@optimacv.com"
+                  href="mailto:support@optimacv.io"
                   className="font-medium text-brand-600 hover:text-brand-700"
                 >
-                  support@optimacv.com
+                  support@optimacv.io
                 </a>
                 .
               </p>
@@ -383,10 +439,10 @@ export default function PrivacyPolicyPage() {
                 <p className="mt-1 text-base text-slate-600">
                   Email:{" "}
                   <a
-                    href="mailto:support@optimacv.com"
+                    href="mailto:support@optimacv.io"
                     className="font-medium text-brand-600 hover:text-brand-700"
                   >
-                    support@optimacv.com
+                    support@optimacv.io
                   </a>
                 </p>
               </div>

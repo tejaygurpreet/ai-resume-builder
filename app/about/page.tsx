@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/page-metadata";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { AboutHighlight } from "@/components/about/about-highlight";
 import { Sparkles, Target, FileText, Zap, Shield, Brain, Heart, Users, GraduationCap, Briefcase, Code, ArrowRight } from "lucide-react";
 
-export const metadata: Metadata = { title: "About | OptimaCV", description: "Learn about OptimaCV — the AI-powered resume builder helping job seekers land their dream jobs." };
+export const metadata: Metadata = pageMetadata({
+  title: "About OptimaCV",
+  description:
+    "Why we built OptimaCV: an AI resume builder that writes ATS-aware bullet points, scores your resume against real parsing rules, and exports clean, machine-readable files.",
+  path: "/about",
+});
 
 const aiFeatures = [
   { Icon: Sparkles, title: "Smart Bullet Points", description: "AI analyzes your experience and generates impactful, quantified bullet points that highlight your achievements." },
@@ -117,7 +123,7 @@ export default function AboutPage() {
         <div className="orb orb-blue absolute left-1/3 top-0 h-[500px] w-[500px] animate-pulse-glow" />
         <div className="relative mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Ready to Build Your Resume?</h2>
-          <p className="mt-4 text-lg text-slate-400">Pick from 20 professional templates and let AI do the heavy lifting.</p>
+          <p className="mt-4 text-lg text-slate-400">Pick from 55 professional templates and let AI do the heavy lifting.</p>
           <Link href="/templates" className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white px-8 text-sm font-semibold text-dark shadow-lg transition-all hover:bg-slate-100 hover:-translate-y-[1px]">Browse Templates <ArrowRight className="h-4 w-4" /></Link>
         </div>
       </section>

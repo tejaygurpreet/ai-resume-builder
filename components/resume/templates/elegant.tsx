@@ -232,7 +232,7 @@ export default function ElegantTemplate({ sections, color }: TemplateProps) {
                       style={{
                         margin: "4px 0 0 0",
                         paddingLeft: "18px",
-                        listStyleType: "none",
+                        listStyleType: '"\\25C6  "' ,
                       }}
                     >
                       {item.bullets.map((b: string, i: number) => (
@@ -247,16 +247,7 @@ export default function ElegantTemplate({ sections, color }: TemplateProps) {
                             paddingLeft: "12px",
                           }}
                         >
-                          <span
-                            style={{
-                              position: "absolute",
-                              left: 0,
-                              color: color,
-                            }}
-                          >
-                            ◆
-                          </span>
-                          {b}
+                                                    {b}
                         </li>
                       ))}
                     </ul>

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ContactLine from "@/components/resume/ContactLine";
 import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
@@ -84,13 +85,7 @@ export default function TwoColumnTemplate({ sections, color }: TemplateProps) {
               color: "rgba(255,255,255,0.9)",
             }}
           >
-            {personal.content.email && <span>✉ {personal.content.email}</span>}
-            {personal.content.phone && <span>☎ {personal.content.phone}</span>}
-            {personal.content.location && <span>⌂ {personal.content.location}</span>}
-            {personal.content.linkedin && <span>{personal.content.linkedin}</span>}
-            {personal.content.github && <span>{personal.content.github}</span>}
-            {personal.content.portfolio && <span>{personal.content.portfolio}</span>}
-            {personal.content.website && <span>{personal.content.website}</span>}
+            <ContactLine personal={personal.content} separator=" · " />
           </div>
         </div>
       )}

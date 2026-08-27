@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ContactLine from "@/components/resume/ContactLine";
 import { getFullName, filterValidSkills } from "@/lib/template-utils";
 
 interface TemplateProps {
@@ -74,13 +75,7 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
               letterSpacing: "0.5px",
             }}
           >
-            {personal.content.email && <span>{personal.content.email}</span>}
-            {personal.content.phone && <span>{personal.content.phone}</span>}
-            {personal.content.location && <span>{personal.content.location}</span>}
-            {personal.content.linkedin && <span>{personal.content.linkedin}</span>}
-            {personal.content.github && <span>{personal.content.github}</span>}
-            {personal.content.portfolio && <span>{personal.content.portfolio}</span>}
-            {personal.content.website && <span>{personal.content.website}</span>}
+            <ContactLine personal={personal.content} separator=" · " separatorColor={"#ccc"} />
           </div>
         </div>
       )}
@@ -113,10 +108,9 @@ export default function MinimalTemplate({ sections, color }: TemplateProps) {
                       {item.company}{item.location ? ` · ${item.location}` : ""}
                     </div>
                     {item.bullets && item.bullets.length > 0 && (
-                      <ul style={{ margin: "5px 0 0 0", paddingLeft: "14px", listStyleType: "none" }}>
+                      <ul style={{ margin: "5px 0 0 0", paddingLeft: "14px", listStyleType: '"\\2013  "' }}>
                         {item.bullets.map((b: string, i: number) => (
-                          <li key={i} style={{ fontSize: "10px", lineHeight: 1.65, color: "#555", marginBottom: "2px", fontWeight: 300, position: "relative", paddingLeft: "8px" }}>
-                            <span style={{ position: "absolute", left: 0, color: "#ccc" }}>–</span>
+                          <li key={i} style={{ fontSize: "10px", lineHeight: 1.65, color: "#555", marginBottom: "2px", fontWeight: 300 }}>
                             {b}
                           </li>
                         ))}

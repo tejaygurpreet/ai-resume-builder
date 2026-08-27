@@ -1,19 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getOpenAI } from "@/lib/openai";
-import { blockAiIfExportOnly } from "@/lib/ai-access";
+import { guardAiRequest } from "@/lib/ai-guard";
+import { AI_MODEL } from "@/lib/ai-model";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as { id?: string }).id;
-    const exportBlock = await blockAiIfExportOnly(userId);
-    if (exportBlock) return exportBlock;
+    const guard = await guardAiRequest({ tier: "pro" });
+    if (!guard.ok) return guard.response;
 
     const body = await request.json();
     const { resumeText } = body;
@@ -26,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+      model: AI_MODEL,
       messages: [
         {
           role: "system",

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ContactLine from "@/components/resume/ContactLine";
 import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
@@ -122,90 +123,7 @@ export default function StudentTemplate({ sections, color }: TemplateProps) {
               color: "#555",
             }}
           >
-            {personal.content.email && (
-              <span
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "2px 10px",
-                  borderRadius: "12px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                {personal.content.email}
-              </span>
-            )}
-            {personal.content.phone && (
-              <span
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "2px 10px",
-                  borderRadius: "12px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                {personal.content.phone}
-              </span>
-            )}
-            {personal.content.location && (
-              <span
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "2px 10px",
-                  borderRadius: "12px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                {personal.content.location}
-              </span>
-            )}
-            {personal.content.linkedin && (
-              <span
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "2px 10px",
-                  borderRadius: "12px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                {personal.content.linkedin}
-              </span>
-            )}
-            {personal.content.github && (
-              <span
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "2px 10px",
-                  borderRadius: "12px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                {personal.content.github}
-              </span>
-            )}
-            {personal.content.portfolio && (
-              <span
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "2px 10px",
-                  borderRadius: "12px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                {personal.content.portfolio}
-              </span>
-            )}
-            {personal.content.website && (
-              <span
-                style={{
-                  backgroundColor: "#fff",
-                  padding: "2px 10px",
-                  borderRadius: "12px",
-                  border: "1px solid #e0e0e0",
-                }}
-              >
-                {personal.content.website}
-              </span>
-            )}
+            <ContactLine personal={personal.content} separator=" · " />
           </div>
         </div>
       )}

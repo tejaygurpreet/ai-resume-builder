@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ContactLine from "@/components/resume/ContactLine";
 import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
@@ -150,33 +151,7 @@ export default function RibbonTemplate({ sections, color }: TemplateProps) {
               paddingLeft: "16px",
             }}
           >
-            {personal.content.email && (
-              <span>
-                <span style={{ color, fontWeight: 600 }}>✉</span> {personal.content.email}
-              </span>
-            )}
-            {personal.content.phone && (
-              <span>
-                <span style={{ color, fontWeight: 600 }}>☎</span> {personal.content.phone}
-              </span>
-            )}
-            {personal.content.location && (
-              <span>
-                <span style={{ color, fontWeight: 600 }}>⌂</span> {personal.content.location}
-              </span>
-            )}
-            {personal.content.linkedin && (
-              <span>{personal.content.linkedin}</span>
-            )}
-            {personal.content.github && (
-              <span>{personal.content.github}</span>
-            )}
-            {personal.content.portfolio && (
-              <span>{personal.content.portfolio}</span>
-            )}
-            {personal.content.website && (
-              <span>{personal.content.website}</span>
-            )}
+            <ContactLine personal={personal.content} separator=" · " />
           </div>
 
           <div style={{ borderBottom: `1px solid #e5e5e5`, marginTop: "16px" }} />

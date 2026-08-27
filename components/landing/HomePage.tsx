@@ -131,7 +131,7 @@ export default function HomePage() {
             <FadeUp delay={0.4}>
               <p className="mt-8 flex flex-wrap items-center justify-center gap-2 text-sm text-slate-500 lg:justify-start">
                 <Shield className="h-4 w-4 shrink-0 text-slate-600" aria-hidden />
-                No credit card • Join 0 early users • First 100 get lifetime 50% off
+                No credit card required • Free plan with no time limit
               </p>
             </FadeUp>
           </div>

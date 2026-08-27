@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/page-metadata";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 
-export const metadata: Metadata = {
-  title: "Terms of Service | OptimaCV",
+export const metadata: Metadata = pageMetadata({
+  title: "Terms of Service",
   description:
-    "Read the terms and conditions for using OptimaCV's resume builder platform.",
-};
+    "The terms governing your use of OptimaCV, covering accounts, subscriptions, refunds, acceptable use and limitations of liability.",
+  path: "/terms",
+});
 
 export default function TermsOfServicePage() {
   return (
@@ -422,10 +424,10 @@ export default function TermsOfServicePage() {
                 <p className="mt-1 text-base text-slate-600">
                   Email:{" "}
                   <a
-                    href="mailto:support@optimacv.com"
+                    href="mailto:support@optimacv.io"
                     className="font-medium text-brand-600 hover:text-brand-700"
                   >
-                    support@optimacv.com
+                    support@optimacv.io
                   </a>
                 </p>
               </div>

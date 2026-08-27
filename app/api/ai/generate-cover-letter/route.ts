@@ -1,27 +1,16 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getOpenAI } from "@/lib/openai";
-import { prisma } from "@/lib/prisma";
-import { blockAiIfExportOnly } from "@/lib/ai-access";
+import { guardAiRequest } from "@/lib/ai-guard";
+import { AI_MODEL } from "@/lib/ai-model";
+import { NO_FABRICATION_RULE } from "@/lib/ai-prompts";
 
-const MODEL = "gpt-4o-mini";
 const MAX_TOKENS = 200;
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as { id?: string }).id;
-    if (!userId) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    const exportBlock = await blockAiIfExportOnly(userId);
-    if (exportBlock) return exportBlock;
+    const guard = await guardAiRequest({ tier: "pro" });
+    if (!guard.ok) return guard.response;
+    const { isPro } = guard;
 
     const body = await request.json();
     const { resumeText, jobTitle, company, jobDescription } = body as {
@@ -45,22 +34,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId },
-    });
-
-    const isPro =
-      subscription?.plan === "pro" && subscription?.status === "active";
-
-    if (!isPro) {
-      return NextResponse.json(
-        { error: "Cover letter generation is a Pro feature. Please upgrade.", proRequired: true },
-        { status: 403 }
-      );
-    }
-
     const prompt = [
       "You are a professional cover letter writer.",
+      NO_FABRICATION_RULE,
       "",
       "Write a compelling, concise cover letter (3-4 paragraphs) for this candidate.",
       "",
@@ -84,7 +60,7 @@ export async function POST(request: Request) {
 
     const openai = getOpenAI();
     const completion = await openai.chat.completions.create({
-      model: MODEL,
+      model: AI_MODEL,
       max_tokens: MAX_TOKENS,
       temperature: 0.7,
       messages: [{ role: "user", content: prompt }],

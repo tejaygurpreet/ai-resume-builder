@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { assertTemplateAllowed } from "@/lib/template-access";
 
 interface RouteContext {
   params: { id: string };
@@ -81,6 +82,15 @@ export async function PUT(req: NextRequest, { params }: RouteContext) {
         content: object;
       }>;
     };
+
+    // Paywall is enforced here, not in the UI. See lib/template-access.ts.
+    const templateAccess = await assertTemplateAllowed(userId, template);
+    if (!templateAccess.ok) {
+      return NextResponse.json(
+        { error: templateAccess.error, code: templateAccess.code },
+        { status: templateAccess.status }
+      );
+    }
 
     const resume = await prisma.$transaction(async (tx) => {
       await tx.resume.update({

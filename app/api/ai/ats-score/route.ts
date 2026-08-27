@@ -1,80 +1,110 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getOpenAI } from "@/lib/openai";
-import { blockAiIfExportOnly } from "@/lib/ai-access";
+import { guardAiRequest } from "@/lib/ai-guard";
+import { analyzeResume } from "@/lib/ats-engine";
+import { AI_MODEL } from "@/lib/ai-model";
 
-const MODEL = "gpt-4o-mini";
-const MAX_TOKENS = 200;
+export const runtime = "nodejs";
 
-function buildScorePrompt(resumeText: string): string {
-  return [
-    "You are an ATS (Applicant Tracking System) expert.",
-    "",
-    "Score this resume on a scale of 0-100 based on:",
-    "- Keyword optimization (25 points)",
-    "- Measurable achievements with numbers/metrics (25 points)",
-    "- Bullet point quality and action verbs (25 points)",
-    "- Formatting and length appropriateness (25 points)",
-    "",
-    "Resume:",
-    resumeText.slice(0, 2000),
-    "",
-    "Return ONLY a JSON object (no markdown fences):",
-    '{ "score": 82, "breakdown": { "keywords": 20, "achievements": 18, "bulletQuality": 22, "formatting": 22 }, "suggestions": ["Add measurable achievements", "Include industry keywords", "Shorten bullet points"] }',
-  ].join("\n");
-}
+/**
+ * ATS analysis.
+ *
+ * The score is computed by lib/ats-engine.ts — deterministic, reproducible and
+ * explainable line by line. The model is called only to rewrite the specific
+ * bullets the engine flagged, which is a language task rather than a measurement
+ * task. If the model call fails the report is still returned; the score never
+ * depends on it.
+ */
+
+const REWRITE_LIMIT = 3;
 
 export async function POST(request: Request) {
+  const guard = await guardAiRequest({ tier: "pro" });
+  if (!guard.ok) return guard.response;
+
+  let body: { sections?: unknown; jobDescription?: string };
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
-    const userId = (session.user as { id?: string }).id;
-    const exportBlock = await blockAiIfExportOnly(userId);
-    if (exportBlock) return exportBlock;
-
-    const body = await request.json();
-    const { resumeText } = body as { resumeText?: string };
-
-    if (!resumeText || resumeText.trim().length < 20) {
-      return NextResponse.json(
-        { error: "Resume content is too short to score" },
-        { status: 400 }
-      );
-    }
-
-    const openai = getOpenAI();
-    const prompt = buildScorePrompt(resumeText);
-
-    const completion = await openai.chat.completions.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      temperature: 0.3,
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    const raw = completion.choices[0]?.message?.content?.trim() ?? "";
-
-    let result;
-    try {
-      result = JSON.parse(raw);
-    } catch {
-      result = {
-        score: 0,
-        breakdown: { keywords: 0, achievements: 0, bulletQuality: 0, formatting: 0 },
-        suggestions: ["Could not parse score. Please try again."],
-      };
-    }
-
-    return NextResponse.json({ result });
-  } catch (err) {
-    console.error("ATS score error:", err);
+  const sections = Array.isArray(body.sections) ? (body.sections as any[]) : null;
+  if (!sections || sections.length === 0) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Scoring failed" },
-      { status: 500 }
+      { error: "Add some resume content before running an analysis." },
+      { status: 400 }
     );
   }
+
+  const report = analyzeResume(sections, body.jobDescription ?? null);
+
+  // Pull the actual weak lines so the model rewrites real text, not a summary.
+  const weakBullets: string[] = [];
+  for (const type of ["experience", "projects"]) {
+    const items: any[] = sections.find((s) => s?.type === type)?.content?.items ?? [];
+    for (const item of items) {
+      for (const bullet of item?.bullets ?? []) {
+        if (typeof bullet !== "string" || !bullet.trim()) continue;
+        const hasNumber = /\d/.test(bullet);
+        const weakOpener =
+          /^(responsible for|worked on|helped|assisted|participated|involved in|tasked with)/i.test(
+            bullet.trim()
+          );
+        if (!hasNumber || weakOpener) weakBullets.push(bullet.trim());
+      }
+    }
+  }
+
+  let rewrites: Array<{ before: string; after: string }> = [];
+
+  if (weakBullets.length > 0) {
+    try {
+      const targets = weakBullets.slice(0, REWRITE_LIMIT);
+      const completion = await getOpenAI().chat.completions.create({
+        model: AI_MODEL,
+        temperature: 0.4,
+        max_tokens: 400,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              "You rewrite resume bullet points. Keep every factual claim from the original. " +
+              "Never invent numbers, employers, technologies or outcomes that are not already implied. " +
+              "Where a metric clearly belongs but is absent, leave a bracketed placeholder like [X%] for " +
+              "the candidate to fill in rather than guessing a value. Open with a concrete past-tense " +
+              'verb. Stay under 30 words. Respond as JSON: {"rewrites":[{"before":"...","after":"..."}]}',
+          },
+          { role: "user", content: JSON.stringify({ bullets: targets }) },
+        ],
+      });
+
+      const parsed = JSON.parse(completion.choices[0]?.message?.content ?? "{}");
+      if (Array.isArray(parsed?.rewrites)) {
+        rewrites = parsed.rewrites
+          .filter(
+            (r: any) =>
+              r &&
+              typeof r.before === "string" &&
+              typeof r.after === "string" &&
+              r.after.trim()
+          )
+          .slice(0, REWRITE_LIMIT);
+      }
+    } catch (err) {
+      // Non-fatal: the report is the product, the rewrites are a bonus.
+      console.error("ATS rewrite suggestion failed:", err);
+    }
+  }
+
+  return NextResponse.json({
+    result: {
+      ...report,
+      rewrites,
+      // Kept so any existing UI reading `suggestions` keeps working.
+      suggestions: report.issues.slice(0, 5).map((i) => i.title),
+      method: "deterministic-v1",
+    },
+  });
 }

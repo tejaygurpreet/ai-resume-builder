@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getOpenAI } from "@/lib/openai";
-import { prisma } from "@/lib/prisma";
-import { blockAiIfExportOnly } from "@/lib/ai-access";
+import { guardAiRequest, consumeAiGeneration } from "@/lib/ai-guard";
+import { AI_MODEL } from "@/lib/ai-model";
+import { NO_FABRICATION_RULE, sanitizeGeneratedText } from "@/lib/ai-prompts";
 
-const FREE_AI_LIMIT = 3;
-const MODEL = "gpt-4o-mini";
 const MAX_TOKENS = 400;
 
 type GenerationType = "summary" | "experience" | "skills";
@@ -26,7 +23,8 @@ function buildPrompt(
             "- Base the summary STRICTLY on the user's Work Experience and Skills provided below",
             "- Write 4–6 full sentences (at least 5 lines when formatted)",
             "- Lead with years of experience and target role",
-            "- Highlight key achievements and quantifiable impact from their experience",
+            "- Highlight achievements and impact that appear in their supplied experience",
+            `- ${NO_FABRICATION_RULE}`,
             "- Incorporate relevant skills naturally",
             "- Achievement-focused, professional, ATS-optimized",
             "- No generic phrases (team player, hard worker, etc.)",
@@ -66,6 +64,7 @@ function buildPrompt(
       return isPro
         ? [
             "You are an elite resume writer. Generate 4–5 achievement-focused bullet points.",
+            NO_FABRICATION_RULE,
             "",
             "Rules:",
             "- Base bullets on the job title, company, and dates provided",
@@ -85,6 +84,7 @@ function buildPrompt(
             .join("\n")
         : [
             "You are an expert resume writer. Generate 4 strong bullet points.",
+            NO_FABRICATION_RULE,
             "",
             "Rules:",
             "- Base on job title, company, and dates provided",
@@ -126,7 +126,7 @@ function buildPrompt(
 async function callOpenAI(prompt: string): Promise<string> {
   const openai = getOpenAI();
   const completion = await openai.chat.completions.create({
-    model: MODEL,
+    model: AI_MODEL,
     max_tokens: MAX_TOKENS,
     temperature: 0.7,
     messages: [{ role: "user", content: prompt }],
@@ -137,18 +137,6 @@ async function callOpenAI(prompt: string): Promise<string> {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as { id?: string }).id;
-    if (!userId) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    const exportBlock = await blockAiIfExportOnly(userId);
-    if (exportBlock) return exportBlock;
 
     const body = await request.json();
     const { type, data, resumeId } = body as {
@@ -178,33 +166,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const resume = await prisma.resume.findFirst({
-      where: { id: resumeId, userId },
-    });
-
-    if (!resume) {
-      return NextResponse.json(
-        { error: "Resume not found" },
-        { status: 404 }
-      );
-    }
-
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId },
-    });
-
-    const isPro =
-      subscription?.plan === "pro" && subscription?.status === "active";
-
-    if (!isPro && resume.aiGenerations >= FREE_AI_LIMIT) {
-      return NextResponse.json(
-        {
-          error: "Free plan limit reached (3 AI generations per resume). Upgrade to Pro for unlimited.",
-          limitReached: true,
-        },
-        { status: 403 }
-      );
-    }
+    const guard = await guardAiRequest({ tier: "basic", resumeId });
+    if (!guard.ok) return guard.response;
+    const { isPro } = guard;
 
     const prompt = buildPrompt(type as GenerationType, data, isPro);
     const result = await callOpenAI(prompt);
@@ -215,18 +179,7 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-
-    if (!isPro) {
-      await prisma.resume.update({
-        where: { id: resumeId },
-        data: { aiGenerations: { increment: 1 } },
-      });
-    }
-
-    const remaining = isPro
-      ? null
-      : Math.max(0, FREE_AI_LIMIT - (resume.aiGenerations + 1));
-
+    const remaining = await consumeAiGeneration(resumeId, isPro);
     return NextResponse.json({
       result,
       type,

@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/page-metadata";
 import Link from "next/link";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ChevronDown, Sparkles, ArrowRight } from "lucide-react";
 import { PLANS_COPY, PRICING } from "@/lib/plans";
 
-export const metadata: Metadata = { title: "FAQ | OptimaCV", description: "Frequently asked questions about OptimaCV's AI resume builder, pricing, exports, and data privacy." };
+export const metadata: Metadata = pageMetadata({
+  title: "Frequently Asked Questions",
+  description:
+    "Answers on plans and billing, ATS compatibility, AI features, export formats, data privacy and cancelling your OptimaCV subscription.",
+  path: "/faq",
+});
 
 const faqItems = [
   { question: "How does the AI resume builder work?", answer: "Getting started is simple. First, choose from one of our 55 professionally designed, ATS-friendly templates. Then enter your information — work experience, education, skills, and more. As you type, our AI suggests compelling bullet points, rewrites summaries, and optimizes your wording for impact. When you're happy with the result, export your resume as a PDF, DOCX, TXT, or JSON file. The entire process takes just minutes, not hours." },
@@ -23,7 +29,7 @@ const faqItems = [
   { question: "Are the templates ATS-friendly?", answer: "Yes. All 55 templates are designed for Applicant Tracking Systems (ATS). We use clean formatting, standard section headings, proper document structure, and avoid elements that confuse ATS parsers like tables, columns embedded in text boxes, or unusual fonts." },
   { question: "How does the AI generate content?", answer: "OptimaCV uses OpenAI's language models to analyze your input and generate professional content. When you provide your job title, company, and a brief description, the AI produces impactful bullet points with quantified achievements. It can also write professional summaries, generate cover letters tailored to specific job descriptions, score your resume's ATS compatibility, and identify missing keywords. All AI suggestions are fully editable." },
   { question: "Can I cancel my Pro subscription?", answer: "Yes, you can cancel your Pro subscription at any time from your account settings. There are no cancellation fees or penalties. After canceling, you'll continue to have access to all Pro features until the end of your current billing period. Your resumes and data will remain intact on the free plan." },
-  { question: "How do I contact support?", answer: "You can reach our support team by emailing support@optimacv.com or by using our contact page. We typically respond within 24 hours on business days. For common questions, we recommend checking this FAQ page first." },
+  { question: "How do I contact support?", answer: "You can reach our support team by emailing support@optimacv.io or by using our contact page. We typically respond within 24 hours on business days. For common questions, we recommend checking this FAQ page first." },
 ];
 
 function FAQItem({ question, answer }: { question: string; answer: string }) {

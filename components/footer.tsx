@@ -20,11 +20,22 @@ const legalLinks = [
   { href: "/terms", label: "Terms of Service" },
 ];
 
+/**
+ * Social links render only when a real profile URL is configured.
+ *
+ * These previously pointed at bare `https://twitter.com`, `https://linkedin.com`
+ * and `https://github.com` on every page. A visitor who clicks one lands on a
+ * logged-out homepage, which reads as an abandoned product. No link is better
+ * than a link to nowhere, so each entry is dropped unless its env var is set.
+ */
 const socialLinks = [
-  { href: "https://twitter.com", label: "Twitter", Icon: Twitter },
-  { href: "https://linkedin.com", label: "LinkedIn", Icon: Linkedin },
-  { href: "https://github.com", label: "GitHub", Icon: Github },
-];
+  { href: process.env.NEXT_PUBLIC_TWITTER_URL, label: "Twitter", Icon: Twitter },
+  { href: process.env.NEXT_PUBLIC_LINKEDIN_URL, label: "LinkedIn", Icon: Linkedin },
+  { href: process.env.NEXT_PUBLIC_GITHUB_URL, label: "GitHub", Icon: Github },
+].filter(
+  (link): link is { href: string; label: string; Icon: typeof Twitter } =>
+    typeof link.href === "string" && /^https?:\/\/.+\..+/.test(link.href.trim())
+);
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
@@ -46,6 +57,7 @@ export function Footer() {
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-slate-500">
               Craft your optimal resume with AI precision. OptimaCV helps you land more interviews.
             </p>
+            {socialLinks.length > 0 && (
             <div className="mt-6 flex items-center gap-3">
               {socialLinks.map(({ href, label, Icon }) => (
                 <a
@@ -60,6 +72,7 @@ export function Footer() {
                 </a>
               ))}
             </div>
+            )}
           </div>
 
           {[

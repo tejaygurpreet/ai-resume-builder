@@ -15,29 +15,28 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://optimacv.io"),
-  title: "OptimaCV - AI Resume Builder",
+  title: {
+    default: "OptimaCV — AI Resume Builder",
+    // Pages supply their own title; this appends the brand consistently.
+    template: "%s | OptimaCV",
+  },
   description: "Create professional resumes with AI. Build resumes fast.",
+  alternates: { canonical: "/" },
   robots: {
     index: true,
     follow: true,
   },
-  keywords: [
-    "AI resume builder",
-    "resume builder",
-    "CV builder",
-    "resume maker",
-    "ATS resume",
-  ],
   openGraph: {
-    title: "OptimaCV - AI Resume Builder",
+    title: "OptimaCV — AI Resume Builder",
     description: "Create professional resumes with AI in minutes.",
-    url: "https://optimacv.io",
+    // No hardcoded `url` here. It inherits to every page and made all of them
+    // declare the homepage as canonical. Pages set their own via pageMetadata().
     siteName: "OptimaCV",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "OptimaCV - AI Resume Builder",
+    title: "OptimaCV — AI Resume Builder",
     description: "Create professional resumes with AI in minutes.",
   },
 };

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { TEMPLATE_CONFIGS } from "@/lib/template-config";
+import { assertTemplateAllowed } from "@/lib/template-access";
 
 const DEFAULT_SECTIONS = [
   {
@@ -189,9 +190,14 @@ export async function POST(req: Request) {
     try {
       body = await req.json().catch(() => ({}));
       if (body.template && typeof body.template === "string" && VALID_TEMPLATES.has(body.template)) {
-        template = body.template;
-        const config = TEMPLATE_CONFIGS.find((c) => c.id === template);
-        if (config) color = config.accent;
+        // A locked template arriving here is usually a stale ?template= deep link
+        // rather than an attack, so fall back to the default instead of erroring.
+        const access = await assertTemplateAllowed(userId, body.template);
+        if (access.ok) {
+          template = body.template;
+          const config = TEMPLATE_CONFIGS.find((c) => c.id === template);
+          if (config) color = config.accent;
+        }
       }
       if (body.color && typeof body.color === "string") {
         color = body.color;

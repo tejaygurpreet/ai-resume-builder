@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getOpenAI } from "@/lib/openai";
-import { blockAiIfExportOnly } from "@/lib/ai-access";
+import { guardAiRequest } from "@/lib/ai-guard";
+import { AI_MODEL } from "@/lib/ai-model";
+import { NO_FABRICATION_RULE } from "@/lib/ai-prompts";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as { id?: string }).id;
-    const exportBlock = await blockAiIfExportOnly(userId);
-    if (exportBlock) return exportBlock;
+    const guard = await guardAiRequest({ tier: "pro" });
+    if (!guard.ok) return guard.response;
 
     const body = await request.json();
     const { resumeData, jobTitle, companyName } = body;
@@ -26,12 +20,12 @@ export async function POST(request: Request) {
     }
 
     const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+      model: AI_MODEL,
       messages: [
         {
           role: "system",
           content:
-            "You are an expert cover letter writer. Write a professional, personalized cover letter. The letter should be well-structured with an opening paragraph, 2-3 body paragraphs highlighting relevant experience, and a strong closing. Keep it concise and impactful. Return as JSON with field: coverLetter (string).",
+            "You are an expert cover letter writer. " + NO_FABRICATION_RULE + "  Write a professional, personalized cover letter. The letter should be well-structured with an opening paragraph, 2-3 body paragraphs highlighting relevant experience, and a strong closing. Keep it concise and impactful. Return as JSON with field: coverLetter (string).",
         },
         {
           role: "user",

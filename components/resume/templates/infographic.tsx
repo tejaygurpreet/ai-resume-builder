@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ContactLine from "@/components/resume/ContactLine";
 import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
@@ -51,10 +52,6 @@ function proficiencyToPercent(prof: string): number {
   return map[prof?.toLowerCase()] || 50;
 }
 
-function skillToPercent(skill: string, index: number): number {
-  const hash = skill.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
-  return 55 + ((hash + index * 7) % 46);
-}
 
 export default function InfographicTemplate({ sections, color }: TemplateProps) {
   const sorted = [...sections].sort((a, b) => a.order - b.order);
@@ -135,48 +132,7 @@ export default function InfographicTemplate({ sections, color }: TemplateProps) 
         {/* Contact Info */}
         {personal && hasContent(personal) && (
           <div style={{ padding: "0 24px 20px", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-            {personal.content.email && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
-                <span style={{ color, fontSize: "13px" }}>✉</span>
-                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.email}</span>
-              </div>
-            )}
-            {personal.content.phone && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
-                <span style={{ color, fontSize: "13px" }}>☎</span>
-                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.phone}</span>
-              </div>
-            )}
-            {personal.content.location && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
-                <span style={{ color, fontSize: "13px" }}>◉</span>
-                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.location}</span>
-              </div>
-            )}
-            {personal.content.linkedin && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
-                <span style={{ color, fontSize: "13px" }}>▶</span>
-                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.linkedin}</span>
-              </div>
-            )}
-            {personal.content.github && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
-                <span style={{ color, fontSize: "13px" }}>▶</span>
-                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.github}</span>
-              </div>
-            )}
-            {personal.content.portfolio && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
-                <span style={{ color, fontSize: "13px" }}>▶</span>
-                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.portfolio}</span>
-              </div>
-            )}
-            {personal.content.website && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px", fontSize: "10px" }}>
-                <span style={{ color, fontSize: "13px" }}>◆</span>
-                <span style={{ color: "rgba(255,255,255,0.85)" }}>{personal.content.website}</span>
-              </div>
-            )}
+            <ContactLine personal={personal.content} separator=" · " layout="stack" />
           </div>
         )}
 
@@ -198,36 +154,26 @@ export default function InfographicTemplate({ sections, color }: TemplateProps) 
                 {section.type}
               </h2>
 
-              {section.type === "skills" &&
-                section.content.items.map((skill: string, i: number) => {
-                  const pct = skillToPercent(skill, i);
-                  return (
-                    <div key={i} style={{ marginBottom: "7px" }}>
-                      <div
+              {section.type === "skills" && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                  {section.content.items
+                    .filter((s: string) => typeof s === "string" && s.trim())
+                    .map((skill: string, i: number) => (
+                      <span
+                        key={i}
                         style={{
-                          display: "flex",
-                          justifyContent: "space-between",
                           fontSize: "9.5px",
-                          marginBottom: "3px",
-                          color: "rgba(255,255,255,0.85)",
+                          padding: "3px 8px",
+                          borderRadius: "3px",
+                          backgroundColor: "rgba(255,255,255,0.14)",
+                          color: "rgba(255,255,255,0.9)",
                         }}
                       >
-                        <span>{skill}</span>
-                        <span style={{ color: "rgba(255,255,255,0.5)" }}>{pct}%</span>
-                      </div>
-                      <div style={{ height: "4px", backgroundColor: "rgba(255,255,255,0.15)", borderRadius: "2px" }}>
-                        <div
-                          style={{
-                            width: `${pct}%`,
-                            height: "100%",
-                            backgroundColor: color,
-                            borderRadius: "2px",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
+                        {skill}
+                      </span>
+                    ))}
+                </div>
+              )}
 
               {section.type === "languages" &&
                 section.content.items.map((item: any, i: number) => {

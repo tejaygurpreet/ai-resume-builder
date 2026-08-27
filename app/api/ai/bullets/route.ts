@@ -1,19 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getOpenAI } from "@/lib/openai";
-import { blockAiIfExportOnly } from "@/lib/ai-access";
+import { guardAiRequest } from "@/lib/ai-guard";
+import { AI_MODEL } from "@/lib/ai-model";
+import { resumeWriterSystemPrompt, sanitizeGeneratedList } from "@/lib/ai-prompts";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as { id?: string }).id;
-    const exportBlock = await blockAiIfExportOnly(userId);
-    if (exportBlock) return exportBlock;
+    const guard = await guardAiRequest({ tier: "basic" });
+    if (!guard.ok) return guard.response;
 
     const body = await request.json();
     const { jobTitle, company, responsibilities } = body;
@@ -26,12 +20,15 @@ export async function POST(request: Request) {
     }
 
     const completion = await getOpenAI().chat.completions.create({
-      model: "gpt-4o-mini",
+      model: AI_MODEL,
       messages: [
         {
           role: "system",
           content:
-            "You are an expert resume writer. Generate exactly 5 optimized, ATS-friendly resume bullet points. Each bullet should start with a strong action verb, include quantifiable metrics where possible, and be concise. Return as JSON with a 'bullets' field containing an array of 5 strings.",
+            resumeWriterSystemPrompt(
+            "Generate exactly 5 bullet points from the role details supplied. " +
+            'Respond as JSON: {"bullets": ["...", "...", "...", "...", "..."]}'
+          ),
         },
         {
           role: "user",
@@ -59,11 +56,15 @@ export async function POST(request: Request) {
       );
     }
 
-    const bullets = Array.isArray(parsed.bullets)
+    const raw = Array.isArray(parsed.bullets)
       ? parsed.bullets
       : Array.isArray(parsed)
         ? parsed
         : [];
+
+    // Strip markdown, stray list markers and emoji before this text can land in
+    // a template and end up in an exported PDF.
+    const bullets = sanitizeGeneratedList(raw);
 
     return NextResponse.json({ bullets });
   } catch (error) {

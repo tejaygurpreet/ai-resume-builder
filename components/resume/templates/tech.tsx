@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ContactLine from "@/components/resume/ContactLine";
 import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
@@ -92,13 +93,7 @@ export default function TechTemplate({ sections, color }: TemplateProps) {
               {getFullName(personal.content)}
             </h1>
             <div style={{ marginTop: "12px", fontSize: "9.5px", color: "rgba(255,255,255,0.8)", lineHeight: 2 }}>
-              {personal.content.email && <div>{personal.content.email}</div>}
-              {personal.content.phone && <div>{personal.content.phone}</div>}
-              {personal.content.location && <div>{personal.content.location}</div>}
-              {personal.content.linkedin && <div>{personal.content.linkedin}</div>}
-              {personal.content.github && <div>{personal.content.github}</div>}
-              {personal.content.portfolio && <div>{personal.content.portfolio}</div>}
-              {personal.content.website && <div>{personal.content.website}</div>}
+              <ContactLine personal={personal.content} separator=" · " layout="stack" />
             </div>
           </div>
         )}

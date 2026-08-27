@@ -2,6 +2,7 @@
 
 import toast from "react-hot-toast";
 import type { ResumeSection } from "@/hooks/use-resume-store";
+import { buildAtsTextLayer } from "@/lib/pdf-text-layer";
 
 export type ExportFormat = "pdf" | "docx" | "txt" | "json" | "md";
 
@@ -9,10 +10,54 @@ export type ExportFormat = "pdf" | "docx" | "txt" | "json" | "md";
 export const RESUME_PDF_CAPTURE_ID = "resume-pdf-capture";
 
 /**
- * html2canvas + jsPDF — tuned for crisp text and stable letter-spacing vs the DOM preview.
- * Temporarily un-scales the element (editor preview uses CSS scale) so the PDF matches full A4 layout.
+ * Writes the resume text into the PDF in invisible render mode.
+ *
+ * The visible page is a rasterised screenshot, which carries no text at all. This
+ * draws the same content as real, selectable, extractable text sitting behind the
+ * image — the technique used to make scanned documents searchable. Result: the
+ * human sees the designed template, `pdftotext` and every ATS sees clean, ordered,
+ * labelled text.
  */
-async function captureResumeElementToPdf(element: HTMLElement, title: string): Promise<void> {
+function drawInvisibleTextLayer(
+  pdf: import("jspdf").jsPDF,
+  sections: ResumeSection[],
+  title: string
+): void {
+  const lines = buildAtsTextLayer(sections, title);
+  if (lines.length === 0) return;
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const marginX = 12;
+  const marginTop = 14;
+  const bottomLimit = pageHeight - 10;
+  const usableWidth = pageWidth - marginX * 2;
+
+  pdf.setFontSize(9);
+  const lineHeight = 4;
+  let y = marginTop;
+
+  for (const line of lines) {
+    // splitTextToSize keeps long paragraphs inside the page box so nothing is
+    // silently dropped off the right edge of the text stream.
+    const wrapped = pdf.splitTextToSize(line.text, usableWidth) as string[];
+    for (const part of wrapped) {
+      if (y > bottomLimit) {
+        pdf.addPage();
+        y = marginTop;
+      }
+      pdf.text(part, marginX, y, { renderingMode: "invisible" });
+      y += lineHeight;
+    }
+    if (line.heading) y += 1;
+  }
+}
+
+async function captureResumeElementToPdf(
+  element: HTMLElement,
+  title: string,
+  sections: ResumeSection[]
+): Promise<void> {
   await document.fonts.ready;
 
   const prevTransform = element.style.transform;
@@ -50,6 +95,17 @@ async function captureResumeElementToPdf(element: HTMLElement, title: string): P
     const pdf = new jsPDF("p", "mm", "a4");
     const imgData = canvas.toDataURL("image/png", 1.0);
     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+
+    // The image alone has no text layer. Without this the export is a picture
+    // and every ATS gets nothing back from it.
+    drawInvisibleTextLayer(pdf, sections, title);
+
+    pdf.setProperties({
+      title: `${title} — Resume`,
+      subject: "Resume",
+      creator: "OptimaCV",
+    });
+
     const safeName = title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim() || "Resume";
     pdf.save(`${safeName}.pdf`);
   } finally {
@@ -72,7 +128,7 @@ export async function exportToPdf(
         : null;
 
     if (liveEl) {
-      await captureResumeElementToPdf(liveEl, title);
+      await captureResumeElementToPdf(liveEl, title, sections);
       toast.success("PDF downloaded!", { id: toastId });
       return;
     }
@@ -102,7 +158,8 @@ export async function exportToPdf(
 /** @deprecated Prefer exportToPdf from the builder (captures live DOM). Kept for legacy callers. */
 export async function exportToPdfFromElement(
   element: HTMLElement | null,
-  title: string = "Resume"
+  title: string = "Resume",
+  sections: ResumeSection[] = []
 ) {
   if (!element) {
     toast.error("Nothing to export");
@@ -111,7 +168,7 @@ export async function exportToPdfFromElement(
 
   const toastId = toast.loading("Generating PDF…");
   try {
-    await captureResumeElementToPdf(element, title);
+    await captureResumeElementToPdf(element, title, sections);
     toast.success("PDF downloaded!", { id: toastId });
   } catch {
     toast.error("Failed to export PDF", { id: toastId });

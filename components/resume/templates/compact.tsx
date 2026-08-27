@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import ContactLine from "@/components/resume/ContactLine";
 import { getFullName } from "@/lib/template-utils";
 
 interface TemplateProps {
@@ -66,22 +67,16 @@ export default function CompactTemplate({ sections, color }: TemplateProps) {
       {/* Compact Header */}
       {personal && hasContent(personal) && (
         <div style={{ marginBottom: "12px", borderBottom: `2px solid ${color}`, paddingBottom: "8px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-            <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#1a1a1a", margin: 0 }}>
-              {getFullName(personal.content)}
-            </h1>
-            <div style={{ display: "flex", gap: "10px", fontSize: "9px", color: "#666" }}>
-              {personal.content.email && <span>{personal.content.email}</span>}
-              {personal.content.phone && <span>{personal.content.phone}</span>}
-            </div>
-          </div>
-          <div style={{ display: "flex", gap: "10px", fontSize: "9px", color: "#888", marginTop: "2px" }}>
-            {personal.content.location && <span>{personal.content.location}</span>}
-            {personal.content.linkedin && <span>{personal.content.linkedin}</span>}
-            {personal.content.github && <span>{personal.content.github}</span>}
-            {personal.content.portfolio && <span>{personal.content.portfolio}</span>}
-            {personal.content.website && <span>{personal.content.website}</span>}
-          </div>
+          <h1 style={{ fontSize: "22px", fontWeight: 700, color: "#1a1a1a", margin: 0 }}>
+            {getFullName(personal.content)}
+          </h1>
+          <ContactLine
+            personal={personal.content}
+            separator=" · "
+            fontSize="9px"
+            color="#666"
+            style={{ marginTop: "3px" }}
+          />
         </div>
       )}
 

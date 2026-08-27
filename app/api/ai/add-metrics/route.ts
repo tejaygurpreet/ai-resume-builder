@@ -1,28 +1,13 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { getOpenAI } from "@/lib/openai";
-import { prisma } from "@/lib/prisma";
-import { blockAiIfExportOnly } from "@/lib/ai-access";
+import { guardAiRequest, consumeAiGeneration } from "@/lib/ai-guard";
+import { AI_MODEL } from "@/lib/ai-model";
+import { NO_FABRICATION_RULE, sanitizeGeneratedText } from "@/lib/ai-prompts";
 
-const FREE_AI_LIMIT = 3;
-const MODEL = "gpt-4o-mini";
 const MAX_TOKENS = 150;
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = (session.user as { id?: string }).id;
-    if (!userId) {
-      return NextResponse.json({ error: "Invalid session" }, { status: 401 });
-    }
-
-    const exportBlock = await blockAiIfExportOnly(userId);
-    if (exportBlock) return exportBlock;
 
     const body = await request.json();
     const { bullet, jobTitle, resumeId } = body as {
@@ -45,52 +30,42 @@ export async function POST(request: Request) {
       );
     }
 
-    const resume = await prisma.resume.findFirst({
-      where: { id: resumeId, userId },
-    });
+    const guard = await guardAiRequest({ tier: "basic", resumeId });
+    if (!guard.ok) return guard.response;
+    const { isPro } = guard;
 
-    if (!resume) {
-      return NextResponse.json({ error: "Resume not found" }, { status: 404 });
-    }
-
-    const subscription = await prisma.subscription.findUnique({
-      where: { userId },
-    });
-
-    const isPro =
-      subscription?.plan === "pro" && subscription?.status === "active";
-
-    if (!isPro && resume.aiGenerations >= FREE_AI_LIMIT) {
-      return NextResponse.json(
-        {
-          error: "Free plan limit reached. Upgrade to Pro for unlimited AI.",
-          limitReached: true,
-        },
-        { status: 403 }
-      );
-    }
-
+    // This prompt previously said: "Add realistic numbers: percentages, dollar
+    // amounts, team sizes, time saved, users served, etc." The model has no
+    // access to any of those figures, so it invented them — and the user pasted
+    // fabricated achievements onto a hiring document they could not defend.
+    // It now inserts labelled placeholders instead, so the candidate supplies
+    // the real value and the resume stays truthful.
     const prompt = [
-      "You are an expert resume writer. Rewrite this bullet point to ADD measurable metrics and quantifiable impact.",
+      "You are an expert resume writer. Rewrite this bullet point so it is ready to carry a measurable result.",
+      "",
+      NO_FABRICATION_RULE,
       "",
       "Rules:",
-      "- Keep the original action and context",
-      "- Add realistic numbers: percentages, dollar amounts, team sizes, time saved, users served, etc.",
-      "- Make it more impactful for recruiters",
+      "- Keep the original action, scope and context exactly as given",
+      "- Restructure so the outcome leads, rather than the task",
+      "- Where a number belongs, insert a bracketed placeholder that names the unit:",
+      "  [X%], [$X], [N users], [N engineers], [X hours/week], [N teams]",
+      "- Never substitute an actual figure for a placeholder",
+      "- Open with a concrete past-tense verb",
       "- Under 25 words",
       "",
       jobTitle ? `Job context: ${jobTitle}` : "",
       "",
       `Original bullet: ${bullet}`,
       "",
-      "Return ONLY the improved bullet with metrics, nothing else.",
+      "Return ONLY the rewritten bullet, nothing else.",
     ]
       .filter(Boolean)
       .join("\n");
 
     const openai = getOpenAI();
     const completion = await openai.chat.completions.create({
-      model: MODEL,
+      model: AI_MODEL,
       max_tokens: MAX_TOKENS,
       temperature: 0.6,
       messages: [{ role: "user", content: prompt }],
@@ -104,18 +79,7 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
-
-    if (!isPro) {
-      await prisma.resume.update({
-        where: { id: resumeId },
-        data: { aiGenerations: { increment: 1 } },
-      });
-    }
-
-    const remaining = isPro
-      ? null
-      : Math.max(0, FREE_AI_LIMIT - (resume.aiGenerations + 1));
-
+    const remaining = await consumeAiGeneration(resumeId, isPro);
     return NextResponse.json({ result, remaining, isPro });
   } catch (err) {
     console.error("Add metrics error:", err);
